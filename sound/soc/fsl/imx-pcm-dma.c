@@ -110,11 +110,10 @@ static const struct snd_dmaengine_pcm_config imx_dmaengine_pcm_config = {
 	.prealloc_buffer_size = IMX_SSI_DMABUF_SIZE,
 };
 
-int imx_pcm_dma_init(struct platform_device *pdev)
+int imx_pcm_dma_init(struct platform_device *pdev, unsigned int flags)
 {
 	return devm_snd_dmaengine_pcm_register(&pdev->dev,
-		&imx_dmaengine_pcm_config,
-		SND_DMAENGINE_PCM_FLAG_COMPAT);
+		&imx_dmaengine_pcm_config, flags);
 }
 EXPORT_SYMBOL_GPL(imx_pcm_dma_init);
 
