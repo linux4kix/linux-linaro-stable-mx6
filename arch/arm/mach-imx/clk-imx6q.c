@@ -275,6 +275,7 @@ int __init mx6q_clocks_init(void)
 	struct device_node *np;
 	void __iomem *base;
 	int i, irq;
+	int ret;
 
 	clk[dummy] = imx_clk_fixed("dummy", 0);
 
@@ -567,6 +568,16 @@ int __init mx6q_clocks_init(void)
 		clk_prepare_enable(clk[usbphy1_gate]);
 		clk_prepare_enable(clk[usbphy2_gate]);
 	}
+
+	/*
+	 * Let's initially set up CLKO with OSC24M, since this configuration
+	 * is widely used by imx6q board designs to clock audio codec.
+	 */
+	ret = clk_set_parent(clk[cko2_sel], clk[osc]);
+	if (!ret)
+		ret = clk_set_parent(clk[cko], clk[cko2]);
+	if (ret)
+		pr_warn("failed to set up CLKO: %d\n", ret);
 
 	/* Set initial power mode */
 	imx6q_set_lpm(WAIT_CLOCKED);
