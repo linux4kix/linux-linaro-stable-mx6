@@ -14,6 +14,7 @@ config ARCH_MXC
 	select PINCTRL
 	select SOC_BUS
 	select SPARSE_IRQ
+	select SRAM
 	select USE_OF
 	help
 	  Support for Freescale MXC/iMX-based family of processors
