@@ -177,6 +177,7 @@ int tzic_enable_wake(void);
 extern struct cpu_op *(*get_cpu_op)(int *op);
 #endif
 
+#define cpu_is_imx6()	(cpu_is_imx6q() || cpu_is_imx6dl() || cpu_is_imx6sl())
 #define cpu_is_mx3()	(cpu_is_mx31() || cpu_is_mx35())
 #define cpu_is_mx2()	(cpu_is_mx21() || cpu_is_mx27())
 
