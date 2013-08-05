@@ -527,6 +527,22 @@ static void fsl_ssi_rxtx_config(struct fsl_ssi_private *ssi_private,
 	}
 }
 
+static void fsl_ssi_clk_ctrl(struct fsl_ssi_private *ssi_private, bool enable,
+	if (enable) {
+		if (ssi_private->ssi_on_imx) {
+			if (!IS_ERR(ssi_private->baudclk))
+				clk_enable(ssi_private->baudclk);
+			clk_enable(ssi_private->clk);
+		}
+	} else {
+		if (ssi_private->ssi_on_imx) {
+			if (!IS_ERR(ssi_private->baudclk))
+				clk_disable(ssi_private->baudclk);
+			clk_disable(ssi_private->clk);
+		}
+	}
+}
+
 /*
  * Enable/Disable a ssi configuration. You have to pass either
  * ssi_private->rxtx_reg_val.rx or tx as vals parameter.
@@ -546,6 +562,8 @@ static void fsl_ssi_config(struct fsl_ssi_private *ssi_private, bool enable,
 		avals = &ssi_private->rxtx_reg_val.tx;
 	else
 		avals = &ssi_private->rxtx_reg_val.rx;
+
+	fsl_ssi_clk_ctrl(ssi_private, enable);
 
 	/* If vals should be disabled, start with disabling the unit */
 	if (!enable) {
@@ -1436,9 +1454,9 @@ static int fsl_ssi_probe(struct platform_device *pdev)
 			dev_err(&pdev->dev, "could not get clock: %d\n", ret);
 			goto error_irqmap;
 		}
-		ret = clk_prepare_enable(ssi_private->clk);
+		ret = clk_prepare(ssi_private->clk);
 		if (ret) {
-			dev_err(&pdev->dev, "clk_prepare_enable failed: %d\n",
+			dev_err(&pdev->dev, "clk_prepare failed: %d\n",
 				ret);
 			goto error_irqmap;
 		}
@@ -1451,7 +1469,7 @@ static int fsl_ssi_probe(struct platform_device *pdev)
 			dev_dbg(&pdev->dev, "could not get baud clock: %ld\n",
 				 PTR_ERR(ssi_private->baudclk));
 		else
-			clk_prepare_enable(ssi_private->baudclk);
+			clk_prepare(ssi_private->baudclk);
 
 		/*
 		 * We have burstsize be "fifo_depth - 2" to match the SSI
@@ -1575,8 +1593,8 @@ error_dev:
 
 	if (ssi_private->ssi_on_imx) {
 		if (!IS_ERR(ssi_private->baudclk))
-			clk_disable_unprepare(ssi_private->baudclk);
-		clk_disable_unprepare(ssi_private->clk);
+			clk_unprepare(ssi_private->baudclk);
+		clk_unprepare(ssi_private->clk);
 	}
 
 error_irqmap:
@@ -1597,8 +1615,8 @@ static int fsl_ssi_remove(struct platform_device *pdev)
 	snd_soc_unregister_component(&pdev->dev);
 	if (ssi_private->ssi_on_imx) {
 		if (!IS_ERR(ssi_private->baudclk))
-			clk_disable_unprepare(ssi_private->baudclk);
-		clk_disable_unprepare(ssi_private->clk);
+			clk_unprepare(ssi_private->baudclk);
+		clk_unprepare(ssi_private->clk);
 	}
 	if (ssi_private->irq_stats)
 		irq_dispose_mapping(ssi_private->irq);
