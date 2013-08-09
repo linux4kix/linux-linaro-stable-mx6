@@ -24,7 +24,7 @@ static inline void
 imx_pcm_dma_params_init_data(struct imx_dma_data *dma_data,
 	int dma, enum sdma_peripheral_type peripheral_type)
 {
-	dma_data->dma_request = dma;
+	dma_data->dma_request0 = dma;
 	dma_data->priority = DMA_PRIO_HIGH;
 	dma_data->peripheral_type = peripheral_type;
 }
