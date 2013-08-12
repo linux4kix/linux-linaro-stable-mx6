@@ -331,9 +331,19 @@
 			};
 
 			vpu: vpu@02040000 {
+				compatible = "fsl,imx6-vpu";
 				reg = <0x02040000 0x3c000>;
 				interrupts = <0 3 IRQ_TYPE_LEVEL_HIGH>,
 				             <0 12 IRQ_TYPE_LEVEL_HIGH>;
+				reg-names = "vpu_regs";
+				interrupts = <0 3 0x01>, <0 12 0x04>;
+				interrupt-names = "vpu_jpu_irq", "vpu_ipi_irq";
+				clocks = <&clks 168>, <&clks 140>, <&clks 142>;
+				clock-names = "vpu_clk", "mmdc_ch0_axi", "ocram";
+				iramsize = <0x21000>;
+				iram = <&ocram>;
+				resets = <&src 1>;
+				status = "disabled";
 			};
 
 			aipstz@0207c000 { /* AIPSTZ1 */
