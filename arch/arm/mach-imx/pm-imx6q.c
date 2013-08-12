@@ -489,8 +489,8 @@ static void __init imx6_pm_common_init(const struct imx6_pm_socdata
 	 */
 	gpr = syscon_regmap_lookup_by_compatible("fsl,imx6q-iomuxc-gpr");
 	if (!IS_ERR(gpr))
-		regmap_update_bits(gpr, IOMUXC_GPR1, IMX6Q_GPR1_GINT,
-				   IMX6Q_GPR1_GINT);
+		regmap_update_bits(gpr, IOMUXC_GPR1, IMX6Q_GPR1_GINT_MASK,
+				   IMX6Q_GPR1_GINT_MASK);
 
 
 	suspend_set_ops(&imx6q_pm_ops);
