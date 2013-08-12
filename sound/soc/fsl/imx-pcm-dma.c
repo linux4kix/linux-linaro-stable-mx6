@@ -11,6 +11,10 @@
  *  Free Software Foundation;  either version 2 of the  License, or (at your
  *  option) any later version.
  */
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/dmaengine.h>
 #include <linux/types.h>
@@ -41,8 +45,10 @@ static const struct snd_pcm_hardware imx_pcm_hardware = {
 		SNDRV_PCM_INFO_MMAP_VALID |
 		SNDRV_PCM_INFO_PAUSE |
 		SNDRV_PCM_INFO_RESUME,
-	.formats = SNDRV_PCM_FMTBIT_S16_LE,
-	.buffer_bytes_max = IMX_SSI_DMABUF_SIZE,
+	.formats = SNDRV_PCM_FMTBIT_S16_LE |
+		SNDRV_PCM_FMTBIT_S24_LE |
+		SNDRV_PCM_FMTBIT_S20_3LE,
+	.buffer_bytes_max = IMX_DEFAULT_DMABUF_SIZE,
 	.period_bytes_min = 128,
 	.period_bytes_max = 65535, /* Limited by SDMA engine */
 	.periods_min = 4,
@@ -107,7 +113,7 @@ static const struct snd_dmaengine_pcm_config imx_dmaengine_pcm_config = {
 	.pcm_hardware = &imx_pcm_hardware,
 	.prepare_slave_config = imx_pcm_dma_prepare_slave_config,
 	.compat_filter_fn = filter,
-	.prealloc_buffer_size = IMX_SSI_DMABUF_SIZE,
+	.prealloc_buffer_size = IMX_DEFAULT_DMABUF_SIZE,
 };
 
 int imx_pcm_dma_init(struct platform_device *pdev, unsigned int flags)
