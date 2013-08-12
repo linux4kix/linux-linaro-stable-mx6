@@ -529,3 +529,7 @@
 	cd-gpios = <&gpio3 22 0>;
 	status = "okay";
 };
+
+&pxp {
+	status = "okay";
+};
