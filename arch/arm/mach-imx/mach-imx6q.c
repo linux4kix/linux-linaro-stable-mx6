@@ -198,12 +198,15 @@ static void __init imx6q_lvds_cabc_init(void)
 
 static void __init imx6q_init_machine(void)
 {
-	if (of_machine_is_compatible("fsl,imx6q-sabrelite"))
-		imx6q_sabrelite_init();
+	struct device *parent;
+
+	parent = imx_soc_device_init();
+	if (parent == NULL)
+		pr_warn("failed to initialize soc device\n");
 
 	imx6q_enet_phy_init();
 
-	of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
+	of_platform_populate(NULL, of_default_bus_match_table, NULL, parent);
 
 	imx_anatop_init();
 	imx6q_pm_init();
