@@ -59,7 +59,7 @@
 #define BM_CLPCR_MASK_L2CC_IDLE		(0x1 << 27)
 
 #define CGPR				0x64
-#define BM_CGPR_CHICKEN_BIT		(0x1 << 17)
+#define BM_CGPR_INT_MEM_CLK_LPM		(0x1 << 17)
 
 #define MX6Q_SUSPEND_OCRAM_SIZE		0x1000
 #define MX6_MAX_MMDC_IO_NUM		33
@@ -141,12 +141,21 @@ struct imx6_cpu_pm_info {
 	u32 mmdc_io_val[MX6_MAX_MMDC_IO_NUM][2]; /* To save offset and value */
 } __aligned(8);
 
-void imx6q_set_chicken_bit(void)
+void imx6q_set_cache_lpm_in_wait(bool enable)
 {
-	u32 val = readl_relaxed(ccm_base + CGPR);
+	if ((cpu_is_imx6q() && imx_get_soc_revision() >
+		IMX_CHIP_REVISION_1_1) ||
+		(cpu_is_imx6dl() && imx_get_soc_revision() >
+		IMX_CHIP_REVISION_1_0)) {
+		u32 val;
 
-	val |= BM_CGPR_CHICKEN_BIT;
-	writel_relaxed(val, ccm_base + CGPR);
+		val = readl_relaxed(ccm_base + CGPR);
+		if (enable)
+			val |= BM_CGPR_INT_MEM_CLK_LPM;
+		else
+			val &= ~BM_CGPR_INT_MEM_CLK_LPM;
+		writel_relaxed(val, ccm_base + CGPR);
+	}
 }
 
 static void imx6q_enable_rbc(bool enable)
