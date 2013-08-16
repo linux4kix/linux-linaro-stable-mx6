@@ -221,6 +221,7 @@ clocks and IDs.
 	lvds1_gate		206
 	lvds2_gate		207
 	gpt_3m			208
+	video_27m		209
 
 Examples:
 
