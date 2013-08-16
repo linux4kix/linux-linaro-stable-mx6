@@ -195,7 +195,6 @@
 	pinctrl-0 = <&pinctrl_enet_1>;
 	phy-mode = "rgmii";
 	phy-reset-gpios = <&gpio1 25 0>;
-	ptp-enable = <1>;
 	status = "okay";
 };
 
