@@ -265,6 +265,10 @@ static void __init imx6sl_clocks_init(struct device_node *ccm_node)
 		clk_prepare_enable(clks[IMX6SL_CLK_USBPHY2_GATE]);
 	}
 
+	clk_set_parent(clks[IMX6SL_CLK_GPU2D_OVG_SEL],
+		clks[IMX6SL_CLK_PLL2_BUS]);
+	clk_set_parent(clks[IMX6SL_CLK_GPU2D_SEL], clks[IMX6SL_CLK_PLL2_BUS]);
+
 	/* Audio-related clocks configuration */
 	clk_set_parent(clks[IMX6SL_CLK_SPDIF0_SEL], clks[IMX6SL_CLK_PLL3_PFD3]);
 
