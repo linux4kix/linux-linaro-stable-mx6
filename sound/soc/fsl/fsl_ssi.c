@@ -30,6 +30,7 @@
  * around this by not polling these bits but only wait a fixed delay.
  */
 
+#include <linux/busfreq-imx6.h>
 #include <linux/init.h>
 #include <linux/io.h>
 #include <linux/module.h>
@@ -43,6 +44,7 @@
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
 #include <linux/of_platform.h>
+#include <linux/pm_runtime.h>
 
 #include <sound/core.h>
 #include <sound/pcm.h>
@@ -205,6 +207,26 @@ struct fsl_ssi_private {
 
 	char name[1];
 };
+
+#ifdef CONFIG_PM_RUNTIME
+static int fsl_ssi_runtime_resume(struct device *dev)
+{
+	request_bus_freq(BUS_FREQ_AUDIO);
+	return 0;
+}
+
+static int fsl_ssi_runtime_suspend(struct device *dev)
+{
+	release_bus_freq(BUS_FREQ_AUDIO);
+	return 0;
+}
+
+static const struct dev_pm_ops fsl_ssi_pm = {
+	SET_RUNTIME_PM_OPS(fsl_ssi_runtime_suspend,
+			fsl_ssi_runtime_resume,
+			NULL)
+};
+#endif
 
 static const struct of_device_id fsl_ssi_ids[] = {
 	{ .compatible = "fsl,mpc8610-ssi", .data = (void *) FSL_SSI_MCP8610},
@@ -748,6 +770,8 @@ static int fsl_ssi_startup(struct snd_pcm_substream *substream,
 		snd_soc_dai_get_drvdata(rtd->cpu_dai);
 	unsigned long flags;
 
+	pm_runtime_get_sync(dai->dev);
+
 	/* First, we only do fsl_ssi_setup() when SSI is going to be active.
 	 * Second, fsl_ssi_setup was already called by ac97_init earlier if
 	 * the driver is in ac97 mode.
@@ -1119,6 +1143,12 @@ static int fsl_ssi_trigger(struct snd_pcm_substream *substream, int cmd,
 	return 0;
 }
 
+static void fsl_ssi_shutdown(struct snd_pcm_substream *substream,
+   			     struct snd_soc_dai *dai)
+{
+	pm_runtime_put_sync(dai->dev);
+}
+
 static int fsl_ssi_dai_probe(struct snd_soc_dai *dai)
 {
 	struct fsl_ssi_private *ssi_private = snd_soc_dai_get_drvdata(dai);
@@ -1138,6 +1168,7 @@ static const struct snd_soc_dai_ops fsl_ssi_dai_ops = {
 	.set_sysclk	= fsl_ssi_set_dai_sysclk,
 	.set_tdm_slot	= fsl_ssi_set_dai_tdm_slot,
 	.trigger	= fsl_ssi_trigger,
+	.shutdown	= fsl_ssi_shutdown,
 };
 
 /* Template for the CPU dai driver structure */
@@ -1473,6 +1504,8 @@ static int fsl_ssi_probe(struct platform_device *pdev)
 			goto error_clk;
 		}
 	}
+
+	pm_runtime_enable(&pdev->dev);
 
 	/* Register with ASoC */
 	dev_set_drvdata(&pdev->dev, ssi_private);

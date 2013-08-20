@@ -56,6 +56,8 @@
 #include <linux/regulator/consumer.h>
 #include <linux/if_vlan.h>
 #include <linux/pinctrl/consumer.h>
+#include <linux/busfreq-imx6.h>
+#include <linux/pm_runtime.h>
 
 #include <asm/cacheflush.h>
 
@@ -1583,6 +1585,8 @@ static int fec_enet_clk_enable(struct net_device *ndev, bool enable)
 	int ret;
 
 	if (enable) {
+		pm_runtime_enable(&fep->pdev->dev);
+
 		ret = clk_prepare_enable(fep->clk_ahb);
 		if (ret)
 			return ret;
@@ -2158,6 +2162,8 @@ fec_enet_open(struct net_device *ndev)
 		return ret;
 	}
 
+	pm_runtime_get_sync(&fep->pdev->dev);
+
 	napi_enable(&fep->napi);
 	phy_start(fep->phy_dev);
 	netif_start_queue(ndev);
@@ -2183,6 +2189,8 @@ fec_enet_close(struct net_device *ndev)
 
 	fec_enet_clk_enable(ndev, false);
 	pinctrl_pm_select_sleep_state(&fep->pdev->dev);
+	pm_runtime_put_sync_suspend(&fep->pdev->dev);
+
 	fec_enet_free_buffers(ndev);
 
 	return 0;
@@ -2651,7 +2659,7 @@ fec_drv_remove(struct platform_device *pdev)
 	return 0;
 }
 
-#ifdef CONFIG_PM_SLEEP
+#ifdef CONFIG_PM
 static int
 fec_suspend(struct device *dev)
 {
@@ -2701,9 +2709,26 @@ failed_clk:
 		regulator_disable(fep->reg_phy);
 	return ret;
 }
+
+static int fec_runtime_suspend(struct device *dev)
+{
+	release_bus_freq(BUS_FREQ_HIGH);
+	return 0;
+}
+
+static int fec_runtime_resume(struct device *dev)
+{
+	request_bus_freq(BUS_FREQ_HIGH);
+	return 0;
+}
+
+static const struct dev_pm_ops fec_pm_ops = {
+	SET_RUNTIME_PM_OPS(fec_runtime_suspend, fec_runtime_resume, NULL)
+	SET_SYSTEM_SLEEP_PM_OPS(fec_suspend, fec_resume)
+};
+
 #endif /* CONFIG_PM_SLEEP */
 
-static SIMPLE_DEV_PM_OPS(fec_pm_ops, fec_suspend, fec_resume);
 
 static struct platform_driver fec_driver = {
 	.driver	= {
