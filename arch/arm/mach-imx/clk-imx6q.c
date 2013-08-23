@@ -533,6 +533,14 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	if (IS_ENABLED(CONFIG_PCI_IMX6))
 		clk_set_parent(clk[lvds1_sel], clk[sata_ref]);
 
+	/* Audio clocks */
+	clk_set_parent(clk[ssi1_sel], clk[pll4_audio_div]);
+	clk_set_parent(clk[ssi2_sel], clk[pll4_audio_div]);
+	clk_set_parent(clk[ssi3_sel], clk[pll4_audio_div]);
+
+	/* Set pll4_audio to a value that can derive 5K-88.2KHz and 8K-96KHz */
+	clk_set_rate(clk[pll4_audio_div], 541900800);
+
 	/* Set initial power mode */
 	imx6q_set_lpm(WAIT_CLOCKED);
 
