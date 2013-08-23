@@ -39,7 +39,7 @@ static unsigned int transition_latency;
 static u32 *imx6_soc_volt;
 static u32 soc_opp_count;
 
-static int imx6q_set_target(struct cpufreq_policy *policy, unsigned int index)
+static int imx6_set_target(struct cpufreq_policy *policy, unsigned int index)
 {
 	struct dev_pm_opp *opp;
 	unsigned long freq_hz, volt, volt_old;
@@ -143,24 +143,59 @@ static int imx6q_set_target(struct cpufreq_policy *policy, unsigned int index)
 	return 0;
 }
 
-static int imx6q_cpufreq_init(struct cpufreq_policy *policy)
+static int imx6_cpufreq_init(struct cpufreq_policy *policy)
 {
 	policy->clk = arm_clk;
 	return cpufreq_generic_init(policy, freq_table, transition_latency);
 }
 
-static struct cpufreq_driver imx6q_cpufreq_driver = {
+static struct cpufreq_driver imx6_cpufreq_driver = {
 	.flags = CPUFREQ_NEED_INITIAL_FREQ_CHECK,
 	.verify = cpufreq_generic_frequency_table_verify,
-	.target_index = imx6q_set_target,
+	.target_index = imx6_set_target,
 	.get = cpufreq_generic_get,
-	.init = imx6q_cpufreq_init,
+	.init = imx6_cpufreq_init,
 	.exit = cpufreq_generic_exit,
-	.name = "imx6q-cpufreq",
+	.name = "imx6-cpufreq",
 	.attr = cpufreq_generic_attr,
 };
 
-static int imx6q_cpufreq_probe(struct platform_device *pdev)
+static int imx6_cpufreq_pm_notify(struct notifier_block *nb,
+	unsigned long event, void *dummy)
+{
+	struct cpufreq_policy *data = cpufreq_cpu_get(0);
+	static u32 cpufreq_policy_min_pre_suspend;
+
+	/*
+	 * During suspend/resume, When cpufreq driver try to increase
+	 * voltage/freq, it needs to control I2C/SPI to communicate
+	 * with external PMIC to adjust voltage, but these I2C/SPI
+	 * devices may be already suspended, to avoid such scenario,
+	 * we just increase cpufreq to highest setpoint before suspend.
+	 */
+	switch (event) {
+	case PM_SUSPEND_PREPARE:
+		cpufreq_policy_min_pre_suspend = data->user_policy.min;
+		data->user_policy.min = data->user_policy.max;
+		break;
+	case PM_POST_SUSPEND:
+		data->user_policy.min = cpufreq_policy_min_pre_suspend;
+		break;
+	default:
+		break;
+	}
+
+	cpufreq_update_policy(0);
+
+	return NOTIFY_OK;
+}
+
+static struct notifier_block imx6_cpufreq_pm_notifier = {
+	.notifier_call = imx6_cpufreq_pm_notify,
+};
+
+static int imx6_cpufreq_probe(struct platform_device *pdev)
+>>>>>>> d39ea43... cpufreq: imx6: Squash with rename to imx6-cpufreq
 {
 	struct device_node *np;
 	struct dev_pm_opp *opp;
@@ -302,7 +337,7 @@ soc_opp_out:
 	if (ret > 0)
 		transition_latency += ret * 1000;
 
-	ret = cpufreq_register_driver(&imx6q_cpufreq_driver);
+	ret = cpufreq_register_driver(&imx6_cpufreq_driver);
 	if (ret) {
 		dev_err(cpu_dev, "failed register driver: %d\n", ret);
 		goto free_freq_table;
@@ -318,23 +353,23 @@ put_node:
 	return ret;
 }
 
-static int imx6q_cpufreq_remove(struct platform_device *pdev)
+static int imx6_cpufreq_remove(struct platform_device *pdev)
 {
-	cpufreq_unregister_driver(&imx6q_cpufreq_driver);
+	cpufreq_unregister_driver(&imx6_cpufreq_driver);
 	dev_pm_opp_free_cpufreq_table(cpu_dev, &freq_table);
 
 	return 0;
 }
 
-static struct platform_driver imx6q_cpufreq_platdrv = {
+static struct platform_driver imx6_cpufreq_platdrv = {
 	.driver = {
-		.name	= "imx6q-cpufreq",
+		.name	= "imx6-cpufreq",
 		.owner	= THIS_MODULE,
 	},
-	.probe		= imx6q_cpufreq_probe,
-	.remove		= imx6q_cpufreq_remove,
+	.probe		= imx6_cpufreq_probe,
+	.remove		= imx6_cpufreq_remove,
 };
-module_platform_driver(imx6q_cpufreq_platdrv);
+module_platform_driver(imx6_cpufreq_platdrv);
 
 MODULE_AUTHOR("Shawn Guo <shawn.guo@linaro.org>");
 MODULE_DESCRIPTION("Freescale i.MX6Q cpufreq driver");
