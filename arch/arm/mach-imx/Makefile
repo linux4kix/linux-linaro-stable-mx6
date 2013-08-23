@@ -104,7 +104,7 @@ obj-$(CONFIG_SOC_IMX6SL) += clk-imx6sl.o mach-imx6sl.o
 AFLAGS_suspend-imx6.o :=-Wa,-march=armv7-a
 obj-$(CONFIG_PM) += suspend-imx6.o pm-imx6.o headsmp.o
 
-ifeq ($(CONFIG_ARM_IMX6Q_CPUFREQ),y)
+ifeq ($(CONFIG_ARM_IMX6_CPUFREQ),y)
 obj-y += busfreq-imx6.o
 obj-$(CONFIG_SOC_IMX6Q) += ddr3_freq_imx6.o busfreq_ddr3.o
 endif
