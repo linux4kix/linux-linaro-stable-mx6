@@ -137,6 +137,7 @@ void imx_gpc_irq_unmask(struct irq_data *d);
 void imx_anatop_init(void);
 void imx_anatop_pre_suspend(void);
 void imx_anatop_post_resume(void);
+void imx_anatop_pu_enable(bool enable);
 int imx6q_set_lpm(enum mxc_cpu_pwr_mode mode);
 void imx6q_set_cache_lpm_in_wait(bool enable);
 
