@@ -42,6 +42,15 @@
 			linux,default-trigger = "heartbeat";
 		};
 	};
+
+	sound-spdif {
+		compatible = "fsl,imx-audio-spdif",
+			   "fsl,imx-sabreauto-spdif";
+		model = "imx-spdif";
+		spdif-controller = <&spdif>;
+		spdif-out;
+		spdif-in;
+	};
 };
 
 &gpmi {
@@ -102,6 +111,12 @@
 	pinctrl-0 = <&pinctrl_uart2_2>;
 	fsl,dte-mode;
 	fsl,uart-has-rtscts;
+	status = "okay";
+};
+
+&spdif {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_spdif_2>;
 	status = "okay";
 };
 

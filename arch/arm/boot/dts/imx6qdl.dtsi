@@ -178,7 +178,8 @@
 				ranges;
 
 				spdif: spdif@02004000 {
-					compatible = "fsl,imx35-spdif";
+					compatible = "fsl,imx6q-spdif",
+						"fsl,imx35-spdif";
 					reg = <0x02004000 0x4000>;
 					interrupts = <0 52 0x04>;
 					dmas = <&sdma 14 18 0>,
