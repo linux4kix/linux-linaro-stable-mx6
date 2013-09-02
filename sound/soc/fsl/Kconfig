@@ -14,6 +14,9 @@ config SND_SOC_FSL_ESAI
 config SND_SOC_FSL_ASRC
 	tristate
 
+config SND_SOC_FSL_HDMI
+	tristate
+
 config SND_SOC_FSL_UTILS
 	tristate
 
