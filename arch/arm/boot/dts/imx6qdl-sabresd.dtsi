@@ -141,6 +141,13 @@
 		status = "okay";
 	};
 
+	sound-hdmi {
+		compatible = "fsl,imx6q-audio-hdmi",
+			     "fsl,imx-audio-hdmi";
+		model = "imx-audio-hdmi";
+		hdmi-controller = <&hdmi_audio>;
+	};
+
 	mxcfb1: fb@0 {
 		compatible = "fsl,mxc_sdc_fb";
 		disp_dev = "ldb";
@@ -639,6 +646,10 @@
 	pinctrl-0 = <&pinctrl_hdmi_hdcp_1>;
 	fsl,phy_reg_vlev = <0x0294>;
 	fsl,phy_reg_cksymtx = <0x800d>;
+	status = "okay";
+};
+
+&hdmi_audio {
 	status = "okay";
 };
 
