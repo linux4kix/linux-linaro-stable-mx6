@@ -233,6 +233,17 @@ config SND_SOC_IMX_SPDIF
 	  Say Y if you want to add support for SoC audio on an i.MX board with
 	  a S/DPDIF.
 
+config SND_SOC_IMX_HDMI
+	tristate "SoC Audio support for i.MX boards with HDMI port"
+	depends on MFD_MXC_HDMI
+	select SND_SOC_IMX_HDMI_DMA
+	select SND_SOC_FSL_HDMI
+	select SND_SOC_HDMI_CODEC
+	help
+	  SoC Audio support for i.MX boards with HDMI audio
+	  Say Y if you want to add support for SoC audio on an i.MX board with
+	  IMX HDMI.
+
 config SND_SOC_IMX_MC13783
 	tristate "SoC Audio support for I.MX boards with mc13783"
 	depends on MFD_MC13XXX && ARM
