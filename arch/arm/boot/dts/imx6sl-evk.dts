@@ -87,6 +87,14 @@
 		mux-ext-port = <3>;
 		hp-det-gpios = <&gpio4 19 1>;
 	};
+
+	sound-spdif {
+		compatible = "fsl,imx-audio-spdif",
+			   "fsl,imx6sl-evk-spdif";
+		model = "imx-spdif";
+		spdif-controller = <&spdif>;
+		spdif-out;
+	};
 };
 
 &audmux {
@@ -420,6 +428,12 @@
 &pwm1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1_0>;
+	status = "okay";
+};
+
+&spdif {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_spdif_1>;
 	status = "okay";
 };
 
