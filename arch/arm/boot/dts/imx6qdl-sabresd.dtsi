@@ -666,6 +666,7 @@
 	bus-width = <8>;
 	cd-gpios = <&gpio2 2 0>;
 	wp-gpios = <&gpio2 3 0>;
+	no-1-8-v;
 	status = "okay";
 };
 
@@ -675,6 +676,7 @@
 	bus-width = <8>;
 	cd-gpios = <&gpio2 0 0>;
 	wp-gpios = <&gpio2 1 0>;
+	no-1-8-v;
 	status = "okay";
 };
 
