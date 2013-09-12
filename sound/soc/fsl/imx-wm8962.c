@@ -180,7 +180,8 @@ static int imx_hifi_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct imx_priv *priv = &card_priv;
 	struct device *dev = &priv->pdev->dev;
-	struct imx_wm8962_data *data = platform_get_drvdata(priv->pdev);
+	struct snd_soc_card *card = codec_dai->codec->card;
+	struct imx_wm8962_data *data = snd_soc_card_get_drvdata(card);
 	unsigned int sample_rate = params_rate(params);
 	snd_pcm_format_t sample_format = params_format(params);
 	u32 dai_format, pll_out;
