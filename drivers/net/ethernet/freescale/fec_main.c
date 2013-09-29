@@ -1293,6 +1293,47 @@ static int fec_enet_mdio_reset(struct mii_bus *bus)
 	return 0;
 }
 
+static inline int fec_enet_clk_enable(struct net_device *ndev, bool enable)
+{
+	struct fec_enet_private *fep = netdev_priv(ndev);
+	int ret = 0;
+
+	if (enable) {
+		ret = clk_prepare_enable(fep->clk_ahb);
+		if (ret)
+			goto failed_clk;
+
+		ret = clk_prepare_enable(fep->clk_ipg);
+		if (ret)
+			goto failed_clk_ipg;
+
+		if (fep->clk_enet_out) {
+			ret = clk_prepare_enable(fep->clk_enet_out);
+			if (ret)
+				goto failed_clk_enet_out;
+		}
+
+		if (fep->clk_ptp) {
+			ret = clk_prepare_enable(fep->clk_ptp);
+			if (ret)
+				goto failed_clk_ptp;
+		}
+		return ret;
+	}
+
+	if (fep->clk_ptp)
+		clk_disable_unprepare(fep->clk_ptp);
+failed_clk_ptp:
+        if (fep->clk_enet_out)
+                clk_disable_unprepare(fep->clk_enet_out);
+failed_clk_enet_out:
+        clk_disable_unprepare(fep->clk_ipg);
+failed_clk_ipg:
+        clk_disable_unprepare(fep->clk_ahb);
+failed_clk:
+	return ret;
+}
+
 static int fec_enet_mii_probe(struct net_device *ndev)
 {
 	struct fec_enet_private *fep = netdev_priv(ndev);
@@ -1402,7 +1443,7 @@ static int fec_enet_mii_init(struct platform_device *pdev)
 	 * Reference Manual has an error on this, and gets fixed on i.MX6Q
 	 * document.
 	 */
-	fep->phy_speed = DIV_ROUND_UP(clk_get_rate(fep->clk_ahb), 5000000);
+	fep->phy_speed = DIV_ROUND_UP(clk_get_rate(fep->clk_ipg), 5000000);
 	if (id_entry->driver_data & FEC_QUIRK_ENET_MAC)
 		fep->phy_speed--;
 	fep->phy_speed <<= 1;
@@ -1816,6 +1857,10 @@ fec_enet_open(struct net_device *ndev)
 
 	pm_runtime_get_sync(ndev->dev.parent);
 
+	ret = fec_enet_clk_enable(ndev, true);
+	if (ret)
+		return ret;
+
 	napi_enable(&fep->napi);
 
 	/* I should reset the ring buffers here, but I don't yet know
@@ -1847,6 +1892,7 @@ static int
 fec_enet_close(struct net_device *ndev)
 {
 	struct fec_enet_private *fep = netdev_priv(ndev);
+	int ret;
 
 	/* Don't know what to do yet. */
 	napi_disable(&fep->napi);
@@ -1858,6 +1904,8 @@ fec_enet_close(struct net_device *ndev)
 		phy_stop(fep->phy_dev);
 		phy_disconnect(fep->phy_dev);
 	}
+
+	ret = fec_enet_clk_enable(ndev, false);
 
 	pm_runtime_put_sync_suspend(ndev->dev.parent);
 
@@ -2216,32 +2264,16 @@ fec_probe(struct platform_device *pdev)
 	fep->clk_ptp = devm_clk_get(&pdev->dev, "ptp");
 	fep->bufdesc_ex =
 		pdev->id_entry->driver_data & FEC_QUIRK_HAS_BUFDESC_EX;
-	if (IS_ERR(fep->clk_ptp)) {
+	if (IS_ERR(fep->clk_ptp) || !fep->bufdesc_ex) {
 		fep->clk_ptp = NULL;
 		fep->bufdesc_ex = 0;
 	}
 
 	pm_runtime_enable(&pdev->dev);
 
-	ret = clk_prepare_enable(fep->clk_ahb);
+	ret = fec_enet_clk_enable(ndev, true);
 	if (ret)
 		goto failed_clk;
-
-	ret = clk_prepare_enable(fep->clk_ipg);
-	if (ret)
-		goto failed_clk_ipg;
-
-	if (fep->clk_enet_out) {
-		ret = clk_prepare_enable(fep->clk_enet_out);
-		if (ret)
-			goto failed_clk_enet_out;
-	}
-
-	if (fep->clk_ptp) {
-		ret = clk_prepare_enable(fep->clk_ptp);
-		if (ret)
-			goto failed_clk_ptp;
-	}
 
 	fep->reg_phy = devm_regulator_get(&pdev->dev, "phy");
 	if (!IS_ERR(fep->reg_phy)) {
@@ -2282,6 +2314,7 @@ fec_probe(struct platform_device *pdev)
 
 	/* Carrier starts down, phylib will bring it up */
 	netif_carrier_off(ndev);
+	fec_enet_clk_enable(ndev, false);
 
 	ret = register_netdev(ndev);
 	if (ret)
@@ -2303,13 +2336,6 @@ failed_init:
 failed_regulator:
 	if (fep->clk_ptp)
 		clk_disable_unprepare(fep->clk_ptp);
-failed_clk_ptp:
-	if (fep->clk_enet_out)
-		clk_disable_unprepare(fep->clk_enet_out);
-failed_clk_enet_out:
-	clk_disable_unprepare(fep->clk_ipg);
-failed_clk_ipg:
-	clk_disable_unprepare(fep->clk_ahb);
 failed_clk:
 failed_ioremap:
 	free_netdev(ndev);
@@ -2322,6 +2348,7 @@ fec_drv_remove(struct platform_device *pdev)
 {
 	struct net_device *ndev = platform_get_drvdata(pdev);
 	struct fec_enet_private *fep = netdev_priv(ndev);
+	int ret;
 
 	cancel_delayed_work_sync(&(fep->delay_work.delay_work));
 	unregister_netdev(ndev);
@@ -2333,16 +2360,13 @@ fec_drv_remove(struct platform_device *pdev)
         }
         if (fep->reg_phy)
                 regulator_disable(fep->reg_phy);
+
+	ret = fec_enet_clk_enable(ndev, false);
+
         if (fep->bufdesc_ex) {
-                if (fep->clk_ptp)
-                        clk_disable_unprepare(fep->clk_ptp);
                 if (fep->ptp_clock)
                         ptp_clock_unregister(fep->ptp_clock);
         }
-	if (fep->clk_enet_out)
-		clk_disable_unprepare(fep->clk_enet_out);
-	clk_disable_unprepare(fep->clk_ipg);
-	clk_disable_unprepare(fep->clk_ahb);
 	free_netdev(ndev);
 
 	return 0;
@@ -2354,17 +2378,14 @@ fec_suspend(struct device *dev)
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
 	struct fec_enet_private *fep = netdev_priv(ndev);
+	int ret;
 
 	if (netif_running(ndev)) {
 		fec_stop(ndev);
 		netif_device_detach(ndev);
 	}
-	if (fep->clk_ptp)
-		clk_disable_unprepare(fep->clk_ptp);
-	if (fep->clk_enet_out)
-		clk_disable_unprepare(fep->clk_enet_out);
-	clk_disable_unprepare(fep->clk_ipg);
-	clk_disable_unprepare(fep->clk_ahb);
+
+	ret = fec_enet_clk_enable(ndev, false);
 
 	if (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
@@ -2377,32 +2398,17 @@ fec_resume(struct device *dev)
 {
 	struct net_device *ndev = dev_get_drvdata(dev);
 	struct fec_enet_private *fep = netdev_priv(ndev);
-	int ret;
+	int ret = 0;
 
 	if (fep->reg_phy) {
 		ret = regulator_enable(fep->reg_phy);
 		if (ret)
-			return ret;
+			goto failed_clk;
 	}
 
-	ret = clk_prepare_enable(fep->clk_ahb);
+	ret = fec_enet_clk_enable(ndev, true);
 	if (ret)
-		goto failed_clk_ahb;
-
-	ret = clk_prepare_enable(fep->clk_ipg);
-	if (ret)
-		goto failed_clk_ipg;
-
-	if (fep->clk_enet_out) {
-		ret = clk_prepare_enable(fep->clk_enet_out);
-		if (ret)
-			goto failed_clk_enet_out;
-	}
-
-	if (fep->clk_ptp) {
-		ret = clk_prepare_enable(fep->clk_ptp);
-		if (ret)
-			goto failed_clk_ptp;
+		goto failed_clk;
 	}
 
 	if (netif_running(ndev)) {
@@ -2410,18 +2416,7 @@ fec_resume(struct device *dev)
 		netif_device_attach(ndev);
 	}
 
-	return 0;
-
-failed_clk_ptp:
-	if (fep->clk_enet_out)
-		clk_disable_unprepare(fep->clk_enet_out);
-failed_clk_enet_out:
-	clk_disable_unprepare(fep->clk_ipg);
-failed_clk_ipg:
-	clk_disable_unprepare(fep->clk_ahb);
-failed_clk_ahb:
-	if (fep->reg_phy)
-		regulator_disable(fep->reg_phy);
+failed_clk:
 	return ret;
 }
 
