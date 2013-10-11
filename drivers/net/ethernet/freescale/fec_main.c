@@ -58,6 +58,7 @@
 #include <linux/pinctrl/consumer.h>
 #include <linux/busfreq-imx6.h>
 #include <linux/pm_runtime.h>
+#include <linux/pm_qos.h>
 
 #include <asm/cacheflush.h>
 
@@ -106,7 +107,13 @@ static void set_multicast_list(struct net_device *ndev);
  * frames not being transmitted until there is a 0-to-1 transition on
  * ENET_TDAR[TDAR].
  */
-#define FEC_QUIRK_ERR006358            (1 << 7)
+#define FEC_QUIRK_ERR006358            (1 << 8)
+/*
+ * i.MX6Q/DL ENET cannot wake up system in wait mode because ENET tx & rx
+ * interrupt signal don't connect to GPC. So use pm qos to avoid cpu enter
+ * to wait mode.
+ */
+#define FEC_QUIRK_BUG_WAITMODE		(1 << 9)
 
 static struct platform_device_id fec_devtype[] = {
 	{
@@ -126,7 +133,8 @@ static struct platform_device_id fec_devtype[] = {
 		.name = "imx6q-fec",
 		.driver_data = FEC_QUIRK_ENET_MAC | FEC_QUIRK_HAS_GBIT |
 				FEC_QUIRK_HAS_BUFDESC_EX | FEC_QUIRK_HAS_CSUM |
-				FEC_QUIRK_HAS_VLAN | FEC_QUIRK_ERR006358,
+				FEC_QUIRK_HAS_VLAN | FEC_QUIRK_ERR006358 |
+				FEC_QUIRK_BUG_WAITMODE,
 	}, {
 		.name = "mvf600-fec",
 		.driver_data = FEC_QUIRK_ENET_MAC,
@@ -2181,7 +2189,19 @@ static int
 fec_enet_open(struct net_device *ndev)
 {
 	struct fec_enet_private *fep = netdev_priv(ndev);
+	const struct platform_device_id *id_entry =
+				platform_get_device_id(fep->pdev);
 	int ret;
+
+	if (id_entry->driver_data & FEC_QUIRK_BUG_WAITMODE)
+		pm_qos_add_request(&ndev->pm_qos_req,
+				   PM_QOS_CPU_DMA_LATENCY,
+				   0);
+	else
+		pm_qos_add_request(&ndev->pm_qos_req,
+				   PM_QOS_CPU_DMA_LATENCY,
+				   PM_QOS_DEFAULT_VALUE);
+
 
 	pinctrl_pm_select_default_state(&fep->pdev->dev);
 	ret = fec_enet_clk_enable(ndev, true);
@@ -2230,6 +2250,7 @@ fec_enet_close(struct net_device *ndev)
 
 	fec_enet_clk_enable(ndev, false);
 	pinctrl_pm_select_sleep_state(&fep->pdev->dev);
+	pm_qos_remove_request(&ndev->pm_qos_req);
 	pm_runtime_put_sync_suspend(&fep->pdev->dev);
 
 	fec_enet_free_buffers(ndev);
