@@ -1139,5 +1139,11 @@
 				MX6SL_PAD_FEC_REF_CLK__GPIO4_IO26  0x3080
 			>;
 		};
+
+		pinctrl_pwm1_0_sleep: pwm1grp-0-sleep {
+			fsl,pins = <
+				MX6SL_PAD_PWM1__GPIO3_IO23 0x3080
+			>;
+		};
 	};
 };
