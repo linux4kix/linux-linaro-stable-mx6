@@ -71,48 +71,46 @@ static int clk_pllv3_wait_lock(struct clk_pllv3 *pll)
 	return readl_relaxed(pll->base) & BM_PLL_LOCK ? 0 : -ETIMEDOUT;
 }
 
-static int clk_pllv3_prepare(struct clk_hw *hw)
+static int clk_pllv3_power_up_down(struct clk_hw *hw, bool enable)
 {
 	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	u32 val;
-	int ret;
+	u32 val, ret = 0;
 
-	val = readl_relaxed(pll->base);
-	if (pll->powerup_set)
-		val |= BM_PLL_POWER;
-	else
-		val &= ~BM_PLL_POWER;
-	writel_relaxed(val, pll->base);
+	if (enable) {
+		val = readl_relaxed(pll->base);
+		val &= ~BM_PLL_BYPASS;
+		if (pll->powerup_set)
+			val |= BM_PLL_POWER;
+		else
+			val &= ~BM_PLL_POWER;
+		writel_relaxed(val, pll->base);
 
-	ret = clk_pllv3_wait_lock(pll);
-	if (ret)
-		return ret;
+		ret = clk_pllv3_wait_lock(pll);
+	} else {
+		val = readl_relaxed(pll->base);
+		val |= BM_PLL_BYPASS;
+		if (pll->powerup_set)
+			val &= ~BM_PLL_POWER;
+		else
+			val |= BM_PLL_POWER;
+		writel_relaxed(val, pll->base);
+	}
 
-	val = readl_relaxed(pll->base);
-	val &= ~BM_PLL_BYPASS;
-	writel_relaxed(val, pll->base);
+	if (!ret) {
+		val = readl_relaxed(pll->base);
+		val &= ~BM_PLL_BYPASS;
+		writel_relaxed(val, pll->base);
+	}
 
-	return 0;
-}
-
-static void clk_pllv3_unprepare(struct clk_hw *hw)
-{
-	struct clk_pllv3 *pll = to_clk_pllv3(hw);
-	u32 val;
-
-	val = readl_relaxed(pll->base);
-	val |= BM_PLL_BYPASS;
-	if (pll->powerup_set)
-		val &= ~BM_PLL_POWER;
-	else
-		val |= BM_PLL_POWER;
-	writel_relaxed(val, pll->base);
+	return ret;
 }
 
 static int clk_pllv3_enable(struct clk_hw *hw)
 {
 	struct clk_pllv3 *pll = to_clk_pllv3(hw);
 	u32 val;
+	
+	clk_pllv3_power_up_down(hw, true);
 
 	val = readl_relaxed(pll->base);
 	val |= BM_PLL_ENABLE;
@@ -130,6 +128,8 @@ static void clk_pllv3_disable(struct clk_hw *hw)
 	if (!pll->always_on)
 		val &= ~BM_PLL_ENABLE;
 	writel_relaxed(val, pll->base);
+
+	clk_pllv3_power_up_down(hw, false);
 }
 
 static unsigned long clk_pllv3_recalc_rate(struct clk_hw *hw,
@@ -190,8 +190,6 @@ static int clk_pllv3_set_rate(struct clk_hw *hw, unsigned long rate,
 }
 
 static const struct clk_ops clk_pllv3_ops = {
-	.prepare	= clk_pllv3_prepare,
-	.unprepare	= clk_pllv3_unprepare,
 	.enable		= clk_pllv3_enable,
 	.disable	= clk_pllv3_disable,
 	.recalc_rate	= clk_pllv3_recalc_rate,
@@ -246,8 +244,6 @@ static int clk_pllv3_sys_set_rate(struct clk_hw *hw, unsigned long rate,
 }
 
 static const struct clk_ops clk_pllv3_sys_ops = {
-	.prepare	= clk_pllv3_prepare,
-	.unprepare	= clk_pllv3_unprepare,
 	.enable		= clk_pllv3_enable,
 	.disable	= clk_pllv3_disable,
 	.recalc_rate	= clk_pllv3_sys_recalc_rate,
@@ -335,8 +331,6 @@ static int clk_pllv3_av_set_rate(struct clk_hw *hw, unsigned long rate,
 }
 
 static const struct clk_ops clk_pllv3_av_ops = {
-	.prepare	= clk_pllv3_prepare,
-	.unprepare	= clk_pllv3_unprepare,
 	.enable		= clk_pllv3_enable,
 	.disable	= clk_pllv3_disable,
 	.recalc_rate	= clk_pllv3_av_recalc_rate,
@@ -351,8 +345,6 @@ static unsigned long clk_pllv3_enet_recalc_rate(struct clk_hw *hw,
 }
 
 static const struct clk_ops clk_pllv3_enet_ops = {
-	.prepare	= clk_pllv3_prepare,
-	.unprepare	= clk_pllv3_unprepare,
 	.enable		= clk_pllv3_enable,
 	.disable	= clk_pllv3_disable,
 	.recalc_rate	= clk_pllv3_enet_recalc_rate,
