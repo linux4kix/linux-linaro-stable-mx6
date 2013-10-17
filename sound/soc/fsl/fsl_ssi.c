@@ -1537,7 +1537,8 @@ static int fsl_ssi_probe(struct platform_device *pdev)
 			if (ret)
 				goto error_pcm;
 		} else {
-			ret = imx_pcm_dma_init(pdev, SND_DMAENGINE_PCM_FLAG_NO_RESIDUE);
+			ret = imx_pcm_dma_init(pdev, SND_DMAENGINE_PCM_FLAG_NO_RESIDUE,
+						IMX_SSI_DMABUF_SIZE);
 			if (ret)
 				goto error_pcm;
 		}
