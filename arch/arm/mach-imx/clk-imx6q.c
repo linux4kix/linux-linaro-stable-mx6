@@ -110,7 +110,8 @@ enum mx6q_clks {
 	usbphy2_gate, pll4_post_div, pll5_post_div, pll5_video_div, eim_slow,
 	spdif, cko2_sel, cko2_podf, cko2, cko, vdoa, pll4_audio_div,
 	lvds1_sel, lvds2_sel, lvds1_gate, lvds2_gate, gpt_3m, video_27m,
-	ldb_di0_div_7, ldb_di1_div_7, ldb_di0_div_sel, ldb_di1_div_sel, clk_max
+	ldb_di0_div_7, ldb_di1_div_7, ldb_di0_div_sel, ldb_di1_div_sel, 
+	caam_mem, caam_aclk, caam_ipg, clk_max
 };
 
 static struct clk *clk[clk_max];
@@ -351,6 +352,9 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	/*                                name             parent_name          reg         shift */
 	clk[apbh_dma]     = imx_clk_gate2("apbh_dma",      "usdhc3",            base + 0x68, 4);
 	clk[asrc]         = imx_clk_gate2("asrc",          "asrc_podf",         base + 0x68, 6);
+	clk[caam_mem]     = imx_clk_gate2("caam_mem",      "ahb",               base + 0x68, 8);
+	clk[caam_aclk]    = imx_clk_gate2("caam_aclk",     "ahb",               base + 0x68, 10);
+	clk[caam_ipg]     = imx_clk_gate2("caam_ipg",      "ipg",               base + 0x68, 12);
 	clk[can1_ipg]     = imx_clk_gate2("can1_ipg",      "ipg",               base + 0x68, 14);
 	clk[can1_serial]  = imx_clk_gate2("can1_serial",   "can_root",          base + 0x68, 16);
 	clk[can2_ipg]     = imx_clk_gate2("can2_ipg",      "ipg",               base + 0x68, 18);
