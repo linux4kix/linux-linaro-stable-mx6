@@ -20,7 +20,7 @@ config CPU_IDLE_MULTIPLE_DRIVERS
 
 config CPU_IDLE_GOV_LADDER
 	bool
-	depends on CPU_IDLE
+	depends on CPU_IDLE && !NO_HZ
 	default y
 
 config CPU_IDLE_GOV_MENU
