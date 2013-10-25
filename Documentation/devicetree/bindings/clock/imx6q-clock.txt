@@ -224,6 +224,9 @@ clocks and IDs.
 	ldb_di1_div_7           211
 	ldb_di0_div_sel         212
 	ldb_di1_div_sel         213
+	caam_mem                214
+	caam_aclk               215
+	caam_ipg                216
 
 Examples:
 
