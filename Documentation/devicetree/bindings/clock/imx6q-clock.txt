@@ -227,6 +227,9 @@ clocks and IDs.
 	caam_mem                214
 	caam_aclk               215
 	caam_ipg                216
+	epit1                   217
+	epit2                   218
+	tzasc2                  219
 
 Examples:
 
