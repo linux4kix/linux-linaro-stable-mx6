@@ -25,7 +25,7 @@
 		reg = <0x90000000 0x20000000>;
 	};
 
-	display@di0 {
+	display0: display@di0 {
 		compatible = "fsl,imx-parallel-display";
 		crtcs = <&ipu 0>;
 		interface-pix-fmt = "rgb24";
@@ -47,7 +47,7 @@
 		};
 	};
 
-	display@di1 {
+	display1: display@di1 {
 		compatible = "fsl,imx-parallel-display";
 		crtcs = <&ipu 1>;
 		interface-pix-fmt = "rgb565";
@@ -83,6 +83,12 @@
 			linux,code = <116>; /* KEY_POWER */
 			gpio-key,wakeup;
 		};
+	};
+
+	imx-drm {
+		compatible = "fsl,imx-drm";
+		crtcs = <&ipu 0>, <&ipu 1>;
+		connectors = <&display0>, <&display1>;
 	};
 
 	sound {
