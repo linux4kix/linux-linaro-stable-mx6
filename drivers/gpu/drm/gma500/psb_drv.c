@@ -387,7 +387,7 @@ static int psb_driver_load(struct drm_device *dev, unsigned long chipset)
 	PSB_WVDC32(0xFFFFFFFF, PSB_INT_MASK_R);
 	spin_unlock_irqrestore(&dev_priv->irqmask_lock, irqflags);
 
-	drm_irq_install(dev);
+	drm_irq_install(dev, dev->pdev->irq);
 
 	dev->vblank_disable_allowed = true;
 

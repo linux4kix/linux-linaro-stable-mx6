@@ -1317,7 +1317,7 @@ static int i915_load_modeset_init(struct drm_device *dev)
 	if (ret)
 		goto cleanup_vga_switcheroo;
 
-	ret = drm_irq_install(dev);
+	ret = drm_irq_install(dev, dev->pdev->irq);
 	if (ret)
 		goto cleanup_gem_stolen;
 
