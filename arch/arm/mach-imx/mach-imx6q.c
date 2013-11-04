@@ -338,10 +338,9 @@ static void __init imx6q_init_machine(void)
 	if (parent == NULL)
 		pr_warn("failed to initialize soc device\n");
 
-	imx6q_enet_init();
-
 	of_platform_populate(NULL, of_default_bus_match_table, NULL, parent);
 
+	imx6q_enet_init();
 	imx_anatop_init();
 	cpu_is_imx6q() ?  imx6q_pm_init() : imx6dl_pm_init();
 	imx6q_csi_mux_init();
