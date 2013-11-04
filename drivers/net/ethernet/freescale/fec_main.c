@@ -2412,9 +2412,8 @@ fec_suspend(struct device *dev)
 	if (netif_running(ndev)) {
 		fec_stop(ndev);
 		netif_device_detach(ndev);
+		ret = fec_enet_clk_enable(ndev, false);
 	}
-
-	ret = fec_enet_clk_enable(ndev, false);
 
 	if (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
@@ -2439,12 +2438,11 @@ fec_resume(struct device *dev)
 			goto failed_clk;
 	}
 
-	ret = fec_enet_clk_enable(ndev, true);
-	if (ret)
-		goto failed_clk;
-	}
-
 	if (netif_running(ndev)) {
+		ret = fec_enet_clk_enable(ndev, true);
+		if (ret)
+			goto failed_clk;
+
 		fec_restart(ndev, fep->full_duplex);
 		netif_device_attach(ndev);
 	}
