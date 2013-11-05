@@ -973,6 +973,7 @@
 				clocks = <&clks IMX6SL_CLK_SDMA>,
 					 <&clks IMX6SL_CLK_SDMA>;
 				clock-names = "ipg", "ahb";
+				iram = <&ocram>;
 				/* imx6sl reuses imx6q sdma firmware */
 				fsl,sdma-ram-script-name = "imx/sdma/sdma-imx6q.bin";
 			};
