@@ -230,6 +230,8 @@ clocks and IDs.
 	epit1                   217
 	epit2                   218
 	tzasc2                  219
+	lvds1_in                220
+	lvds1_out               221
 
 Examples:
 
