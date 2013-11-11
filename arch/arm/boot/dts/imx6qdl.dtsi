@@ -153,8 +153,8 @@
 			                <0 0 0 2 &intc GIC_SPI 122 IRQ_TYPE_LEVEL_HIGH>,
 			                <0 0 0 3 &intc GIC_SPI 121 IRQ_TYPE_LEVEL_HIGH>,
 			                <0 0 0 4 &intc GIC_SPI 120 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&clks 144>, <&clks 206>, <&clks 189>;
-			clock-names = "pcie", "pcie_bus", "pcie_phy";
+			clocks = <&clks 144>, <&clks 206>, <&clks 189>, <&clks 221>;
+			clock-names = "pcie", "pcie_bus", "pcie_phy", "lvds_gate";
 			status = "disabled";
 		};
 

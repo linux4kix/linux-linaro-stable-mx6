@@ -113,7 +113,8 @@ enum mx6q_clks {
 	spdif, cko2_sel, cko2_podf, cko2, cko, vdoa, pll4_audio_div,
 	lvds1_sel, lvds2_sel, lvds1_gate, lvds2_gate, gpt_3m, video_27m,
 	ldb_di0_div_7, ldb_di1_div_7, ldb_di0_div_sel, ldb_di1_div_sel, 
-	caam_mem, caam_aclk, caam_ipg, epit1, epit2, tzasc2, clk_max
+	caam_mem, caam_aclk, caam_ipg, epit1, epit2, tzasc2, lvds1_in, lvds1_out,
+	clk_max
 };
 
 static struct clk *clk[clk_max];
@@ -179,6 +180,9 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	clk[pll6_enet]     = imx_clk_pllv3(IMX_PLLV3_ENET,	"pll6_enet",	"osc", base + 0xe0, 0x3, false);
 	clk[pll7_usb_host] = imx_clk_pllv3(IMX_PLLV3_USB,	"pll7_usb_host",	"osc", base + 0x20, 0x3, false);
 
+	/*                              name            reg       shift width parent_names     num_parents */
+	clk[lvds1_sel]    = imx_clk_mux("lvds1_sel",    base + 0x160, 0,  5,  lvds_sels,       ARRAY_SIZE(lvds_sels));
+
 	/*
 	 * Bit 20 is the reserved and read-only bit, we do this only for:
 	 * - Do nothing for usbphy clk_enable/disable
@@ -197,6 +201,9 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 
 	clk[sata_ref] = imx_clk_fixed_factor("sata_ref", "pll6_enet", 1, 5);
 	clk[pcie_ref] = imx_clk_fixed_factor("pcie_ref", "pll6_enet", 1, 4);
+	/* NOTICE: The gate of the lvds1 in/out is used to select the clk direction */
+	clk[lvds1_in] = imx_clk_gate("lvds1_in", NULL, base + 0x160, 12);
+	clk[lvds1_out] = imx_clk_gate("lvds1_out", "lvds1_sel", base + 0x160, 10);
 
 	clk[sata_ref_100m] = imx_clk_gate("sata_ref_100m", "sata_ref", base + 0xe0, 20);
 	clk[pcie_ref_125m] = imx_clk_gate("pcie_ref_125m", "pcie_ref", base + 0xe0, 19);
@@ -204,18 +211,6 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	clk[enet_ref] = clk_register_divider_table(NULL, "enet_ref", "pll6_enet", 0,
 			base + 0xe0, 0, 2, 0, clk_enet_ref_table,
 			&imx_ccm_lock);
-
-	clk[lvds1_sel] = imx_clk_mux("lvds1_sel", base + 0x160, 0, 5, lvds_sels, ARRAY_SIZE(lvds_sels));
-	clk[lvds2_sel] = imx_clk_mux("lvds2_sel", base + 0x160, 5, 5, lvds_sels, ARRAY_SIZE(lvds_sels));
-
-	/*
-	 * lvds1_gate and lvds2_gate are pseudo-gates.  Both can be
-	 * independently configured as clock inputs or outputs.  We treat
-	 * the "output_enable" bit as a gate, even though it's really just
-	 * enabling clock output.
-	 */
-	clk[lvds1_gate] = imx_clk_gate("lvds1_gate", "dummy", base + 0x160, 10);
-	clk[lvds2_gate] = imx_clk_gate("lvds2_gate", "dummy", base + 0x160, 11);
 
 	/*                                name              parent_name        reg       idx */
 	clk[pll2_pfd0_352m] = imx_clk_pfd("pll2_pfd0_352m", "pll2_bus",     base + 0x100, 0);
@@ -514,6 +509,13 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	 * So choose pll2_pfd2_396m as enfc_sel's parent.
 	 */
 	clk_set_parent(clk[enfc_sel], clk[pll2_pfd2_396m]);
+
+	/* Set the parent clks of PCIe lvds1 and pcie_axi to be sata ref, axi */
+	if (clk_set_parent(clk[lvds1_sel], clk[sata_ref]))
+		pr_err("Failed to set PCIe bus parent clk.\n");
+	if (clk_set_parent(clk[pcie_axi_sel], clk[axi]))
+		pr_err("Failed to set PCIe parent clk.\n");
+
 
 	/* gpu clock initilazation */
 	clk_set_parent(clk[gpu3d_shader_sel], clk[pll2_pfd1_594m]);
