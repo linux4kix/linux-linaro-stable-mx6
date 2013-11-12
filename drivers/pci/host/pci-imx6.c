@@ -14,6 +14,7 @@
 #include <linux/clk.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
+#include <linux/interrupt.h>
 #include <linux/kernel.h>
 #include <linux/mfd/syscon.h>
 #include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
@@ -326,6 +327,12 @@ static int imx6_pcie_wait_for_link(struct pcie_port *pp)
 		return -EINVAL;
 	}
 
+	if (IS_ENABLED(CONFIG_PCI_MSI)) {
+		pp->quirks |= DW_PCIE_QUIRK_NO_MSI_VEC;
+		pp->quirks |= DW_PCIE_QUIRK_MSI_SELF_EN;
+		dw_pcie_msi_init(pp);
+	}
+
 	return 0;
 }
 
@@ -390,6 +397,15 @@ static int imx6_pcie_start_link(struct pcie_port *pp)
 	}
 
 	return ret;
+}
+
+static irqreturn_t imx_pcie_msi_irq_handler(int irq, void *arg)
+{
+	struct pcie_port *pp = arg;
+
+	dw_handle_msi_irq(pp);
+
+	return IRQ_HANDLED;
 }
 
 static void imx6_pcie_host_init(struct pcie_port *pp)
@@ -496,6 +512,22 @@ static int imx6_add_pcie_port(struct pcie_port *pp,
 	if (!pp->irq) {
 		dev_err(&pdev->dev, "failed to get irq\n");
 		return -ENODEV;
+	}
+
+	if (IS_ENABLED(CONFIG_PCI_MSI)) {
+		pp->msi_irq = pp->irq - 3;
+		if (!pp->msi_irq) {
+			dev_err(&pdev->dev, "failed to get msi irq\n");
+			return -ENODEV;
+		}
+
+		ret = devm_request_irq(&pdev->dev, pp->msi_irq,
+					imx_pcie_msi_irq_handler,
+					IRQF_SHARED, "imx6q-pcie", pp);
+		if (ret) {
+			dev_err(&pdev->dev, "failed to request msi irq\n");
+			return ret;
+		}
 	}
 
 	pp->root_bus_nr = -1;
