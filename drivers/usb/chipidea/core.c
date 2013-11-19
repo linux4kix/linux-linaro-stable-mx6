@@ -171,6 +171,13 @@ static void hw_wait_phy_stable(void)
 	usleep_range(2000, 2500);
 }
 
+static void delay_runtime_pm_put_timer(unsigned long arg)
+{
+	struct ci_hdrc *ci = (struct ci_hdrc *)arg;
+
+	pm_runtime_put(ci->dev);
+}
+
 /* The PHY enters/leaves low power mode */
 static void ci_hdrc_enter_lpm(struct ci_hdrc *ci, bool enable)
 {
@@ -672,6 +679,8 @@ static int ci_hdrc_probe(struct platform_device *pdev)
 		pm_runtime_enable(&pdev->dev);
 	}
 
+	setup_timer(&ci->timer, delay_runtime_pm_put_timer,
+			(unsigned long)ci);
 	ret = dbg_create_files(ci);
 	if (!ret)
 		return 0;
@@ -752,7 +761,7 @@ static int ci_controller_resume(struct device *dev)
 	if (ci->wakeup_int) {
 		ci->wakeup_int = false;
 		enable_irq(ci->irq);
-		pm_runtime_put(ci->dev);
+		mod_timer(&ci->timer, jiffies + msecs_to_jiffies(2000));
 	}
 
 	return 0;
