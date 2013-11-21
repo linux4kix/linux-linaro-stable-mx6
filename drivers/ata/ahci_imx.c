@@ -26,6 +26,7 @@
 #include <linux/mfd/syscon.h>
 #include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
 #include <linux/libata.h>
+#include <linux/busfreq-imx6.h>
 #include "ahci.h"
 
 enum {
@@ -225,6 +226,8 @@ static int imx_sata_enable(struct ahci_host_priv *hpriv)
 			return ret;
 	}
 
+	request_bus_freq(BUS_FREQ_HIGH);
+
 	ret = ahci_platform_enable_clks(hpriv);
 	if (ret < 0)
 		goto disable_regulator;
@@ -266,6 +269,8 @@ static int imx_sata_enable(struct ahci_host_priv *hpriv)
 	return 0;
 
 disable_regulator:
+	release_bus_freq(BUS_FREQ_HIGH);
+
 	if (hpriv->target_pwr)
 		regulator_disable(hpriv->target_pwr);
 
@@ -286,6 +291,8 @@ static void imx_sata_disable(struct ahci_host_priv *hpriv)
 	}
 
 	ahci_platform_disable_clks(hpriv);
+
+	release_bus_freq(BUS_FREQ_HIGH);
 
 	if (hpriv->target_pwr)
 		regulator_disable(hpriv->target_pwr);
