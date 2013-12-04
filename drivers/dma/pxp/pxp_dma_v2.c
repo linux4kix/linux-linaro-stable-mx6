@@ -38,6 +38,7 @@
 #include <linux/workqueue.h>
 #include <linux/sched.h>
 #include <linux/of.h>
+#include <linux/kthread.h>
 
 #include "regs-pxp_v2.h"
 
@@ -46,7 +47,6 @@
 static LIST_HEAD(head);
 static int timeout_in_ms = 600;
 static unsigned int block_size;
-struct mutex hard_lock;
 
 struct pxp_dma {
 	struct dma_device dma;
@@ -76,6 +76,11 @@ struct pxps {
 
 	/* to turn clock off when pxp is inactive */
 	struct timer_list clk_timer;
+
+	/* for pxp config dispatch asynchronously*/
+	struct task_struct *dispatch;
+	wait_queue_head_t thread_waitq;
+	struct completion complete;
 };
 
 #define to_pxp_dma(d) container_of(d, struct pxp_dma, dma)
@@ -1287,7 +1292,6 @@ static irqreturn_t pxp_irq(int irq, void *dev_id)
 	}
 
 	pxp_chan = list_entry(head.next, struct pxp_channel, list);
-	list_del_init(&pxp_chan->list);
 
 	if (list_empty(&pxp_chan->active_list)) {
 		pr_debug("PXP_IRQ pxp_chan->active_list empty. chan_id %d\n",
@@ -1316,7 +1320,10 @@ static irqreturn_t pxp_irq(int irq, void *dev_id)
 	list_splice_init(&desc->tx_list, &pxp_chan->free_list);
 	list_move(&desc->list, &pxp_chan->free_list);
 
-	mutex_unlock(&hard_lock);
+	if (list_empty(&pxp_chan->active_list))
+		list_del_init(&pxp_chan->list);
+
+	complete(&pxp->complete);
 	pxp->pxp_ongoing = 0;
 	mod_timer(&pxp->clk_timer, jiffies + msecs_to_jiffies(timeout_in_ms));
 
@@ -1432,6 +1439,7 @@ static void pxp_issue_pending(struct dma_chan *chan)
 	struct pxp_dma *pxp_dma = to_pxp_dma(chan->device);
 	struct pxps *pxp = to_pxp(pxp_dma);
 	unsigned long flags0, flags;
+	struct list_head *iter;
 
 	spin_lock_irqsave(&pxp->lock, flags0);
 	spin_lock_irqsave(&pxp_chan->lock, flags);
@@ -1439,7 +1447,22 @@ static void pxp_issue_pending(struct dma_chan *chan)
 	if (!list_empty(&pxp_chan->queue)) {
 		pxpdma_dequeue(pxp_chan, &pxp_chan->active_list);
 		pxp_chan->status = PXP_CHANNEL_READY;
-		list_add_tail(&pxp_chan->list, &head);
+		iter = head.next;
+		/* Avoid adding a pxp channel to head list which
+		 * has been already listed in it. And this may
+		 * cause the head list to be broken down.
+		 */
+		if (list_empty(&head)) {
+			list_add_tail(&pxp_chan->list, &head);
+		} else {
+			while (iter != &head) {
+				if (&pxp_chan->list == iter)
+					break;
+				iter = iter->next;
+			}
+			if (iter == &head)
+				list_add_tail(&pxp_chan->list, &head);
+		}
 	} else {
 		spin_unlock_irqrestore(&pxp_chan->lock, flags);
 		spin_unlock_irqrestore(&pxp->lock, flags0);
@@ -1449,12 +1472,7 @@ static void pxp_issue_pending(struct dma_chan *chan)
 	spin_unlock_irqrestore(&pxp->lock, flags0);
 
 	pxp_clk_enable(pxp);
-	mutex_lock(&hard_lock);
-
-	spin_lock_irqsave(&pxp->lock, flags);
-	pxp->pxp_ongoing = 1;
-	spin_unlock_irqrestore(&pxp->lock, flags);
-	pxpdma_dostart_work(pxp);
+	wake_up_interruptible(&pxp->thread_waitq);
 }
 
 static void __pxp_terminate_all(struct dma_chan *chan)
@@ -1755,6 +1773,46 @@ static const struct of_device_id imx_pxpdma_dt_ids[] = {
 };
 MODULE_DEVICE_TABLE(of, imx_pxpdma_dt_ids);
 
+static int has_pending_task(struct pxps *pxp, struct pxp_channel *task)
+{
+	int found;
+	unsigned long flags;
+
+	spin_lock_irqsave(&pxp->lock, flags);
+	found = !list_empty(&head);
+	spin_unlock_irqrestore(&pxp->lock, flags);
+
+	return found;
+}
+
+static int pxp_dispatch_thread(void *argv)
+{
+	struct pxps *pxp = (struct pxps *)argv;
+	struct pxp_channel *pending = NULL;
+	unsigned long flags;
+
+	while (!kthread_should_stop()) {
+		int ret;
+		ret = wait_event_interruptible(pxp->thread_waitq,
+					has_pending_task(pxp, pending));
+		if (signal_pending(current))
+			continue;
+
+		spin_lock_irqsave(&pxp->lock, flags);
+		pxp->pxp_ongoing = 1;
+		spin_unlock_irqrestore(&pxp->lock, flags);
+		init_completion(&pxp->complete);
+		pxpdma_dostart_work(pxp);
+		ret = wait_for_completion_timeout(&pxp->complete, 2 * HZ);
+		if (ret == 0) {
+			printk(KERN_EMERG "%s: task is timeout\n\n", __func__);
+			break;
+		}
+	}
+
+	return 0;
+}
+
 static int pxp_probe(struct platform_device *pdev)
 {
 	struct pxps *pxp;
@@ -1786,7 +1844,6 @@ static int pxp_probe(struct platform_device *pdev)
 
 	spin_lock_init(&pxp->lock);
 	mutex_init(&pxp->clk_mutex);
-	mutex_init(&hard_lock);
 
 	pxp->base = devm_request_and_ioremap(&pdev->dev, res);
 	if (pxp->base == NULL) {
@@ -1830,6 +1887,14 @@ static int pxp_probe(struct platform_device *pdev)
 	pxp->clk_timer.function = pxp_clkoff_timer;
 	pxp->clk_timer.data = (unsigned long)pxp;
 
+	/* allocate a kernel thread to dispatch pxp conf */
+	pxp->dispatch = kthread_run(pxp_dispatch_thread, pxp, "pxp_dispatch");
+	if (IS_ERR(pxp->dispatch)) {
+		err = PTR_ERR(pxp->dispatch);
+		goto exit;
+	}
+	init_waitqueue_head(&pxp->thread_waitq);
+
 	register_pxp_device();
 
 exit:
@@ -1843,6 +1908,7 @@ static int pxp_remove(struct platform_device *pdev)
 	struct pxps *pxp = platform_get_drvdata(pdev);
 
 	unregister_pxp_device();
+	kthread_stop(pxp->dispatch);
 	cancel_work_sync(&pxp->work);
 	del_timer_sync(&pxp->clk_timer);
 	clk_disable_unprepare(pxp->clk);
