@@ -1237,6 +1237,11 @@ gckGALDEVICE_Setup_ISR(
         gcmkONERROR(gcvSTATUS_GENERIC_IO);
     }
 
+
+    /* Make sure ISR is disabled to start. */
+    disable_irq(Device->irqLines[Core]);
+    Device->isrEnabled[Core] = gcvFALSE;
+
     /* Mark ISR as initialized. */
     Device->isrInitializeds[Core] = gcvTRUE;
 
