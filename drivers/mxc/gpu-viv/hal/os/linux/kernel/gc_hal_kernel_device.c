@@ -295,38 +295,45 @@ static int threadRoutineVG(void *ctxt)
 */
 static gceSTATUS
 gckGALDEVICE_Setup_ISR(
-    IN gckGALDEVICE Device
+    IN gckGALDEVICE Device,
+    IN gceCORE Core
     )
 {
     gceSTATUS status;
-    gctINT ret;
+    int ret = -1;
 
-    gcmkHEADER_ARG("Device=0x%x", Device);
+    gcmkHEADER_ARG("Device=0x%x Core=%d", Device, Core);
 
     gcmkVERIFY_ARGUMENT(Device != NULL);
 
-    if (Device->irqLines[gcvCORE_MAJOR] < 0)
+    if (Device->irqLines[Core] < 0)
     {
         gcmkONERROR(gcvSTATUS_GENERIC_IO);
     }
 
     /* Hook up the isr based on the irq line. */
-#ifdef FLAREON
-    gc500_handle.dev_name  = "galcore interrupt service";
-    gc500_handle.dev_id    = Device;
-    gc500_handle.handler   = isrRoutine;
-    gc500_handle.intr_gen  = GPIO_INTR_LEVEL_TRIGGER;
-    gc500_handle.intr_trig = GPIO_TRIG_HIGH_LEVEL;
-
-    ret = dove_gpio_request(
-        DOVE_GPIO0_7, &gc500_handle
-        );
-#else
-    ret = request_irq(
-        Device->irqLines[gcvCORE_MAJOR], isrRoutine, IRQF_DISABLED,
-        "galcore interrupt service", Device
-        );
-#endif
+    switch (Core) {
+        case gcvCORE_MAJOR:
+            ret = request_irq(
+                Device->irqLines[Core], isrRoutine, IRQF_DISABLED,
+                "galcore interrupt service", Device
+                );
+            break;
+        case gcvCORE_2D:
+            ret = request_irq(
+                Device->irqLines[Core], isrRoutine2D, IRQF_DISABLED,
+                "galcore 2D interrupt service", Device
+                );
+            break;
+        case gcvCORE_VG:
+            ret = request_irq(
+                Device->irqLines[Core], isrRoutineVG, IRQF_DISABLED,
+                "galcore VG interrupt service", Device
+                );
+            break;
+        default:
+            break;
+    }
 
     if (ret != 0)
     {
@@ -334,14 +341,14 @@ gckGALDEVICE_Setup_ISR(
             gcvLEVEL_ERROR, gcvZONE_DRIVER,
             "%s(%d): Could not register irq line %d (error=%d)\n",
             __FUNCTION__, __LINE__,
-            Device->irqLines[gcvCORE_MAJOR], ret
+            Device->irqLines[Core], ret
             );
 
         gcmkONERROR(gcvSTATUS_GENERIC_IO);
     }
 
     /* Mark ISR as initialized. */
-    Device->isrInitializeds[gcvCORE_MAJOR] = gcvTRUE;
+    Device->isrInitializeds[Core] = gcvTRUE;
 
     gcmkFOOTER_NO();
     return gcvSTATUS_OK;
@@ -352,112 +359,28 @@ OnError:
 }
 
 static gceSTATUS
-gckGALDEVICE_Setup_ISR_2D(
-    IN gckGALDEVICE Device
+gckGALDEVICE_Enable_ISR(
+    IN gckGALDEVICE Device,
+    IN gceCORE Core
     )
 {
     gceSTATUS status;
-    gctINT ret;
 
-    gcmkHEADER_ARG("Device=0x%x", Device);
-
-    gcmkVERIFY_ARGUMENT(Device != NULL);
-
-    if (Device->irqLines[gcvCORE_2D] < 0)
-    {
-        gcmkONERROR(gcvSTATUS_GENERIC_IO);
-    }
-
-    /* Hook up the isr based on the irq line. */
-#ifdef FLAREON
-    gc500_handle.dev_name  = "galcore interrupt service";
-    gc500_handle.dev_id    = Device;
-    gc500_handle.handler   = isrRoutine2D;
-    gc500_handle.intr_gen  = GPIO_INTR_LEVEL_TRIGGER;
-    gc500_handle.intr_trig = GPIO_TRIG_HIGH_LEVEL;
-
-    ret = dove_gpio_request(
-        DOVE_GPIO0_7, &gc500_handle
-        );
-#else
-    ret = request_irq(
-        Device->irqLines[gcvCORE_2D], isrRoutine2D, IRQF_DISABLED,
-        "galcore interrupt service for 2D", Device
-        );
-#endif
-
-    if (ret != 0)
-    {
-        gcmkTRACE_ZONE(
-            gcvLEVEL_ERROR, gcvZONE_DRIVER,
-            "%s(%d): Could not register irq line %d (error=%d)\n",
-            __FUNCTION__, __LINE__,
-            Device->irqLines[gcvCORE_2D], ret
-            );
-
-        gcmkONERROR(gcvSTATUS_GENERIC_IO);
-    }
-
-    /* Mark ISR as initialized. */
-    Device->isrInitializeds[gcvCORE_2D] = gcvTRUE;
-
-    gcmkFOOTER_NO();
-    return gcvSTATUS_OK;
-
-OnError:
-    gcmkFOOTER();
-    return status;
-}
-
-static gceSTATUS
-gckGALDEVICE_Setup_ISR_VG(
-    IN gckGALDEVICE Device
-    )
-{
-    gceSTATUS status;
-    gctINT ret;
-
-    gcmkHEADER_ARG("Device=0x%x", Device);
+    gcmkHEADER_ARG("Device=0x%x Core=%d", Device, Core);
 
     gcmkVERIFY_ARGUMENT(Device != NULL);
 
-    if (Device->irqLines[gcvCORE_VG] < 0)
+    if (Device->irqLines[Core] < 0)
     {
         gcmkONERROR(gcvSTATUS_GENERIC_IO);
     }
 
-    /* Hook up the isr based on the irq line. */
-#ifdef FLAREON
-    gc500_handle.dev_name  = "galcore interrupt service";
-    gc500_handle.dev_id    = Device;
-    gc500_handle.handler   = isrRoutineVG;
-    gc500_handle.intr_gen  = GPIO_INTR_LEVEL_TRIGGER;
-    gc500_handle.intr_trig = GPIO_TRIG_HIGH_LEVEL;
-
-    ret = dove_gpio_request(
-        DOVE_GPIO0_7, &gc500_handle
-        );
-#else
-    ret = request_irq(
-        Device->irqLines[gcvCORE_VG], isrRoutineVG, IRQF_DISABLED,
-        "galcore interrupt service for 2D", Device
-        );
-#endif
-
-    if (ret != 0)
+    if (Device->isrEnabled[Core] == gcvFALSE)
     {
-        gcmkTRACE_ZONE(
-            gcvLEVEL_ERROR, gcvZONE_DRIVER,
-            "%s(%d): Could not register irq line %d (error=%d)\n",
-            __FUNCTION__, __LINE__,
-            Device->irqLines[gcvCORE_VG], ret
-            );
-
-        gcmkONERROR(gcvSTATUS_GENERIC_IO);
+        enable_irq(Device->irqLines[Core]);
+        /* Mark ISR as initialized. */
+        Device->isrEnabled[Core] = gcvTRUE;
     }
-
-    /* Mark ISR as initialized. */
-    Device->isrInitializeds[gcvCORE_VG] = gcvTRUE;
 
     gcmkFOOTER_NO();
     return gcvSTATUS_OK;
@@ -488,23 +411,20 @@ OnError:
 */
 static gceSTATUS
 gckGALDEVICE_Release_ISR(
-    IN gckGALDEVICE Device
+    IN gckGALDEVICE Device,
+    IN gceCORE Core
     )
 {
-    gcmkHEADER_ARG("Device=0x%x", Device);
+    gcmkHEADER_ARG("Device=0x%x Core=%d", Device, Core);
 
     gcmkVERIFY_ARGUMENT(Device != NULL);
 
     /* release the irq */
-    if (Device->isrInitializeds[gcvCORE_MAJOR])
+    if (Device->isrInitializeds[Core])
     {
-#ifdef FLAREON
-        dove_gpio_free(DOVE_GPIO0_7, "galcore interrupt service");
-#else
-        free_irq(Device->irqLines[gcvCORE_MAJOR], Device);
-#endif
+        free_irq(Device->irqLines[Core], Device);
 
-	    Device->isrInitializeds[gcvCORE_MAJOR] = gcvFALSE;
+        Device->isrInitializeds[Core] = gcvFALSE;
     }
 
     gcmkFOOTER_NO();
@@ -512,49 +432,21 @@ gckGALDEVICE_Release_ISR(
 }
 
 static gceSTATUS
-gckGALDEVICE_Release_ISR_2D(
-    IN gckGALDEVICE Device
+gckGALDEVICE_Disable_ISR(
+    IN gckGALDEVICE Device,
+    IN gceCORE Core
     )
 {
-    gcmkHEADER_ARG("Device=0x%x", Device);
+    gcmkHEADER_ARG("Device=0x%x Core=%d", Device, Core);
 
     gcmkVERIFY_ARGUMENT(Device != NULL);
 
-    /* release the irq */
-    if (Device->isrInitializeds[gcvCORE_2D])
+    /* disable the irq */
+    if (Device->isrEnabled[Core])
     {
-#ifdef FLAREON
-        dove_gpio_free(DOVE_GPIO0_7, "galcore interrupt service");
-#else
-        free_irq(Device->irqLines[gcvCORE_2D], Device);
-#endif
+        disable_irq(Device->irqLines[Core]);
 
-	    Device->isrInitializeds[gcvCORE_2D] = gcvFALSE;
-    }
-
-    gcmkFOOTER_NO();
-    return gcvSTATUS_OK;
-}
-
-static gceSTATUS
-gckGALDEVICE_Release_ISR_VG(
-    IN gckGALDEVICE Device
-    )
-{
-    gcmkHEADER_ARG("Device=0x%x", Device);
-
-    gcmkVERIFY_ARGUMENT(Device != NULL);
-
-    /* release the irq */
-    if (Device->isrInitializeds[gcvCORE_VG])
-    {
-#ifdef FLAREON
-        dove_gpio_free(DOVE_GPIO0_7, "galcore interrupt service");
-#else
-        free_irq(Device->irqLines[gcvCORE_VG], Device);
-#endif
-
-	    Device->isrInitializeds[gcvCORE_VG] = gcvFALSE;
+        Device->isrEnabled[Core] = gcvFALSE;
     }
 
     gcmkFOOTER_NO();
@@ -756,7 +648,7 @@ gckGALDEVICE_Start(
     if (Device->kernels[gcvCORE_MAJOR] != gcvNULL)
     {
         /* Setup the ISR routine. */
-        gcmkONERROR(gckGALDEVICE_Setup_ISR(Device));
+        gcmkONERROR(gckGALDEVICE_Setup_ISR(Device, gcvCORE_MAJOR));
 
         /* Switch to SUSPEND power state. */
         gcmkONERROR(gckHARDWARE_SetPowerManagementState(
@@ -767,7 +659,7 @@ gckGALDEVICE_Start(
     if (Device->kernels[gcvCORE_2D] != gcvNULL)
     {
         /* Setup the ISR routine. */
-        gcmkONERROR(gckGALDEVICE_Setup_ISR_2D(Device));
+        gcmkONERROR(gckGALDEVICE_Setup_ISR(Device, gcvCORE_2D));
 
         /* Switch to SUSPEND power state. */
         gcmkONERROR(gckHARDWARE_SetPowerManagementState(
@@ -778,7 +670,7 @@ gckGALDEVICE_Start(
     if (Device->kernels[gcvCORE_VG] != gcvNULL)
     {
         /* Setup the ISR routine. */
-        gcmkONERROR(gckGALDEVICE_Setup_ISR_VG(Device));
+        gcmkONERROR(gckGALDEVICE_Setup_ISR(Device, gcvCORE_VG));
 
         /* Switch to SUSPEND power state. */
         gcmkONERROR(gckVGHARDWARE_SetPowerManagementState(
@@ -833,13 +725,13 @@ gckGALDEVICE_Stop(
             ));
 
         /* Remove the ISR routine. */
-        gcmkONERROR(gckGALDEVICE_Release_ISR(Device));
+        gcmkONERROR(gckGALDEVICE_Release_ISR(Device, gcvCORE_MAJOR));
     }
 
     if (Device->kernels[gcvCORE_2D] != gcvNULL)
     {
         /* Setup the ISR routine. */
-        gcmkONERROR(gckGALDEVICE_Release_ISR_2D(Device));
+        gcmkONERROR(gckGALDEVICE_Release_ISR(Device, gcvCORE_2D));
 
         /* Switch to OFF power state. */
         gcmkONERROR(gckHARDWARE_SetPowerManagementState(
@@ -850,7 +742,7 @@ gckGALDEVICE_Stop(
     if (Device->kernels[gcvCORE_VG] != gcvNULL)
     {
         /* Setup the ISR routine. */
-        gcmkONERROR(gckGALDEVICE_Release_ISR_VG(Device));
+        gcmkONERROR(gckGALDEVICE_Release_ISR(Device, gcvCORE_VG));
 
 #if gcdENABLE_VG
         /* Switch to OFF power state. */
@@ -1135,8 +1027,8 @@ gckGALDEVICE_Construct(
         /* Setup the ISR manager. */
         gcmkONERROR(gckHARDWARE_SetIsrManager(
             device->kernels[gcvCORE_MAJOR]->hardware,
-            (gctISRMANAGERFUNC) gckGALDEVICE_Setup_ISR,
-            (gctISRMANAGERFUNC) gckGALDEVICE_Release_ISR,
+            (gctISRMANAGERFUNC) gckGALDEVICE_Enable_ISR,
+            (gctISRMANAGERFUNC) gckGALDEVICE_Disable_ISR,
             device
             ));
 
@@ -1201,8 +1093,8 @@ gckGALDEVICE_Construct(
         /* Setup the ISR manager. */
         gcmkONERROR(gckHARDWARE_SetIsrManager(
             device->kernels[gcvCORE_2D]->hardware,
-            (gctISRMANAGERFUNC) gckGALDEVICE_Setup_ISR_2D,
-            (gctISRMANAGERFUNC) gckGALDEVICE_Release_ISR_2D,
+            (gctISRMANAGERFUNC) gckGALDEVICE_Enable_ISR,
+            (gctISRMANAGERFUNC) gckGALDEVICE_Disable_ISR,
             device
             ));
 
