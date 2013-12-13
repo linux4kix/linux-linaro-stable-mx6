@@ -32,7 +32,7 @@ static struct clk *pll2_pfd2_396m_clk;
 static struct device *cpu_dev;
 static struct cpufreq_frequency_table *freq_table;
 static unsigned int transition_latency;
-static struct mutex set_cpufreq_lock;
+static DEFINE_MUTEX(set_cpufreq_lock);
 
 struct soc_opp {
 	u32 arm_freq;
