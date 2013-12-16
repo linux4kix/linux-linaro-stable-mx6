@@ -1090,7 +1090,6 @@ struct drm_device {
 
 	/** \name Locks */
 	/*@{ */
-	spinlock_t count_lock;		/**< For inuse, drm_device::open_count, drm_device::buf_use */
 	struct mutex struct_mutex;	/**< For others */
 	struct mutex master_mutex;      /**< For drm_minor::master and drm_file::is_master */
 	/*@} */
@@ -1098,6 +1097,7 @@ struct drm_device {
 	/** \name Usage Counters */
 	/*@{ */
 	int open_count;			/**< Outstanding files open */
+	spinlock_t buf_lock;		/**< For drm_device::buf_use and a few other things. */
 	int buf_use;			/**< Buffers in use -- cannot alloc */
 	atomic_t buf_alloc;		/**< Buffer allocation in progress */
 	/*@} */
