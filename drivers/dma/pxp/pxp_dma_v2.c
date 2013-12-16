@@ -1289,7 +1289,6 @@ static struct dma_async_tx_descriptor *pxp_prep_slave_sg(struct dma_chan *chan,
 	struct pxp_tx_desc *desc = NULL;
 	struct pxp_tx_desc *first = NULL, *prev = NULL;
 	struct scatterlist *sg;
-	unsigned long flags;
 	dma_addr_t phys_addr;
 	int i;
 
@@ -1302,11 +1301,9 @@ static struct dma_async_tx_descriptor *pxp_prep_slave_sg(struct dma_chan *chan,
 	if (unlikely(sg_len < 2))
 		return NULL;
 
-	spin_lock_irqsave(&pxp_chan->lock, flags);
 	for_each_sg(sgl, sg, sg_len, i) {
 		desc = pxpdma_desc_alloc(pxp_chan);
 		if (!desc) {
-			spin_unlock_irqrestore(&pxp_chan->lock, flags);
 			dev_err(chan->device->dev, "no enough memory to allocate tx descriptor\n");
 			return NULL;
 		}
@@ -1330,7 +1327,6 @@ static struct dma_async_tx_descriptor *pxp_prep_slave_sg(struct dma_chan *chan,
 
 		prev = desc;
 	}
-	spin_unlock_irqrestore(&pxp_chan->lock, flags);
 
 	pxp->pxp_conf_state.layer_nr = sg_len;
 	first->txd.flags = tx_flags;
