@@ -170,6 +170,7 @@ void __init imx_init_revision_from_anatop(void)
 	}
 
 	mxc_set_cpu_type(digprog >> 16 & 0xff);
+	mxc_set_system_rev(((digprog >> 16 & 0xff) << 12) | ((digprog & 0xff) + 0x10));
 	imx_set_soc_revision(revision);
 }
 
