@@ -11,11 +11,18 @@
 unsigned int __mxc_cpu_type;
 EXPORT_SYMBOL(__mxc_cpu_type);
 
+extern unsigned int system_rev;
+
 static unsigned int imx_soc_revision;
 
 void mxc_set_cpu_type(unsigned int type)
 {
 	__mxc_cpu_type = type;
+}
+
+void mxc_set_system_rev(unsigned int sysrev)
+{
+	 system_rev = sysrev;
 }
 
 void imx_set_soc_revision(unsigned int rev)
