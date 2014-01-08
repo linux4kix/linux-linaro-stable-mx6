@@ -1571,6 +1571,7 @@ gckGALDEVICE_Start(
             ));
     }
 
+#if gcdENABLE_VG
     if (Device->kernels[gcvCORE_VG] != gcvNULL)
     {
         /* Setup the ISR routine. */
@@ -1581,6 +1582,7 @@ gckGALDEVICE_Start(
             Device->kernels[gcvCORE_VG]->vg->hardware, gcvPOWER_OFF_BROADCAST
             ));
     }
+#endif
 
     gcmkFOOTER_NO();
     return gcvSTATUS_OK;
@@ -1643,18 +1645,18 @@ gckGALDEVICE_Stop(
             ));
     }
 
+#if gcdENABLE_VG
     if (Device->kernels[gcvCORE_VG] != gcvNULL)
     {
         /* Setup the ISR routine. */
         gcmkONERROR(gckGALDEVICE_Release_ISR(Device, gcvCORE_VG));
 
-#if gcdENABLE_VG
         /* Switch to OFF power state. */
         gcmkONERROR(gckVGHARDWARE_SetPowerManagementState(
             Device->kernels[gcvCORE_VG]->vg->hardware, gcvPOWER_OFF
             ));
-#endif
     }
+#endif
 
     /* Stop the kernel thread. */
     gcmkONERROR(gckGALDEVICE_Stop_Threads(Device));
