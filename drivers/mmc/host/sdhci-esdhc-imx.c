@@ -117,6 +117,8 @@
 #define ESDHC_FLAG_HAVE_CAP1		BIT(6)
 /* The IP has errata ERR004536 */
 #define ESDHC_FLAG_ERR004536		BIT(7)
+/* need request bus freq during low power */
+#define ESDHC_FLAG_BUSFREQ		BIT(8)
 
 struct esdhc_soc_data {
 	u32 flags;
@@ -144,7 +146,8 @@ static struct esdhc_soc_data usdhc_imx6q_data = {
 
 static struct esdhc_soc_data usdhc_imx6sl_data = {
 	.flags = ESDHC_FLAG_USDHC | ESDHC_FLAG_STD_TUNING
-			| ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_ERR004536,
+			| ESDHC_FLAG_HAVE_CAP1 | ESDHC_FLAG_ERR004536
+			| ESDHC_FLAG_BUSFREQ,
 };
 
 struct pltfm_imx_data {
@@ -1051,7 +1054,8 @@ static int sdhci_esdhc_imx_probe(struct platform_device *pdev)
 		goto free_sdhci;
 	}
 
-	request_bus_freq(BUS_FREQ_HIGH);
+	if (imx_data->socdata->flags & ESDHC_FLAG_BUSFREQ)
+		request_bus_freq(BUS_FREQ_HIGH);
 
 	pltfm_host->clk = imx_data->clk_per;
 	pltfm_host->clock = clk_get_rate(pltfm_host->clk);
@@ -1207,7 +1211,8 @@ disable_clk:
 	clk_disable_unprepare(imx_data->clk_per);
 	clk_disable_unprepare(imx_data->clk_ipg);
 	clk_disable_unprepare(imx_data->clk_ahb);
-	release_bus_freq(BUS_FREQ_HIGH);
+	if (imx_data->socdata->flags & ESDHC_FLAG_BUSFREQ)
+		release_bus_freq(BUS_FREQ_HIGH);
 free_sdhci:
 	sdhci_pltfm_free(pdev);
 	return err;
@@ -1252,7 +1257,8 @@ static int sdhci_esdhc_runtime_suspend(struct device *dev)
 	}
 	clk_disable_unprepare(imx_data->clk_ahb);
 
-	release_bus_freq(BUS_FREQ_HIGH);
+	if (imx_data->socdata->flags & ESDHC_FLAG_BUSFREQ)
+		release_bus_freq(BUS_FREQ_HIGH);
 
 	return ret;
 }
