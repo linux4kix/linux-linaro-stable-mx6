@@ -30,7 +30,7 @@
 #include <soc.h>
 #include "dhd_dbg.h"
 #include "sdio_host.h"
-#include "sdio_chip.h"
+#include "chip.h"
 
 /* chip core base & ramsize */
 /* bcm4329 */
@@ -127,7 +127,7 @@ brcmf_sdio_sb_iscoreup(struct brcmf_sdio_dev *sdiodev,
 				    NULL);
 	regdata &= (SSB_TMSLOW_RESET | SSB_TMSLOW_REJECT |
 		    SSB_IMSTATE_REJECT | SSB_TMSLOW_CLOCK);
-	return (SSB_TMSLOW_CLOCK == regdata);
+	return SSB_TMSLOW_CLOCK == regdata;
 }
 
 static bool
@@ -256,10 +256,10 @@ brcmf_sdio_ai_coredisable(struct brcmf_sdio_dev *sdiodev,
 
 	wrapbase = ci->c_inf[idx].wrapbase;
 
-	/* if core is already in reset, skip reset */
+	/* if core is already in reset, just return */
 	regdata = brcmf_sdiod_regrl(sdiodev, wrapbase + BCMA_RESET_CTL, NULL);
 	if ((regdata & BCMA_RESET_CTL_RESET) != 0)
-		goto post_reset_config;
+		return;
 
 	/* configure reset */
 	brcmf_sdiod_regwl(sdiodev, wrapbase + BCMA_IOCTL, pre_resetbits |
@@ -275,7 +275,6 @@ brcmf_sdio_ai_coredisable(struct brcmf_sdio_dev *sdiodev,
 	SPINWAIT(brcmf_sdiod_regrl(sdiodev, wrapbase + BCMA_RESET_CTL, NULL) !=
 		 BCMA_RESET_CTL_RESET, 300);
 
-post_reset_config:
 	/* post reset configure */
 	brcmf_sdiod_regwl(sdiodev, wrapbase + BCMA_IOCTL, pre_resetbits |
 			  BCMA_IOCTL_FGC | BCMA_IOCTL_CLK, NULL);
