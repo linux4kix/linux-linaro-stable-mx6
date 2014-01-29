@@ -302,13 +302,11 @@ static int drm_get_minor(struct drm_device *dev, struct drm_minor **minor,
 
 	idr_replace(&drm_minors_idr, new_minor, minor_id);
 
-#if defined(CONFIG_DEBUG_FS)
 	ret = drm_debugfs_init(new_minor, minor_id, drm_debugfs_root);
 	if (ret) {
 		DRM_ERROR("DRM: Failed to initialize /sys/kernel/debug/dri.\n");
 		goto err_mem;
 	}
-#endif
 
 	ret = drm_sysfs_device_add(new_minor);
 	if (ret) {
@@ -323,10 +321,8 @@ static int drm_get_minor(struct drm_device *dev, struct drm_minor **minor,
 
 
 err_debugfs:
-#if defined(CONFIG_DEBUG_FS)
 	drm_debugfs_cleanup(new_minor);
 err_mem:
-#endif
 	kfree(new_minor);
 err_idr:
 	idr_remove(&drm_minors_idr, minor_id);
@@ -349,10 +345,7 @@ static void drm_unplug_minor(struct drm_minor *minor)
 	if (!minor || !minor->kdev)
 		return;
 
-#if defined(CONFIG_DEBUG_FS)
 	drm_debugfs_cleanup(minor);
-#endif
-
 	drm_sysfs_device_remove(minor);
 	idr_remove(&drm_minors_idr, minor->index);
 }
