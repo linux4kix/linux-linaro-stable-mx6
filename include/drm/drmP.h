@@ -43,6 +43,7 @@
 #include <asm/current.h>
 #endif				/* __alpha__ */
 #include <linux/kernel.h>
+#include <linux/kref.h>
 #include <linux/miscdevice.h>
 #include <linux/fs.h>
 #include <linux/init.h>
@@ -1083,6 +1084,11 @@ struct drm_device {
 	char *devname;			/**< For /proc/interrupts */
 	int if_version;			/**< Highest interface version set */
 
+	/** \name Lifetime Management */
+	/*@{ */
+	struct kref ref;		/**< Object ref-count */
+	/*@} */
+
 	/** \name Locks */
 	/*@{ */
 	spinlock_t count_lock;		/**< For inuse, drm_device::open_count, drm_device::buf_use */
@@ -1632,7 +1638,8 @@ static __inline__ void drm_core_dropmap(struct drm_local_map *map)
 
 struct drm_device *drm_dev_alloc(struct drm_driver *driver,
 				 struct device *parent);
-void drm_dev_free(struct drm_device *dev);
+void drm_dev_ref(struct drm_device *dev);
+void drm_dev_unref(struct drm_device *dev);
 int drm_dev_register(struct drm_device *dev, unsigned long flags);
 void drm_dev_unregister(struct drm_device *dev);
 /*@}*/
