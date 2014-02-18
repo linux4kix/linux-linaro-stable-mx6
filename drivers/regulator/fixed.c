@@ -188,8 +188,7 @@ static int reg_fixed_voltage_probe(struct platform_device *pdev)
 
 	drvdata->microvolts = config->microvolts;
 
-	if (config->gpio >= 0)
-		cfg.ena_gpio = config->gpio;
+	cfg.ena_gpio = config->gpio;
 	cfg.ena_gpio_invert = !config->enable_high;
 	if (config->enabled_at_boot) {
 		if (config->enable_high) {
