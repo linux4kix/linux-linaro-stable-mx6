@@ -798,7 +798,7 @@ void bond_change_active_slave(struct bonding *bond, struct slave *new_active)
 		return;
 
 	if (new_active) {
-		new_active->jiffies = jiffies;
+		new_active->last_link_up = jiffies;
 
 		if (new_active->link == BOND_LINK_BACK) {
 			if (USES_PRIMARY(bond->params.mode)) {
@@ -1457,7 +1457,7 @@ int bond_enslave(struct net_device *bond_dev, struct net_device *slave_dev)
 	}
 
 	if (new_slave->link != BOND_LINK_DOWN)
-		new_slave->jiffies = jiffies;
+		new_slave->last_link_up = jiffies;
 	pr_debug("Initial state of slave_dev is BOND_LINK_%s\n",
 		new_slave->link == BOND_LINK_DOWN ? "DOWN" :
 			(new_slave->link == BOND_LINK_UP ? "UP" : "BACK"));
@@ -1908,7 +1908,7 @@ static int bond_miimon_inspect(struct bonding *bond)
 				 * recovered before downdelay expired
 				 */
 				slave->link = BOND_LINK_UP;
-				slave->jiffies = jiffies;
+				slave->last_link_up = jiffies;
 				pr_info("%s: link status up again after %d ms for interface %s.\n",
 					bond->dev->name,
 					(bond->params.downdelay - slave->delay) *
@@ -1983,7 +1983,7 @@ static void bond_miimon_commit(struct bonding *bond)
 
 		case BOND_LINK_UP:
 			slave->link = BOND_LINK_UP;
-			slave->jiffies = jiffies;
+			slave->last_link_up = jiffies;
 
 			if (bond->params.mode == BOND_MODE_8023AD) {
 				/* prevent it from being the active one */
@@ -2380,9 +2380,9 @@ static void bond_loadbalance_arp_mon(struct work_struct *work)
 	oldcurrent = ACCESS_ONCE(bond->curr_active_slave);
 	/* see if any of the previous devices are up now (i.e. they have
 	 * xmt and rcv traffic). the curr_active_slave does not come into
-	 * the picture unless it is null. also, slave->jiffies is not needed
-	 * here because we send an arp on each slave and give a slave as
-	 * long as it needs to get the tx/rx within the delta.
+	 * the picture unless it is null. also, slave->last_link_up is not
+	 * needed here because we send an arp on each slave and give a slave
+	 * as long as it needs to get the tx/rx within the delta.
 	 * TODO: what about up/down delay in arp mode? it wasn't here before
 	 *       so it can wait
 	 */
@@ -2509,7 +2509,7 @@ static int bond_ab_arp_inspect(struct bonding *bond)
 		 * active.  This avoids bouncing, as the last receive
 		 * times need a full ARP monitor cycle to be updated.
 		 */
-		if (bond_time_in_interval(bond, slave->jiffies, 2))
+		if (bond_time_in_interval(bond, slave->last_link_up, 2))
 			continue;
 
 		/*
@@ -2702,7 +2702,7 @@ static bool bond_ab_arp_probe(struct bonding *bond)
 	new_slave->link = BOND_LINK_BACK;
 	bond_set_slave_active_flags(new_slave, BOND_SLAVE_NOTIFY_LATER);
 	bond_arp_send_all(bond, new_slave);
-	new_slave->jiffies = jiffies;
+	new_slave->last_link_up = jiffies;
 	rcu_assign_pointer(bond->current_arp_slave, new_slave);
 
 check_state:
