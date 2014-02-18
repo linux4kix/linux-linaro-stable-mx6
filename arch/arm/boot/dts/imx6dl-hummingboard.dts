@@ -21,6 +21,40 @@
 		pinctrl-0 = <&pinctrl_hummingboard_gpio1_2>;
 	};
 
+	regulators {
+		compatible = "simple-bus";
+
+		reg_3p3v: 3p3v {
+			compatible = "regulator-fixed";
+			regulator-name = "3P3V";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-always-on;
+		};
+
+		reg_usbh1_vbus: usb-h1-vbus {
+			compatible = "regulator-fixed";
+			enable-active-high;
+			gpio = <&gpio1 0 0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_hummingboard_usbh1_vbus>;
+			regulator-name = "usb_h1_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+		};
+
+		reg_usbotg_vbus: usb-otg-vbus {
+			compatible = "regulator-fixed";
+			enable-active-high;
+			gpio = <&gpio3 22 0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_hummingboard_usbotg_vbus>;
+			regulator-name = "usb_otg_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+		};
+	};
+
 	codec: spdif-transmitter {
 		compatible = "linux,spdif-dit";
 		pinctrl-names = "default";
@@ -34,6 +68,12 @@
 		spdif-controller = <&spdif>;
 		spdif-out;
 	};
+};
+
+&flexcan1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hummingboard_flexcan1>;
+	status = "okay";
 };
 
 &i2c1 {
@@ -53,6 +93,13 @@
 
 &iomuxc {
 	hummingboard {
+		pinctrl_hummingboard_flexcan1: hummingboard-flexcan1 {
+			fsl,pins = <
+				MX6QDL_PAD_SD3_CLK__FLEXCAN1_RX 0x80000000
+				MX6QDL_PAD_SD3_CMD__FLEXCAN1_TX 0x80000000
+			>;
+		};
+
 		pinctrl_hummingboard_gpio1_2: hummingboard-gpio1_2 {
 			fsl,pins = <
 				MX6QDL_PAD_GPIO_2__GPIO1_IO02 0x80000000
@@ -61,6 +108,14 @@
 
 		pinctrl_hummingboard_spdif: hummingboard-spdif {
 			fsl,pins = <MX6QDL_PAD_GPIO_17__SPDIF_OUT 0x1b0b0>;
+		};
+
+		pinctrl_hummingboard_usbh1_vbus: hummingboard-usbh1-vbus {
+			fsl,pins = <MX6QDL_PAD_GPIO_0__GPIO1_IO00 0x1b0b0>;
+		};
+
+		pinctrl_hummingboard_usbotg_vbus: hummingboard-usbotg-vbus {
+			fsl,pins = <MX6QDL_PAD_EIM_D22__GPIO3_IO22 0x1b0b0>;
 		};
 
 		pinctrl_hummingboard_usdhc2: hummingboard-usdhc2 {
@@ -78,6 +133,16 @@
 };
 
 &spdif {
+	status = "okay";
+};
+
+&usbh1 {
+	vbus-supply = <&reg_usbh1_vbus>;
+	status = "okay";
+};
+
+&usbotg {
+	vbus-supply = <&reg_usbotg_vbus>;
 	status = "okay";
 };
 
