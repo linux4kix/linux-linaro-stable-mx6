@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2013 Freescale Semiconductor, Inc.
+ * Copyright 2011-2014 Freescale Semiconductor, Inc.
  * Copyright 2011 Linaro Ltd.
  *
  * The code contained herein is licensed under the GNU General Public
@@ -76,6 +76,7 @@ static const char *lvds_sels[] = {
 	"pll4_audio", "pll5_video", "pll8_mlb", "enet_ref",
 	"pcie_ref", "sata_ref",
 };
+static const char *pll_av_sels[] = { "osc", "lvds1_in", "lvds2_in", "dummy", };
 
 enum mx6q_clks {
 	dummy, ckil, ckih, osc, pll2_pfd0_352m, pll2_pfd1_594m, pll2_pfd2_396m,
@@ -114,7 +115,7 @@ enum mx6q_clks {
 	lvds1_sel, lvds2_sel, lvds1_gate, lvds2_gate, gpt_3m, video_27m,
 	ldb_di0_div_7, ldb_di1_div_7, ldb_di0_div_sel, ldb_di1_div_sel, 
 	caam_mem, caam_aclk, caam_ipg, epit1, epit2, tzasc2, lvds1_in, lvds1_out,
-	clk_max
+	pll4_sel, lvds2_in, lvds2_out, anaclk1, anaclk2, clk_max
 };
 
 static struct clk *clk[clk_max];
@@ -158,6 +159,9 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	clk[ckil] = imx_obtain_fixed_clock("ckil", 0);
 	clk[ckih] = imx_obtain_fixed_clock("ckih1", 0);
 	clk[osc] = imx_obtain_fixed_clock("osc", 0);
+	/* Clock source from external clock via ANACLK1/2 PADs */
+	clk[anaclk1] = imx_obtain_fixed_clock("anaclk1", 0);
+	clk[anaclk2] = imx_obtain_fixed_clock("anaclk2", 0);
 
 	np = of_find_compatible_node(NULL, NULL, "fsl,imx6q-anatop");
 	base = of_iomap(np, 0);
@@ -175,13 +179,15 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 	clk[pll1_sys]      = imx_clk_pllv3(IMX_PLLV3_SYS,	"pll1_sys",	"osc", base,        0x7f, false);
 	clk[pll2_bus]      = imx_clk_pllv3(IMX_PLLV3_GENERIC,	"pll2_bus",	"osc", base + 0x30, 0x1, false);
 	clk[pll3_usb_otg]  = imx_clk_pllv3(IMX_PLLV3_USB,	"pll3_usb_otg",	"osc", base + 0x10, 0x3, false);
-	clk[pll4_audio]    = imx_clk_pllv3(IMX_PLLV3_AV,	"pll4_audio",	"osc", base + 0x70, 0x7f, false);
+	clk[pll4_audio]    = imx_clk_pllv3(IMX_PLLV3_AV,	"pll4_audio",	"pll4_sel", base + 0x70, 0x7f, false);
 	clk[pll5_video]    = imx_clk_pllv3(IMX_PLLV3_AV,	"pll5_video",	"osc", base + 0xa0, 0x7f, false);
 	clk[pll6_enet]     = imx_clk_pllv3(IMX_PLLV3_ENET,	"pll6_enet",	"osc", base + 0xe0, 0x3, false);
 	clk[pll7_usb_host] = imx_clk_pllv3(IMX_PLLV3_USB,	"pll7_usb_host",	"osc", base + 0x20, 0x3, false);
 
 	/*                              name            reg       shift width parent_names     num_parents */
 	clk[lvds1_sel]    = imx_clk_mux("lvds1_sel",    base + 0x160, 0,  5,  lvds_sels,       ARRAY_SIZE(lvds_sels));
+	clk[lvds2_sel]    = imx_clk_mux("lvds2_sel",    base + 0x160, 5,  5,  lvds_sels,       ARRAY_SIZE(lvds_sels));
+	clk[pll4_sel]     = imx_clk_mux("pll4_sel",     base + 0x70, 14,  2,  pll_av_sels,     ARRAY_SIZE(pll_av_sels));
 
 	/*
 	 * Bit 20 is the reserved and read-only bit, we do this only for:
@@ -201,9 +207,11 @@ static void __init imx6q_clocks_init(struct device_node *ccm_node)
 
 	clk[sata_ref] = imx_clk_fixed_factor("sata_ref", "pll6_enet", 1, 5);
 	clk[pcie_ref] = imx_clk_fixed_factor("pcie_ref", "pll6_enet", 1, 4);
-	/* NOTICE: The gate of the lvds1 in/out is used to select the clk direction */
-	clk[lvds1_in] = imx_clk_gate("lvds1_in", NULL, base + 0x160, 12);
+	/* NOTICE: The gate of the lvds1/2 in/out is used to select the clk direction */
+	clk[lvds1_in] = imx_clk_gate("lvds1_in", "anaclk1", base + 0x160, 12);
+	clk[lvds2_in] = imx_clk_gate("lvds2_in", "anaclk2", base + 0x160, 13);
 	clk[lvds1_out] = imx_clk_gate("lvds1_out", "lvds1_sel", base + 0x160, 10);
+	clk[lvds2_out] = imx_clk_gate("lvds2_out", "lvds2_sel", base + 0x160, 11);
 
 	clk[sata_ref_100m] = imx_clk_gate("sata_ref_100m", "sata_ref", base + 0xe0, 20);
 	clk[pcie_ref_125m] = imx_clk_gate("pcie_ref_125m", "pcie_ref", base + 0xe0, 19);
