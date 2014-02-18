@@ -79,6 +79,10 @@ static void ahci_imx_error_handler(struct ata_port *ap)
 	clk_disable_unprepare(imxpriv->sata_ref_clk);
 	release_bus_freq(BUS_FREQ_HIGH);
 	imxpriv->no_device = true;
+
+	dev_info(ap->dev, "no device found, disabling link.\n");
+	dev_info(ap->dev, "pass " MODULE_PARAM_PREFIX
+		 ".hotplug=1 to enable hotplug\n");
 }
 
 static struct ata_port_operations ahci_imx_ops = {
@@ -132,10 +136,11 @@ static int imx6q_sata_init(struct device *dev, void __iomem *mmio)
 			| IMX6Q_GPR13_SATA_RX_LOS_LVL_SATA2M
 			| IMX6Q_GPR13_SATA_RX_DPLL_MODE_2P_4F
 			| IMX6Q_GPR13_SATA_SPD_MODE_3P0G
-			| IMX6Q_GPR13_SATA_MPLL_SS_EN
+			| /* IMX6Q_GPR13_SATA_MPLL_SS_EN */ 0
 			| IMX6Q_GPR13_SATA_TX_ATTEN_9_16
-			| IMX6Q_GPR13_SATA_TX_BOOST_3_33_DB
-			| IMX6Q_GPR13_SATA_TX_LVL_1_025_V);
+			| /* IMX6Q_GPR13_SATA_TX_BOOST_3_33_DB
+			| IMX6Q_GPR13_SATA_TX_LVL_1_025_V */
+			  IMX6Q_GPR13_SATA_TX_LVL_1_104_V);
 	regmap_update_bits(imxpriv->gpr, 0x34, IMX6Q_GPR13_SATA_MPLL_CLK_EN,
 			IMX6Q_GPR13_SATA_MPLL_CLK_EN);
 	usleep_range(100, 200);
@@ -242,6 +247,10 @@ static int imx_ahci_probe(struct platform_device *pdev)
 	struct device *ahci_dev;
 	struct platform_device *ahci_pdev;
 	int ret;
+
+	/* Prevent our child ahci device coming back to us */
+	if (!strcmp(dev_name(&pdev->dev), "ahci"))
+		return -ENODEV;
 
 	imxpriv = devm_kzalloc(dev, sizeof(*imxpriv), GFP_KERNEL);
 	if (!imxpriv) {
