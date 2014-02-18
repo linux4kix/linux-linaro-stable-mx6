@@ -4,9 +4,58 @@
  * The code contained herein is licensed under the GNU General Public
  * License version 2.
  */
+/ {
+	regulators {
+		compatible = "simple-bus";
+
+		reg_brcm_osc: brcm_osc_reg {
+			compatible = "regulator-fixed";
+			enable-active-high;
+			gpio = <&gpio5 13 0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_microsom_brcm_osc_reg>;
+			regulator-name = "brcm_osc_reg";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+		};
+
+		reg_brcm: brcm_reg {
+			compatible = "regulator-fixed";
+			enable-active-high;
+			gpio = <&gpio3 19 0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_microsom_brcm_reg>;
+			regulator-name = "brcm_reg";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			startup-delay-us = <200000>;
+		};
+	};
+};
 
 &iomuxc {
 	microsom {
+		pinctrl_microsom_brcm_osc_reg: microsom-brcm-osc-reg {
+			fsl,pins = <
+				MX6QDL_PAD_DISP0_DAT19__GPIO5_IO13 0x4001b0b1
+			>;
+		};
+
+		pinctrl_microsom_brcm_reg: microsom-brcm-reg {
+			fsl,pins = <
+				MX6QDL_PAD_EIM_D19__GPIO3_IO19 0x4001b0b1
+			>;
+		};
+
+		pinctrl_microsom_uart4_1: microsom-uart4 {
+			fsl,pins = <
+				MX6QDL_PAD_CSI0_DAT12__UART4_TX_DATA 0x1b0b1
+				MX6QDL_PAD_CSI0_DAT13__UART4_RX_DATA 0x1b0b1
+				MX6QDL_PAD_CSI0_DAT16__UART4_RTS_B 0x1b0b1
+				MX6QDL_PAD_CSI0_DAT17__UART4_CTS_B 0x1b0b1
+			>;
+		};
+
 		pinctrl_microsom_usbotg: microsom-usbotg {
 			/*
 			 * Similar to pinctrl_usbotg_2, but we want it
@@ -21,4 +70,20 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_uart1_1>;
 	status = "okay";
+};
+
+/* UART4 - Connected to optional BRCM Wifi/BT/FM */
+&uart4 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_microsom_uart4_1>;
+	uart-has-rtscts;
+};
+
+/* USDHC1 - Connected to optional BRCM Wifi/BT/FM */
+&usdhc1 {
+	keep-power-in-suspend;
+	non-removable;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_usdhc1_2>;
+	vmmc-supply = <&reg_brcm>;
 };
