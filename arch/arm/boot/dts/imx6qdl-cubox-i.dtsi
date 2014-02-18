@@ -66,6 +66,12 @@
 		pinctrl-0 = <&pinctrl_cubox_i_spdif>;
 	};
 
+	imx-drm {
+		compatible = "fsl,imx-drm";
+		crtcs = <&ipu1 0>, <&ipu1 1>;
+		connectors = <&hdmi>;
+	};
+
 	sound-spdif {
 		compatible = "fsl,imx-audio-spdif";
 		model = "imx-spdif";
@@ -73,6 +79,21 @@
 		spdif-controller = <&spdif>;
 		spdif-out;
 	};
+};
+
+&hdmi {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_cubox_i_hdmi>;
+	ddc = <&i2c2>;
+	status = "okay";
+	crtcs = <&ipu1 0>;
+};
+
+&i2c2 {
+	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c2_2>;
+	status = "okay";
 };
 
 &i2c3 {
@@ -92,6 +113,12 @@
 		pinctrl_cubox_i_ir: cubox-i-ir {
 			fsl,pins = <
 				MX6QDL_PAD_EIM_DA9__GPIO3_IO09 0x80000000
+			>;
+		};
+
+		pinctrl_cubox_i_hdmi: cubox-i-hdmi {
+			fsl,pins = <
+				MX6QDL_PAD_KEY_ROW2__HDMI_TX_CEC_LINE 0x1f8b0
 			>;
 		};
 
