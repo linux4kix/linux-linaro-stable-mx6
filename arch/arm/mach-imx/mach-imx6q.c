@@ -395,6 +395,28 @@ put_node:
 	of_node_put(np);
 }
 
+#define ESAI_AUDIO_MCLK 24576000
+
+static void __init imx6q_audio_lvds2_init(void)
+{
+	struct clk *pll4_sel, *lvds2_in, *pll4_audio_div, *esai;
+
+	pll4_audio_div = clk_get_sys(NULL, "pll4_audio_div");
+	pll4_sel = clk_get_sys(NULL, "pll4_sel");
+	lvds2_in = clk_get_sys(NULL, "lvds2_in");
+	esai = clk_get_sys(NULL, "esai");
+	if (IS_ERR(pll4_audio_div) || IS_ERR(pll4_sel) ||
+	    IS_ERR(lvds2_in) || IS_ERR(esai))
+		return;
+
+	if (clk_get_rate(lvds2_in) != ESAI_AUDIO_MCLK)
+		return;
+
+	clk_set_parent(pll4_sel, lvds2_in);
+	clk_set_rate(pll4_audio_div, 786432000);
+	clk_set_rate(esai, ESAI_AUDIO_MCLK);
+}
+
 static struct platform_device imx6q_cpufreq_pdev = {
 	.name = "imx6-cpufreq",
 };
@@ -425,6 +447,11 @@ static void __init imx6q_init_late(void)
 	if (IS_ENABLED(CONFIG_ARM_IMX6_CPUFREQ)) {
 		imx6q_opp_init();
 		platform_device_register(&imx6q_cpufreq_pdev);
+	}
+
+	if (of_machine_is_compatible("fsl,imx6q-sabreauto")
+		|| of_machine_is_compatible("fsl,imx6dl-sabreauto")) {
+		imx6q_audio_lvds2_init();
 	}
 }
 
