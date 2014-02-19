@@ -304,8 +304,6 @@ static void sdhci_cmu_set_clock(struct sdhci_host *host, unsigned int clock)
 
 	clk_set_rate(ourhost->clk_bus[ourhost->cur_clk], clock);
 
-	host->clock = clock;
-
 	clk = SDHCI_CLOCK_INT_EN;
 	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
 

@@ -56,7 +56,7 @@ static inline void esdhc_set_clock(struct sdhci_host *host, unsigned int clock)
 	u32 temp;
 
 	if (clock == 0)
-		goto out;
+		return;
 
 	temp = sdhci_readl(host, ESDHC_SYSTEM_CONTROL);
 	temp &= ~(ESDHC_CLOCK_IPGEN | ESDHC_CLOCK_HCKEN | ESDHC_CLOCK_PEREN
@@ -81,8 +81,6 @@ static inline void esdhc_set_clock(struct sdhci_host *host, unsigned int clock)
 		| (pre_div << ESDHC_PREDIV_SHIFT));
 	sdhci_writel(host, temp, ESDHC_SYSTEM_CONTROL);
 	mdelay(1);
-out:
-	host->clock = clock;
 }
 
 #endif /* _DRIVERS_MMC_SDHCI_ESDHC_H */
