@@ -590,6 +590,8 @@ static inline void esdhc_pltfm_set_clock(struct sdhci_host *host,
 	u32 temp, val;
 
 	if (clock == 0) {
+		host->mmc->actual_clock = 0;
+
 		if (esdhc_is_usdhc(imx_data)) {
 			val = readl(host->ioaddr + ESDHC_VENDOR_SPEC);
 			writel(val & ~ESDHC_VENDOR_SPEC_FRC_SDCLK_ON,
@@ -676,7 +678,7 @@ static void esdhc_pltfm_set_bus_width(struct sdhci_host *host, int width)
 			SDHCI_HOST_CONTROL);
 }
 
-static void esdhc_reset(struct sdhci_host *host, u32 rst_bits)
+static void esdhc_full_reset(struct sdhci_host *host, u32 rst_bits)
 {
 	struct sdhci_pltfm_host *pltfm_host = sdhci_priv(host);
 	struct pltfm_imx_data *imx_data = pltfm_host->priv;
@@ -721,7 +723,7 @@ static void esdhc_prepare_tuning(struct sdhci_host *host, u32 val)
 	u32 reg;
 
 	/* reset controller before tuning or it may fail on some cards */
-	esdhc_reset(host, ESDHC_SYS_CTRL_RSTA);
+	esdhc_full_reset(host, ESDHC_SYS_CTRL_RSTA);
 
 	pm_runtime_get_sync(host->mmc->parent);
 	reg = readl(host->ioaddr + ESDHC_MIX_CTRL);

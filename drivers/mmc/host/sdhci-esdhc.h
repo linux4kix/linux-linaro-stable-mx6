@@ -55,6 +55,8 @@ static inline void esdhc_set_clock(struct sdhci_host *host, unsigned int clock)
 	int div = 1;
 	u32 temp;
 
+	host->mmc->actual_clock = 0;
+
 	if (clock == 0)
 		return;
 
