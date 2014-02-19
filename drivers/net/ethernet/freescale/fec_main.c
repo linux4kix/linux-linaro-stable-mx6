@@ -2132,7 +2132,6 @@ static void fec_reset_phy(struct platform_device *pdev)
 
 	/* check GPIO valid to avoid kernel print warning when no gpio reset */
 	if (gpio_is_valid(fep->phy_reset_gpio)) {
-		gpio_set_value(fep->phy_reset_gpio, 0);
 		msleep(fep->reset_duration);
 		gpio_set_value(fep->phy_reset_gpio, 1);
 	}
