@@ -166,6 +166,8 @@ struct sdhci_host {
 	unsigned int            ocr_avail_sd;
 	unsigned int            ocr_avail_mmc;
 
+	unsigned		timing;		/* Current timing */
+
 	u32			thread_isr;
 
 	/* cached registers */
