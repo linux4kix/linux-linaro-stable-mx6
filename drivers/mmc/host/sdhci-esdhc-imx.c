@@ -658,7 +658,7 @@ static unsigned int esdhc_pltfm_get_ro(struct sdhci_host *host)
 	return -ENOSYS;
 }
 
-static int esdhc_pltfm_bus_width(struct sdhci_host *host, int width)
+static void esdhc_pltfm_set_bus_width(struct sdhci_host *host, int width)
 {
 	u32 ctrl;
 
@@ -676,8 +676,6 @@ static int esdhc_pltfm_bus_width(struct sdhci_host *host, int width)
 
 	esdhc_clrset_le(host, ESDHC_CTRL_BUSWIDTH_MASK, ctrl,
 			SDHCI_HOST_CONTROL);
-
-	return 0;
 }
 
 static void esdhc_reset(struct sdhci_host *host, u32 rst_bits)
@@ -923,7 +921,7 @@ static struct sdhci_ops sdhci_esdhc_ops = {
 	.get_max_clock = sdhci_pltfm_clk_get_max_clock,
 	.get_min_clock = esdhc_pltfm_get_min_clock,
 	.get_ro = esdhc_pltfm_get_ro,
-	.platform_bus_width = esdhc_pltfm_bus_width,
+	.set_bus_width = esdhc_pltfm_set_bus_width,
 	.set_uhs_signaling = esdhc_set_uhs_signaling,
 };
 
