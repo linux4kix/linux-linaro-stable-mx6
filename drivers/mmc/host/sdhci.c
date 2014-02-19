@@ -1498,6 +1498,7 @@ static void sdhci_do_set_ios(struct sdhci_host *host, struct mmc_ios *ios)
 
 			sdhci_writew(host, ctrl_2, SDHCI_HOST_CONTROL2);
 		} else {
+			int timeout;
 			/*
 			 * According to SDHC Spec v3.00, if the Preset Value
 			 * Enable in the Host Control 2 register is set, we
@@ -1512,8 +1513,19 @@ static void sdhci_do_set_ios(struct sdhci_host *host, struct mmc_ios *ios)
 
 			sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 
-			/* Re-enable SD Clock */
-			host->ops->set_clock(host, host->clock);
+			/* Wait max 5 ms */
+			timeout = 5;
+			while (!((clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL))
+				& SDHCI_CLOCK_INT_STABLE)) {
+				if (timeout == 0) {
+					pr_err("%s: Internal clock never "
+						"stabilised.\n", mmc_hostname(host->mmc));
+					sdhci_dumpregs(host);
+					return;
+				}
+				timeout--;
+				mdelay(1);
+			}
 		}
 
 		host->ops->set_uhs_signaling(host, ios->timing);
@@ -1532,6 +1544,9 @@ static void sdhci_do_set_ios(struct sdhci_host *host, struct mmc_ios *ios)
 			ios->drv_type = (preset & SDHCI_PRESET_DRV_MASK)
 				>> SDHCI_PRESET_DRV_SHIFT;
 		}
+
+		/* Re-enable SD Clock */
+		host->ops->set_clock(host, host->clock);
 	} else
 		sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 
