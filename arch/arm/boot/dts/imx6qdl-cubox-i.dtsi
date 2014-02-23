@@ -5,6 +5,10 @@
 #include "imx6qdl-microsom-ar8035.dtsi"
 
 / {
+        aliases {
+                mxcfb0 = &mxcfb1;
+        };
+
 	ir_recv: ir-receiver {
 		compatible = "gpio-ir-receiver";
 		gpios = <&gpio3 9 1>;
@@ -75,10 +79,48 @@
 	sound-spdif {
 		compatible = "fsl,imx-audio-spdif";
 		model = "imx-spdif";
-		/* IMX6 doesn't implement this yet */
 		spdif-controller = <&spdif>;
 		spdif-out;
 	};
+
+        sound-hdmi {
+                compatible = "fsl,imx6q-audio-hdmi",
+                             "fsl,imx-audio-hdmi";
+                model = "imx-audio-hdmi";
+                hdmi-controller = <&hdmi_audio>;
+        };
+
+        mxcfb1: mxc_sdc_fb@0 { 
+                compatible = "fsl,mxc_sdc_fb";
+                disp_dev = "hdmi";
+                interface_pix_fmt = "RGB24";
+                mode_str ="1280x720@60";
+                default_bpp = <32>;
+                int_clk = <0>;
+                late_init = <0>;
+                status = "okay";
+        };
+
+        v4l2_cap_0 {
+                compatible = "fsl,imx6q-v4l2-capture";
+                ipu_id = <0>;
+                csi_id = <0>;
+                mclk_source = <0>;
+                status = "okay";
+        };
+
+        v4l2_cap_1 {
+                compatible = "fsl,imx6q-v4l2-capture";
+                ipu_id = <0>;
+                csi_id = <1>;
+                mclk_source = <0>;
+                status = "okay";
+        };
+
+        v4l2_out {
+                compatible = "fsl,mxc_v4l2_output";
+                status = "okay";
+        };
 };
 
 &hdmi {
@@ -89,11 +131,36 @@
 	crtcs = <&ipu1 0>;
 };
 
+&hdmi_audio {
+        status = "okay";
+};
+
+&hdmi_cec {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_cubox_i_hdmi>;
+        status = "okay";
+};
+
+&hdmi_core {
+        ipu_id = <1>;
+        disp_id = <0>;
+        status = "okay";
+};
+
+&hdmi_video {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_hdmi_hdcp_1>;
+        fsl,phy_reg_vlev = <0x0294>;
+        fsl,phy_reg_cksymtx = <0x800d>;
+        fsl,hdcp;
+        status = "okay";
+};
+
 &i2c2 {
 	clock-frequency = <100000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c2_2>;
-	status = "okay";
+	status = "enable";
 };
 
 &i2c3 {
