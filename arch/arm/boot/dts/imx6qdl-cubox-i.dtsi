@@ -160,7 +160,7 @@
 	clock-frequency = <100000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_i2c2_2>;
-	status = "enable";
+	status = "disable";
 };
 
 &i2c3 {
