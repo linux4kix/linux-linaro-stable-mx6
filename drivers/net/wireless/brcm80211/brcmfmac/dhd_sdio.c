@@ -769,8 +769,6 @@ brcmf_sdio_kso_control(struct brcmf_sdio *bus, bool on)
 	return err;
 }
 
-#define PKT_AVAILABLE()		(intstatus & I_HMB_FRAME_IND)
-
 #define HOSTINTMASK		(I_HMB_SW_MASK | I_CHIPACTIVE)
 
 /* Turn backplane clock on or off */
@@ -869,7 +867,6 @@ static int brcmf_sdio_htclk(struct brcmf_sdio *bus, bool on, bool pendok)
 		}
 #endif				/* defined (DEBUG) */
 
-		bus->activity = true;
 	} else {
 		clkreq = 0;
 
@@ -2342,7 +2339,7 @@ static uint brcmf_sdio_sendfromq(struct brcmf_sdio *bus, uint maxframes)
 		cnt += i;
 
 		/* In poll mode, need to check for other events */
-		if (!bus->intr && cnt) {
+		if (!bus->intr) {
 			/* Check device status, signal pending interrupt */
 			sdio_claim_host(bus->sdiodev->func[1]);
 			ret = r_sdreg32(bus, &intstatus,
@@ -2486,9 +2483,8 @@ static void brcmf_sdio_dpc(struct brcmf_sdio *bus)
 {
 	u32 newstatus = 0;
 	unsigned long intstatus;
-	uint rxlimit = bus->rxbound;	/* Rx frames to read before resched */
 	uint txlimit = bus->txbound;	/* Tx frames to send before resched */
-	uint framecnt = 0;	/* Temporary counter of tx/rx frames */
+	uint framecnt;			/* Temporary counter of tx/rx frames */
 	int err = 0, n;
 
 	brcmf_dbg(TRACE, "Enter\n");
@@ -2586,11 +2582,10 @@ static void brcmf_sdio_dpc(struct brcmf_sdio *bus)
 		intstatus &= ~I_HMB_FRAME_IND;
 
 	/* On frame indication, read available frames */
-	if (PKT_AVAILABLE() && bus->clkstate == CLK_AVAIL) {
-		framecnt = brcmf_sdio_readframes(bus, rxlimit);
+	if ((intstatus & I_HMB_FRAME_IND) && (bus->clkstate == CLK_AVAIL)) {
+		brcmf_sdio_readframes(bus, bus->rxbound);
 		if (!bus->rxpending)
 			intstatus &= ~I_HMB_FRAME_IND;
-		rxlimit -= min(framecnt, rxlimit);
 	}
 
 	/* Keep still-pending events for next scheduling */
@@ -2648,8 +2643,7 @@ static void brcmf_sdio_dpc(struct brcmf_sdio *bus)
 		 && data_ok(bus)) {
 		framecnt = bus->rxpending ? min(txlimit, bus->txminmax) :
 					    txlimit;
-		framecnt = brcmf_sdio_sendfromq(bus, framecnt);
-		txlimit -= framecnt;
+		brcmf_sdio_sendfromq(bus, framecnt);
 	}
 
 	if (!brcmf_bus_ready(bus->sdiodev->bus_if) || (err != 0)) {
@@ -2659,7 +2653,7 @@ static void brcmf_sdio_dpc(struct brcmf_sdio *bus)
 		   atomic_read(&bus->ipend) > 0 ||
 		   (!atomic_read(&bus->fcstate) &&
 		    brcmu_pktq_mlen(&bus->txq, ~bus->flowcontrol) &&
-		    data_ok(bus)) || PKT_AVAILABLE()) {
+		    data_ok(bus))) {
 		atomic_inc(&bus->dpc_tskcnt);
 	}
 }
