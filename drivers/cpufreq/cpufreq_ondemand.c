@@ -76,6 +76,8 @@ static int should_io_be_busy(void)
 			boot_cpu_data.x86 == 6 &&
 			boot_cpu_data.x86_model >= 15)
 		return 1;
+#else if defined(CONFIG_ARM_IMX6_CPUFREQ)
+		return 1;
 #endif
 	return 0;
 }
