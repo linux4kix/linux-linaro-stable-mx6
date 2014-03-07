@@ -116,12 +116,12 @@ static int imx_spdif_audio_remove(struct platform_device *pdev)
 	struct snd_soc_card *card = platform_get_drvdata(pdev);
 	struct imx_spdif_data *data = snd_soc_card_get_drvdata(card);
 
+	snd_soc_unregister_card(card);
+
 	if (data->rxdev)
 		platform_device_unregister(data->rxdev);
 	if (data->txdev)
 		platform_device_unregister(data->txdev);
-
-	snd_soc_unregister_card(card);
 
 	return 0;
 }
