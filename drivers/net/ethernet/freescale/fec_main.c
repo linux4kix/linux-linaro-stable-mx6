@@ -769,8 +769,6 @@ fec_stop(struct net_device *ndev)
 	}
 }
 
-static uint last_ievents;
-
 static void
 fec_timeout(struct net_device *ndev)
 {
@@ -1100,36 +1098,30 @@ fec_enet_interrupt(int irq, void *dev_id)
 {
 	struct net_device *ndev = dev_id;
 	struct fec_enet_private *fep = netdev_priv(ndev);
+	const unsigned napi_mask = FEC_ENET_RXF | FEC_ENET_TXF;
 	uint int_events, eir;
 	irqreturn_t ret = IRQ_NONE;
 
-	while (1) {
-		eir = readl(fep->hwp + FEC_IEVENT);
-		int_events = eir & readl(fep->hwp + FEC_IMASK);
-		if (!int_events)
-			break;
-		last_ievents = eir;
+	int_events = readl(fep->hwp + FEC_IEVENT);
+	writel(int_events & ~napi_mask, fep->hwp + FEC_IEVENT);
 
-		if ((int_events & FEC_ENET_TS_TIMER) && fep->bufdesc_ex) {
-			ret = IRQ_HANDLED;
-			if (fep->hwts_tx_en_ioctl || fep->hwts_rx_en_ioctl)
-				fep->prtc++;
-			writel(FEC_ENET_TS_TIMER, fep->hwp + FEC_IEVENT);
-		}
-		if (int_events & (FEC_ENET_RXF | FEC_ENET_TXF)) {
-			ret = IRQ_HANDLED;
-			if (napi_schedule_prep(&fep->napi)) {
-				/* Disable the RX/TX interrupt */
-				writel(FEC_ENET_MII, fep->hwp + FEC_IMASK);
-				__napi_schedule(&fep->napi);
-			}
-		}
+	if ((int_events & FEC_ENET_TS_TIMER) && fep->bufdesc_ex) {
+		ret = IRQ_HANDLED;
+		if (fep->hwts_tx_en_ioctl || fep->hwts_rx_en_ioctl)
+			fep->prtc++;
+		writel(FEC_ENET_TS_TIMER, fep->hwp + FEC_IEVENT);
+	}
+	if (int_events & napi_mask) {
+		ret = IRQ_HANDLED;
+		/* Disable the NAPI interrupts */
+		writel(FEC_ENET_MII, fep->hwp + FEC_IMASK);
+		napi_schedule(&fep->napi);  
+	}
 
-		if (int_events & FEC_ENET_MII) {
-			writel(FEC_ENET_MII, fep->hwp + FEC_IEVENT);
-			ret = IRQ_HANDLED;
-			complete(&fep->mdio_done);
-		}
+	if (int_events & FEC_ENET_MII) {
+		writel(FEC_ENET_MII, fep->hwp + FEC_IEVENT);
+		ret = IRQ_HANDLED;
+		complete(&fep->mdio_done);
 	}
 
 	return ret;
@@ -1139,11 +1131,23 @@ static int fec_enet_rx_napi(struct napi_struct *napi, int budget)
 {
 	struct net_device *ndev = napi->dev;
 	struct fec_enet_private *fep = netdev_priv(ndev);
-	int pkts;
+	unsigned status;
+	int pkts = 0;
 
-	writel(FEC_ENET_RXF | FEC_ENET_TXF, fep->hwp + FEC_IEVENT);
-	pkts = fec_enet_rx(ndev, budget);
-	fec_enet_tx(ndev);
+        status = readl(fep->hwp + FEC_IEVENT) & (FEC_ENET_RXF | FEC_ENET_TXF);
+	if (status) {
+		/*
+		 * Clear any pending transmit or receive interrupts before
+		 * processing the rings to avoid racing with the hardware.
+		 */
+		writel(status, fep->hwp + FEC_IEVENT);
+
+		if (status & FEC_ENET_RXF)
+			pkts = fec_enet_rx(ndev, budget);
+
+		if (status & FEC_ENET_TXF)
+			fec_enet_tx(ndev);
+	} 
 
 	if (pkts < budget) {
 		uint int_events = readl(fep->hwp + FEC_IEVENT);
