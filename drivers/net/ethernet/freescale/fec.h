@@ -173,6 +173,11 @@ struct bufdesc_ex {
 	unsigned short res0[4];
 };
 
+union bufdesc_u {
+	struct bufdesc bd;
+	struct bufdesc_ex ebd;
+};
+
 /*
  *	The following definitions courtesy of commproc.h, which where
  *	Copyright (c) 1997 Dan Malek (dmalek@jlc.net).
@@ -404,11 +409,11 @@ struct fec_enet_private {
 	dma_addr_t	bd_dma;
 	/* Address of Rx and Tx buffers */
 	struct bufdesc	*rx_bd_base;
-	struct bufdesc	*tx_bd_base;
+	union bufdesc_u	*tx_bd_base;
 	/* The next free ring entry */
-	struct bufdesc	*cur_rx, *cur_tx;
-	/* The ring entries to be free()ed */
-	struct bufdesc	*dirty_tx;
+	unsigned short tx_next;
+	unsigned short tx_dirty;
+	struct bufdesc	*cur_rx;
 
 	unsigned short tx_ring_size;
 	unsigned short rx_ring_size;
