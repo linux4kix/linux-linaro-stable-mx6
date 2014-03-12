@@ -338,6 +338,17 @@ fec_enet_clear_csum(struct sk_buff *skb, struct net_device *ndev)
 	return 0;
 }
 
+static void
+fec_enet_tx_unmap(struct bufdesc *bdp, struct fec_enet_private *fep)
+{
+	dma_addr_t addr = bdp->cbd_bufaddr;
+	unsigned length = bdp->cbd_datlen;
+
+	bdp->cbd_bufaddr = 0;
+
+	dma_unmap_single(&fep->pdev->dev, addr, length, DMA_TO_DEVICE);
+}
+
 static netdev_tx_t
 fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 {
@@ -508,11 +519,12 @@ static void fec_enet_bd_init(struct net_device *dev)
 
 		/* Initialize the BD for every fragment in the page. */
 		bdp->cbd_sc = 0;
+		if (bdp->cbd_bufaddr)
+			fec_enet_tx_unmap(bdp, fep);
 		if (fep->tx_skbuff[i]) {
 			dev_kfree_skb_any(fep->tx_skbuff[i]);
 			fep->tx_skbuff[i] = NULL;
 		}
-		bdp->cbd_bufaddr = 0;
 		bdp = fec_enet_get_nextdesc(bdp, fep);
 	}
 
@@ -818,11 +830,10 @@ fec_enet_tx(struct net_device *ndev)
 		else
 			index = bdp - fep->tx_bd_base;
 
+		fec_enet_tx_unmap(bdp, fep);
+
 		skb = fep->tx_skbuff[index];
 		fep->tx_skbuff[index] = NULL;
-		dma_unmap_single(&fep->pdev->dev, bdp->cbd_bufaddr, skb->len,
-				DMA_TO_DEVICE);
-		bdp->cbd_bufaddr = 0;
 
 		/* Check for errors. */
 		if (status & (BD_ENET_TX_HB | BD_ENET_TX_LC |
@@ -1811,8 +1822,11 @@ static void fec_enet_free_buffers(struct net_device *ndev)
 	}
 
 	bdp = fep->tx_bd_base;
-	for (i = 0; i < fep->tx_ring_size; i++)
+	for (i = 0; i < fep->tx_ring_size; i++) {
+		if (bdp->cbd_bufaddr)
+			fec_enet_tx_unmap(bdp, fep);
 		kfree(fep->tx_bounce[i]);
+	}
 }
 
 static int fec_enet_alloc_buffers(struct net_device *ndev)
