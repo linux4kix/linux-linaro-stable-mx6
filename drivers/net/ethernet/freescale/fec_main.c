@@ -437,6 +437,13 @@ fec_enet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 		}
 	}
 
+	/*
+	 * We need the preceding stores to the descriptor to complete
+	 * before updating the status field, which hands it over to the
+	 * hardware.  The corresponding rmb() is "in the hardware".
+	 */
+	wmb();
+
 	/* Send it on its way.  Tell FEC it's ready, interrupt when done,
 	 * it's the last BD of the frame, and to put the CRC on the end.
 	 */
