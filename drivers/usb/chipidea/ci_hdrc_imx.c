@@ -50,7 +50,8 @@ static const struct ci_hdrc_imx_platform_flag imx6q_usb_data = {
 };
 
 static const struct ci_hdrc_imx_platform_flag imx6sl_usb_data = {
-	.flags = CI_HDRC_IMX_SUPPORT_RUNTIME_PM,
+	.flags = CI_HDRC_IMX_SUPPORT_RUNTIME_PM |
+		CI_HDRC_IMX_HOST_QUIRK,
 };
 
 static const struct of_device_id ci_hdrc_imx_dt_ids[] = {
