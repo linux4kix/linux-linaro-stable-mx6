@@ -3,7 +3,7 @@ ifeq (, $(findstring -W,$(EXTRA_CFLAGS)))
 	ccflags-y += -Werror
 endif
 
-msm-y := \
+vivante-y := \
 	adreno/adreno_gpu.o \
 	adreno/a3xx_gpu.o \
 	hdmi/hdmi.o \
@@ -37,4 +37,4 @@ msm-y := \
 
 msm-$(CONFIG_DRM_MSM_FBDEV) += msm_fbdev.o
 
-obj-$(CONFIG_DRM_MSM)	+= msm.o
+obj-$(CONFIG_DRM_VIVANTE)	+= vivante.o
