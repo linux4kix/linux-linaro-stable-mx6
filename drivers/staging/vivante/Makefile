@@ -15,6 +15,4 @@ vivante-y := \
 	msm_iommu.o \
 	msm_ringbuffer.o
 
-msm-$(CONFIG_DRM_MSM_FBDEV) += msm_fbdev.o
-
 obj-$(CONFIG_DRM_VIVANTE)	+= vivante.o
