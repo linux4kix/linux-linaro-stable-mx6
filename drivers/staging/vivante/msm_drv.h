@@ -178,12 +178,6 @@ struct drm_gem_object *msm_gem_new(struct drm_device *dev,
 struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 		uint32_t size, struct sg_table *sgt);
 
-struct hdmi;
-struct hdmi *hdmi_init(struct drm_device *dev, struct drm_encoder *encoder);
-irqreturn_t hdmi_irq(int irq, void *dev_id);
-void __init hdmi_register(void);
-void __exit hdmi_unregister(void);
-
 #ifdef CONFIG_DEBUG_FS
 void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m);
 void msm_gem_describe_objects(struct list_head *list, struct seq_file *m);
