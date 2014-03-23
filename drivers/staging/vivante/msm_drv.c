@@ -622,7 +622,7 @@ static const struct platform_device_id msm_id[] = {
 	{ }
 };
 
-static struct platform_driver msm_platform_driver = {
+static struct platform_driver vivante_platform_driver = {
 	.probe      = msm_pdev_probe,
 	.remove     = msm_pdev_remove,
 	.driver     = {
@@ -634,22 +634,7 @@ static struct platform_driver msm_platform_driver = {
 	.id_table   = msm_id,
 };
 
-static int __init msm_drm_register(void)
-{
-	DBG("init");
-	a3xx_register();
-	return platform_driver_register(&msm_platform_driver);
-}
-
-static void __exit msm_drm_unregister(void)
-{
-	DBG("fini");
-	platform_driver_unregister(&msm_platform_driver);
-	a3xx_unregister();
-}
-
-module_init(msm_drm_register);
-module_exit(msm_drm_unregister);
+module_platform_driver(vivante_platform_driver);
 
 MODULE_AUTHOR("Rob Clark <robdclark@gmail.com");
 MODULE_DESCRIPTION("MSM DRM Driver");
