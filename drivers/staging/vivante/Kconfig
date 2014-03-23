@@ -2,7 +2,6 @@
 config DRM_VIVANTE
 	tristate "Vivante DRM"
 	depends on DRM
-	select DRM_KMS_HELPER
 	select SHMEM
 	select TMPFS
 	default y

@@ -51,7 +51,6 @@ static inline struct device *msm_iommu_get_ctx(const char *ctx_name)
 #include <drm/drm_fb_helper.h>
 #include <drm/msm_drm.h>
 
-struct msm_kms;
 struct msm_gpu;
 struct msm_mmu;
 
@@ -66,8 +65,6 @@ struct msm_file_private {
 };
 
 struct msm_drm_private {
-
-	struct msm_kms *kms;
 
 	/* when we have more than one 'msm_gpu' these need to be an array: */
 	struct msm_gpu *gpu;
@@ -180,15 +177,6 @@ struct drm_gem_object *msm_gem_new(struct drm_device *dev,
 		uint32_t size, uint32_t flags);
 struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 		uint32_t size, struct sg_table *sgt);
-
-struct drm_gem_object *msm_framebuffer_bo(struct drm_framebuffer *fb, int plane);
-const struct msm_format *msm_framebuffer_format(struct drm_framebuffer *fb);
-struct drm_framebuffer *msm_framebuffer_init(struct drm_device *dev,
-		struct drm_mode_fb_cmd2 *mode_cmd, struct drm_gem_object **bos);
-struct drm_framebuffer *msm_framebuffer_create(struct drm_device *dev,
-		struct drm_file *file, struct drm_mode_fb_cmd2 *mode_cmd);
-
-struct drm_fb_helper *msm_fbdev_init(struct drm_device *dev);
 
 struct hdmi;
 struct hdmi *hdmi_init(struct drm_device *dev, struct drm_encoder *encoder);

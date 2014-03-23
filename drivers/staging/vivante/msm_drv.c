@@ -17,7 +17,6 @@
 
 #include "msm_drv.h"
 #include "msm_gpu.h"
-#include "msm_kms.h"
 
 static void msm_fb_output_poll_changed(struct drm_device *dev)
 {
@@ -25,11 +24,6 @@ static void msm_fb_output_poll_changed(struct drm_device *dev)
 	if (priv->fbdev)
 		drm_fb_helper_hotplug_event(priv->fbdev);
 }
-
-static const struct drm_mode_config_funcs mode_config_funcs = {
-	.fb_create = msm_framebuffer_create,
-	.output_poll_changed = msm_fb_output_poll_changed,
-};
 
 int msm_register_mmu(struct drm_device *dev, struct msm_mmu *mmu)
 {
@@ -109,10 +103,8 @@ u32 msm_readl(const void __iomem *addr)
 static int msm_unload(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
 	struct msm_gpu *gpu = priv->gpu;
 
-	drm_kms_helper_poll_fini(dev);
 	drm_mode_config_cleanup(dev);
 	drm_vblank_cleanup(dev);
 
@@ -122,11 +114,6 @@ static int msm_unload(struct drm_device *dev)
 
 	flush_workqueue(priv->wq);
 	destroy_workqueue(priv->wq);
-
-	if (kms) {
-		pm_runtime_disable(dev->dev);
-		kms->funcs->destroy(kms);
-	}
 
 	if (gpu) {
 		mutex_lock(&dev->struct_mutex);
@@ -154,7 +141,6 @@ static int msm_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
 	struct msm_drm_private *priv;
-	struct msm_kms *kms;
 	int ret;
 
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
@@ -208,43 +194,6 @@ static int msm_load(struct drm_device *dev, unsigned long flags)
 				(uint32_t)(priv->vram.paddr + size));
 	}
 
-	kms = ERR_PTR(-ENODEV);
-
-	if (IS_ERR(kms)) {
-		/*
-		 * NOTE: once we have GPU support, having no kms should not
-		 * be considered fatal.. ideally we would still support gpu
-		 * and (for example) use dmabuf/prime to share buffers with
-		 * imx drm driver on iMX5
-		 */
-		dev_err(dev->dev, "failed to load kms\n");
-		ret = PTR_ERR(kms);
-		goto fail;
-	}
-
-	priv->kms = kms;
-
-	if (kms) {
-		pm_runtime_enable(dev->dev);
-		ret = kms->funcs->hw_init(kms);
-		if (ret) {
-			dev_err(dev->dev, "kms hw init failed: %d\n", ret);
-			goto fail;
-		}
-	}
-
-	dev->mode_config.min_width = 0;
-	dev->mode_config.min_height = 0;
-	dev->mode_config.max_width = 2048;
-	dev->mode_config.max_height = 2048;
-	dev->mode_config.funcs = &mode_config_funcs;
-
-	ret = drm_vblank_init(dev, 1);
-	if (ret < 0) {
-		dev_err(dev->dev, "failed to initialize vblank\n");
-		goto fail;
-	}
-
 	pm_runtime_get_sync(dev->dev);
 	ret = drm_irq_install(dev);
 	pm_runtime_put_sync(dev->dev);
@@ -254,13 +203,6 @@ static int msm_load(struct drm_device *dev, unsigned long flags)
 	}
 
 	platform_set_drvdata(pdev, dev);
-
-#ifdef CONFIG_DRM_MSM_FBDEV
-	priv->fbdev = msm_fbdev_init(dev);
-#endif
-
-	drm_kms_helper_poll_init(dev);
-
 	return 0;
 
 fail:
@@ -321,10 +263,6 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_file_private *ctx = file->driver_priv;
-	struct msm_kms *kms = priv->kms;
-
-	if (kms)
-		kms->funcs->preclose(kms, file);
 
 	mutex_lock(&dev->struct_mutex);
 	if (ctx == priv->lastctx)
@@ -342,59 +280,6 @@ static void msm_lastclose(struct drm_device *dev)
 		drm_fb_helper_restore_fbdev_mode(priv->fbdev);
 		drm_modeset_unlock_all(dev);
 	}
-}
-
-static irqreturn_t msm_irq(int irq, void *arg)
-{
-	struct drm_device *dev = arg;
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	BUG_ON(!kms);
-	return kms->funcs->irq(kms);
-}
-
-static void msm_irq_preinstall(struct drm_device *dev)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	BUG_ON(!kms);
-	kms->funcs->irq_preinstall(kms);
-}
-
-static int msm_irq_postinstall(struct drm_device *dev)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	BUG_ON(!kms);
-	return kms->funcs->irq_postinstall(kms);
-}
-
-static void msm_irq_uninstall(struct drm_device *dev)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	BUG_ON(!kms);
-	kms->funcs->irq_uninstall(kms);
-}
-
-static int msm_enable_vblank(struct drm_device *dev, int crtc_id)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	if (!kms)
-		return -ENXIO;
-	DBG("dev=%p, crtc=%d", dev, crtc_id);
-	return kms->funcs->enable_vblank(kms, priv->crtcs[crtc_id]);
-}
-
-static void msm_disable_vblank(struct drm_device *dev, int crtc_id)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_kms *kms = priv->kms;
-	if (!kms)
-		return;
-	DBG("dev=%p, crtc=%d", dev, crtc_id);
-	kms->funcs->disable_vblank(kms, priv->crtcs[crtc_id]);
 }
 
 /*
@@ -723,20 +608,12 @@ static struct drm_driver msm_driver = {
 	.driver_features    = DRIVER_HAVE_IRQ |
 				DRIVER_GEM |
 				DRIVER_PRIME |
-				DRIVER_RENDER |
-				DRIVER_MODESET,
+				DRIVER_RENDER,
 	.load               = msm_load,
 	.unload             = msm_unload,
 	.open               = msm_open,
 	.preclose           = msm_preclose,
 	.lastclose          = msm_lastclose,
-	.irq_handler        = msm_irq,
-	.irq_preinstall     = msm_irq_preinstall,
-	.irq_postinstall    = msm_irq_postinstall,
-	.irq_uninstall      = msm_irq_uninstall,
-	.get_vblank_counter = drm_vblank_count,
-	.enable_vblank      = msm_enable_vblank,
-	.disable_vblank     = msm_disable_vblank,
 	.gem_free_object    = msm_gem_free_object,
 	.gem_vm_ops         = &vm_ops,
 	.dumb_create        = msm_gem_dumb_create,
@@ -764,30 +641,6 @@ static struct drm_driver msm_driver = {
 	.date               = "20130625",
 	.major              = 1,
 	.minor              = 0,
-};
-
-#ifdef CONFIG_PM_SLEEP
-static int msm_pm_suspend(struct device *dev)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-
-	drm_kms_helper_poll_disable(ddev);
-
-	return 0;
-}
-
-static int msm_pm_resume(struct device *dev)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-
-	drm_kms_helper_poll_enable(ddev);
-
-	return 0;
-}
-#endif
-
-static const struct dev_pm_ops msm_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(msm_pm_suspend, msm_pm_resume)
 };
 
 /*
