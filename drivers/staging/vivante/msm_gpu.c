@@ -24,36 +24,9 @@
  * Power Management:
  */
 
-#ifdef CONFIG_MSM_BUS_SCALING
-#include <mach/board.h>
-static void bs_init(struct msm_gpu *gpu)
-{
-	if (gpu->bus_scale_table) {
-		gpu->bsc = msm_bus_scale_register_client(gpu->bus_scale_table);
-		DBG("bus scale client: %08x", gpu->bsc);
-	}
-}
-
-static void bs_fini(struct msm_gpu *gpu)
-{
-	if (gpu->bsc) {
-		msm_bus_scale_unregister_client(gpu->bsc);
-		gpu->bsc = 0;
-	}
-}
-
-static void bs_set(struct msm_gpu *gpu, int idx)
-{
-	if (gpu->bsc) {
-		DBG("set bus scaling: %d", idx);
-		msm_bus_scale_client_update_request(gpu->bsc, idx);
-	}
-}
-#else
 static void bs_init(struct msm_gpu *gpu) {}
 static void bs_fini(struct msm_gpu *gpu) {}
 static void bs_set(struct msm_gpu *gpu, int idx) {}
-#endif
 
 static int enable_pwrrail(struct msm_gpu *gpu)
 {

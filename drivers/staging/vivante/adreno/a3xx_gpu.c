@@ -466,9 +466,6 @@ struct msm_gpu *a3xx_gpu_init(struct drm_device *dev)
 	gpu->fast_rate = config->fast_rate;
 	gpu->slow_rate = config->slow_rate;
 	gpu->bus_freq  = config->bus_freq;
-#ifdef CONFIG_MSM_BUS_SCALING
-	gpu->bus_scale_table = config->bus_scale_table;
-#endif
 
 	DBG("fast_rate=%u, slow_rate=%u, bus_freq=%u",
 			gpu->fast_rate, gpu->slow_rate, gpu->bus_freq);
@@ -518,9 +515,6 @@ fail:
  * The a3xx device:
  */
 
-#if defined(CONFIG_MSM_BUS_SCALING) && !defined(CONFIG_OF)
-#  include <mach/kgsl.h>
-#endif
 
 static int a3xx_probe(struct platform_device *pdev)
 {
@@ -605,9 +599,6 @@ static int a3xx_probe(struct platform_device *pdev)
 			config.rev = ADRENO_REV(3, 0, 5, 0);
 
 	}
-#  ifdef CONFIG_MSM_BUS_SCALING
-	config.bus_scale_table = pdata->bus_scale_table;
-#  endif
 #endif
 	pdev->dev.platform_data = &config;
 	a3xx_pdev = pdev;
