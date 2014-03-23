@@ -617,21 +617,20 @@ static int msm_pdev_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static const struct platform_device_id msm_id[] = {
-	{ "mdp", 0 },
-	{ }
+static const struct of_device_id dt_match[] = {
+	{ .compatible = "vivante" },
+	{}
 };
+MODULE_DEVICE_TABLE(of, dt_match);
 
 static struct platform_driver vivante_platform_driver = {
 	.probe      = msm_pdev_probe,
 	.remove     = msm_pdev_remove,
 	.driver     = {
 		.owner  = THIS_MODULE,
-		.name   = "msm",
-		/*.of_match_table = dt_match,*/
-		/*.pm     = &msm_pm_ops,*/
+		.name   = "vivante",
+		.of_match_table = dt_match,
 	},
-	.id_table   = msm_id,
 };
 
 module_platform_driver(vivante_platform_driver);
