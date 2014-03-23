@@ -144,7 +144,7 @@ static int msm_load(struct drm_device *dev, unsigned long flags)
 
 	dev->dev_private = priv;
 
-	priv->wq = alloc_ordered_workqueue("msm", 0);
+	priv->wq = alloc_ordered_workqueue("vivante", 0);
 	init_waitqueue_head(&priv->fence_event);
 
 	INIT_LIST_HEAD(&priv->inactive_list);
