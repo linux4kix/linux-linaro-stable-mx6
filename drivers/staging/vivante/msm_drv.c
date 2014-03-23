@@ -532,7 +532,7 @@ static int msm_ioctl_wait_fence(struct drm_device *dev, void *data,
 	return msm_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
 }
 
-static const struct drm_ioctl_desc msm_ioctls[] = {
+static const struct drm_ioctl_desc vivante_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MSM_GET_PARAM,    msm_ioctl_get_param,    DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_NEW,      msm_ioctl_gem_new,      DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_INFO,     msm_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
@@ -562,7 +562,7 @@ static const struct file_operations fops = {
 	.mmap               = msm_gem_mmap,
 };
 
-static struct drm_driver msm_driver = {
+static struct drm_driver vivante_driver = {
 	.driver_features    = DRIVER_HAVE_IRQ |
 				DRIVER_GEM |
 				DRIVER_PRIME |
@@ -590,11 +590,11 @@ static struct drm_driver msm_driver = {
 	.debugfs_init       = msm_debugfs_init,
 	.debugfs_cleanup    = msm_debugfs_cleanup,
 #endif
-	.ioctls             = msm_ioctls,
+	.ioctls             = vivante_ioctls,
 	.num_ioctls         = DRM_MSM_NUM_IOCTLS,
 	.fops               = &fops,
-	.name               = "msm",
-	.desc               = "MSM Snapdragon DRM",
+	.name               = "vivante",
+	.desc               = "Vivante DRM",
 	.date               = "20130625",
 	.major              = 1,
 	.minor              = 0,
@@ -604,13 +604,13 @@ static struct drm_driver msm_driver = {
  * Platform driver:
  */
 
-static int msm_pdev_probe(struct platform_device *pdev)
+static int vivante_pdev_probe(struct platform_device *pdev)
 {
 	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
-	return drm_platform_init(&msm_driver, pdev);
+	return drm_platform_init(&vivante_driver, pdev);
 }
 
-static int msm_pdev_remove(struct platform_device *pdev)
+static int vivante_pdev_remove(struct platform_device *pdev)
 {
 	drm_put_dev(platform_get_drvdata(pdev));
 
@@ -624,8 +624,8 @@ static const struct of_device_id dt_match[] = {
 MODULE_DEVICE_TABLE(of, dt_match);
 
 static struct platform_driver vivante_platform_driver = {
-	.probe      = msm_pdev_probe,
-	.remove     = msm_pdev_remove,
+	.probe      = vivante_pdev_probe,
+	.remove     = vivante_pdev_remove,
 	.driver     = {
 		.owner  = THIS_MODULE,
 		.name   = "vivante",
