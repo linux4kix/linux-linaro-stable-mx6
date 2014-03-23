@@ -24,10 +24,6 @@
  * Power Management:
  */
 
-static void bs_init(struct msm_gpu *gpu) {}
-static void bs_fini(struct msm_gpu *gpu) {}
-static void bs_set(struct msm_gpu *gpu, int idx) {}
-
 static int enable_pwrrail(struct msm_gpu *gpu)
 {
 	struct drm_device *dev = gpu->dev;
@@ -111,8 +107,6 @@ static int enable_axi(struct msm_gpu *gpu)
 {
 	if (gpu->ebi1_clk)
 		clk_prepare_enable(gpu->ebi1_clk);
-	if (gpu->bus_freq)
-		bs_set(gpu, gpu->bus_freq);
 	return 0;
 }
 
@@ -120,8 +114,6 @@ static int disable_axi(struct msm_gpu *gpu)
 {
 	if (gpu->ebi1_clk)
 		clk_disable_unprepare(gpu->ebi1_clk);
-	if (gpu->bus_freq)
-		bs_set(gpu, 0);
 	return 0;
 }
 
@@ -415,8 +407,6 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 		goto fail;
 	}
 
-	bs_init(gpu);
-
 	return 0;
 
 fail:
@@ -428,8 +418,6 @@ void msm_gpu_cleanup(struct msm_gpu *gpu)
 	DBG("%s", gpu->name);
 
 	WARN_ON(!list_empty(&gpu->active_list));
-
-	bs_fini(gpu);
 
 	if (gpu->rb) {
 		if (gpu->rb_iova)
