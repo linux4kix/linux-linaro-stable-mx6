@@ -5,7 +5,6 @@ endif
 
 vivante-y := \
 	adreno/adreno_gpu.o \
-	adreno/a3xx_gpu.o \
 	msm_drv.o \
 	msm_gem.o \
 	msm_gem_prime.o \
