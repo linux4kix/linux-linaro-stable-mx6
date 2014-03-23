@@ -98,9 +98,6 @@ static int msm_unload(struct drm_device *dev)
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_gpu *gpu = priv->gpu;
 
-	drm_mode_config_cleanup(dev);
-	drm_vblank_cleanup(dev);
-
 	pm_runtime_get_sync(dev->dev);
 	drm_irq_uninstall(dev);
 	pm_runtime_put_sync(dev->dev);
@@ -149,8 +146,6 @@ static int msm_load(struct drm_device *dev, unsigned long flags)
 
 	INIT_LIST_HEAD(&priv->inactive_list);
 	INIT_LIST_HEAD(&priv->fence_cbs);
-
-	drm_mode_config_init(dev);
 
 	/* if we have no IOMMU, then we need to use carveout allocator.
 	 * Grab the entire CMA chunk carved out in early startup in
