@@ -628,8 +628,8 @@ static struct platform_driver msm_platform_driver = {
 	.driver     = {
 		.owner  = THIS_MODULE,
 		.name   = "msm",
-		.of_match_table = dt_match,
-		.pm     = &msm_pm_ops,
+		/*.of_match_table = dt_match,*/
+		/*.pm     = &msm_pm_ops,*/
 	},
 	.id_table   = msm_id,
 };
@@ -640,7 +640,7 @@ static int __init msm_drm_register(void)
 	a3xx_register();
 	return platform_driver_register(&msm_platform_driver);
 }
-a
+
 static void __exit msm_drm_unregister(void)
 {
 	DBG("fini");
