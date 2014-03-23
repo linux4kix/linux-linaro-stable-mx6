@@ -169,8 +169,8 @@ void msm_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m);
 
 void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
 		const char *dbgname);
-void msm_writel(u32 data, void __iomem *addr);
-u32 msm_readl(const void __iomem *addr);
+void vivante_writel(u32 data, void __iomem *addr);
+u32 vivante_readl(const void __iomem *addr);
 
 #define DBG(fmt, ...) DRM_DEBUG(fmt"\n", ##__VA_ARGS__)
 #define VERB(fmt, ...) if (0) DRM_DEBUG(fmt"\n", ##__VA_ARGS__)

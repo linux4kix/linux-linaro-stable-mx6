@@ -74,14 +74,14 @@ void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
 	return ptr;
 }
 
-void msm_writel(u32 data, void __iomem *addr)
+void vivante_writel(u32 data, void __iomem *addr)
 {
 	if (reglog)
 		printk(KERN_DEBUG "IO:W %08x %08x\n", (u32)addr, data);
 	writel(data, addr);
 }
 
-u32 msm_readl(const void __iomem *addr)
+u32 vivante_readl(const void __iomem *addr)
 {
 	u32 val = readl(addr);
 	if (reglog)
@@ -631,5 +631,5 @@ static struct platform_driver vivante_platform_driver = {
 module_platform_driver(vivante_platform_driver);
 
 MODULE_AUTHOR("Rob Clark <robdclark@gmail.com");
-MODULE_DESCRIPTION("MSM DRM Driver");
+MODULE_DESCRIPTION("Vivante DRM Driver");
 MODULE_LICENSE("GPL");
