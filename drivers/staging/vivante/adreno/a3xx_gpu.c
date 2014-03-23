@@ -620,6 +620,7 @@ static int a3xx_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#if 0
 static const struct of_device_id dt_match[] = {
 	{ .compatible = "qcom,kgsl-3d0" },
 	{}
@@ -644,3 +645,4 @@ void __exit a3xx_unregister(void)
 {
 	platform_driver_unregister(&a3xx_driver);
 }
+#endif
