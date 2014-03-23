@@ -18,13 +18,6 @@
 #include "msm_drv.h"
 #include "msm_gpu.h"
 
-static void msm_fb_output_poll_changed(struct drm_device *dev)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	if (priv->fbdev)
-		drm_fb_helper_hotplug_event(priv->fbdev);
-}
-
 int msm_register_mmu(struct drm_device *dev, struct msm_mmu *mmu)
 {
 	struct msm_drm_private *priv = dev->dev_private;
@@ -272,16 +265,6 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
 	kfree(ctx);
 }
 
-static void msm_lastclose(struct drm_device *dev)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	if (priv->fbdev) {
-		drm_modeset_lock_all(dev);
-		drm_fb_helper_restore_fbdev_mode(priv->fbdev);
-		drm_modeset_unlock_all(dev);
-	}
-}
-
 /*
  * DRM debugfs:
  */
@@ -321,30 +304,6 @@ static int msm_mm_show(struct drm_device *dev, struct seq_file *m)
 	return drm_mm_dump_table(m, &dev->vma_offset_manager->vm_addr_space_mm);
 }
 
-static int msm_fb_show(struct drm_device *dev, struct seq_file *m)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct drm_framebuffer *fb, *fbdev_fb = NULL;
-
-	if (priv->fbdev) {
-		seq_printf(m, "fbcon ");
-		fbdev_fb = priv->fbdev->fb;
-		msm_framebuffer_describe(fbdev_fb, m);
-	}
-
-	mutex_lock(&dev->mode_config.fb_lock);
-	list_for_each_entry(fb, &dev->mode_config.fb_list, head) {
-		if (fb == fbdev_fb)
-			continue;
-
-		seq_printf(m, "user ");
-		msm_framebuffer_describe(fb, m);
-	}
-	mutex_unlock(&dev->mode_config.fb_lock);
-
-	return 0;
-}
-
 static int show_locked(struct seq_file *m, void *arg)
 {
 	struct drm_info_node *node = (struct drm_info_node *) m->private;
@@ -368,7 +327,6 @@ static struct drm_info_list msm_debugfs_list[] = {
 		{"gpu", show_locked, 0, msm_gpu_show},
 		{"gem", show_locked, 0, msm_gem_show},
 		{ "mm", show_locked, 0, msm_mm_show },
-		{ "fb", show_locked, 0, msm_fb_show },
 };
 
 static int msm_debugfs_init(struct drm_minor *minor)
@@ -613,7 +571,6 @@ static struct drm_driver msm_driver = {
 	.unload             = msm_unload,
 	.open               = msm_open,
 	.preclose           = msm_preclose,
-	.lastclose          = msm_lastclose,
 	.gem_free_object    = msm_gem_free_object,
 	.gem_vm_ops         = &vm_ops,
 	.dumb_create        = msm_gem_dumb_create,

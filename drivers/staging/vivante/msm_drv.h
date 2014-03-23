@@ -70,8 +70,6 @@ struct msm_drm_private {
 	struct msm_gpu *gpu;
 	struct msm_file_private *lastctx;
 
-	struct drm_fb_helper *fbdev;
-
 	uint32_t next_fence, completed_fence;
 	wait_queue_head_t fence_event;
 
@@ -86,21 +84,6 @@ struct msm_drm_private {
 	/* registered MMUs: */
 	unsigned int num_mmus;
 	struct msm_mmu *mmus[NUM_DOMAINS];
-
-	unsigned int num_planes;
-	struct drm_plane *planes[8];
-
-	unsigned int num_crtcs;
-	struct drm_crtc *crtcs[8];
-
-	unsigned int num_encoders;
-	struct drm_encoder *encoders[8];
-
-	unsigned int num_bridges;
-	struct drm_bridge *bridges[8];
-
-	unsigned int num_connectors;
-	struct drm_connector *connectors[8];
 
 	/* VRAM carveout, used when no IOMMU: */
 	struct {
