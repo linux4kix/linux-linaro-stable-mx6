@@ -93,7 +93,7 @@ u32 msm_readl(const void __iomem *addr)
  * DRM operations:
  */
 
-static int msm_unload(struct drm_device *dev)
+static int vivante_unload(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_gpu *gpu = priv->gpu;
@@ -127,7 +127,7 @@ static int msm_unload(struct drm_device *dev)
 	return 0;
 }
 
-static int msm_load(struct drm_device *dev, unsigned long flags)
+static int vivante_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
 	struct msm_drm_private *priv;
@@ -194,7 +194,7 @@ static int msm_load(struct drm_device *dev, unsigned long flags)
 	return 0;
 
 fail:
-	msm_unload(dev);
+	vivante_unload(dev);
 	return ret;
 }
 
@@ -562,8 +562,8 @@ static struct drm_driver vivante_driver = {
 				DRIVER_GEM |
 				DRIVER_PRIME |
 				DRIVER_RENDER,
-	.load               = msm_load,
-	.unload             = msm_unload,
+	.load               = vivante_load,
+	.unload             = vivante_unload,
 	.open               = msm_open,
 	.preclose           = msm_preclose,
 	.gem_free_object    = msm_gem_free_object,
