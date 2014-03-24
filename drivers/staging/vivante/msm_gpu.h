@@ -83,7 +83,7 @@ struct msm_gpu {
 
 	/* Power Control: */
 	struct regulator *gpu_reg, *gpu_cx;
-	struct clk *ebi1_clk, *grp_clks[5];
+	struct clk *grp_clks[6];
 	uint32_t fast_rate, slow_rate, bus_freq;
 
 	/* Hang Detction: */

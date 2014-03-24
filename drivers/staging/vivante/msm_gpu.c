@@ -309,7 +309,7 @@ static irqreturn_t irq_handler(int irq, void *data)
 }
 
 static const char *clk_names[] = {
-		"src_clk", "core_clk", "iface_clk", "mem_clk", "mem_iface_clk",
+		"gpu3d_core", "gpu3d_shader", "gpu3d_axi", "gpu2d", "gpu2d_axi", "openvg_axi",
 };
 
 int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
