@@ -17,6 +17,7 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
+#include <linux/of_device.h>
 #include <sound/soc.h>
 #include <sound/pcm.h>
 #include <sound/initval.h>
@@ -53,12 +54,18 @@ static int spdif_dit_remove(struct platform_device *pdev)
 	return 0;
 }
 
+static const struct of_device_id spdif_dit_dt_ids[] = {
+	{ .compatible = "linux,spdif-dit"},
+	{ }
+};
+
 static struct platform_driver spdif_dit_driver = {
 	.probe		= spdif_dit_probe,
 	.remove		= spdif_dit_remove,
 	.driver		= {
 		.name	= DRV_NAME,
 		.owner	= THIS_MODULE,
+		.of_match_table = spdif_dit_dt_ids,
 	},
 };
 
