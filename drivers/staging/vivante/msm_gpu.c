@@ -333,7 +333,7 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	BUG_ON(ARRAY_SIZE(clk_names) != ARRAY_SIZE(gpu->grp_clks));
 
 	/* Map registers: */
-	gpu->mmio = msm_ioremap(pdev, ioname, name);
+	gpu->mmio = vivante_ioremap(pdev, ioname, name);
 	if (IS_ERR(gpu->mmio)) {
 		ret = PTR_ERR(gpu->mmio);
 		goto fail;

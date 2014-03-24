@@ -167,7 +167,7 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m);
 void msm_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m);
 #endif
 
-void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
+void __iomem *vivante_ioremap(struct platform_device *pdev, const char *name,
 		const char *dbgname);
 void vivante_writel(u32 data, void __iomem *addr);
 u32 vivante_readl(const void __iomem *addr);

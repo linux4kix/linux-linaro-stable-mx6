@@ -43,7 +43,7 @@ static char *vram;
 MODULE_PARM_DESC(vram, "Configure VRAM size (for devices without IOMMU/GPUMMU");
 module_param(vram, charp, 0);
 
-void __iomem *msm_ioremap(struct platform_device *pdev, const char *name,
+void __iomem *vivante_ioremap(struct platform_device *pdev, const char *name,
 		const char *dbgname)
 {
 	struct resource *res;
