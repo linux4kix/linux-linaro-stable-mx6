@@ -19,34 +19,6 @@
 #include "msm_gem.h"
 #include "msm_mmu.h"
 
-struct adreno_info {
-	struct adreno_rev rev;
-	uint32_t revn;
-	const char *name;
-	uint32_t gmem;
-};
-
-#define ANY_ID 0xff
-
-static const struct adreno_info gpulist[] = {
-	{
-		.rev   = ADRENO_REV(3, 0, 5, ANY_ID),
-		.revn  = 305,
-		.name  = "A305",
-		.gmem  = SZ_256K,
-	}, {
-		.rev   = ADRENO_REV(3, 2, ANY_ID, ANY_ID),
-		.revn  = 320,
-		.name  = "A320",
-		.gmem  = SZ_512K,
-	}, {
-		.rev   = ADRENO_REV(3, 3, 0, ANY_ID),
-		.revn  = 330,
-		.name  = "A330",
-		.gmem  = SZ_1M,
-	},
-};
-
 #define RB_SIZE    SZ_32K
 #define RB_BLKSIZE 16
 
@@ -282,25 +254,6 @@ int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 {
 	struct msm_mmu *mmu;
 	int i, ret;
-
-	/* identify gpu: */
-	for (i = 0; i < ARRAY_SIZE(gpulist); i++) {
-		const struct adreno_info *info = &gpulist[i];
-		if (_rev_match(info->rev.core, rev.core) &&
-				_rev_match(info->rev.major, rev.major) &&
-				_rev_match(info->rev.minor, rev.minor) &&
-				_rev_match(info->rev.patchid, rev.patchid)) {
-			gpu->info = info;
-			gpu->revn = info->revn;
-			break;
-		}
-	}
-
-	if (i == ARRAY_SIZE(gpulist)) {
-		dev_err(drm->dev, "Unknown GPU revision: %u.%u.%u.%u\n",
-				rev.core, rev.major, rev.minor, rev.patchid);
-		return -ENXIO;
-	}
 
 	DBG("Found GPU: %s (%u.%u.%u.%u)", gpu->info->name,
 			rev.core, rev.major, rev.minor, rev.patchid);
