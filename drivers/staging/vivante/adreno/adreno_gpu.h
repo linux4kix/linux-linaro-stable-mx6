@@ -55,9 +55,6 @@ struct adreno_gpu {
 	uint32_t revn;  /* numeric revision name */
 	const struct adreno_gpu_funcs *funcs;
 
-	/* firmware: */
-	const struct firmware *pm4, *pfp;
-
 	/* ringbuffer rptr/wptr: */
 	// TODO should this be in msm_ringbuffer?  I think it would be
 	// different for z180..

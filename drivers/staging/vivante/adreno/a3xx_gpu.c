@@ -239,33 +239,6 @@ static int a3xx_hw_init(struct msm_gpu *gpu)
 	/* VBIF registers */
 	gpu_write(gpu, REG_A3XX_CP_PROTECT(12), 0x6b00c000);
 
-	/* NOTE: PM4/micro-engine firmware registers look to be the same
-	 * for a2xx and a3xx.. we could possibly push that part down to
-	 * adreno_gpu base class.  Or push both PM4 and PFP but
-	 * parameterize the pfp ucode addr/data registers..
-	 */
-
-	/* Load PM4: */
-	ptr = (uint32_t *)(adreno_gpu->pm4->data);
-	len = adreno_gpu->pm4->size / 4;
-	DBG("loading PM4 ucode version: %x", ptr[1]);
-
-	gpu_write(gpu, REG_AXXX_CP_DEBUG,
-			AXXX_CP_DEBUG_DYNAMIC_CLK_DISABLE |
-			AXXX_CP_DEBUG_MIU_128BIT_WRITE_ENABLE);
-	gpu_write(gpu, REG_AXXX_CP_ME_RAM_WADDR, 0);
-	for (i = 1; i < len; i++)
-		gpu_write(gpu, REG_AXXX_CP_ME_RAM_DATA, ptr[i]);
-
-	/* Load PFP: */
-	ptr = (uint32_t *)(adreno_gpu->pfp->data);
-	len = adreno_gpu->pfp->size / 4;
-	DBG("loading PFP ucode version: %x", ptr[5]);
-
-	gpu_write(gpu, REG_A3XX_CP_PFP_UCODE_ADDR, 0);
-	for (i = 1; i < len; i++)
-		gpu_write(gpu, REG_A3XX_CP_PFP_UCODE_DATA, ptr[i]);
-
 	/* CP ROQ queue sizes (bytes) - RB:16, ST:16, IB1:32, IB2:64 */
 	if (adreno_is_a305(adreno_gpu) || adreno_is_a320(adreno_gpu)) {
 		gpu_write(gpu, REG_AXXX_CP_QUEUE_THRESHOLDS,

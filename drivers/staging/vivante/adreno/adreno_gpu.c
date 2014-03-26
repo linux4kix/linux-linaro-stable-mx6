@@ -23,7 +23,6 @@ struct adreno_info {
 	struct adreno_rev rev;
 	uint32_t revn;
 	const char *name;
-	const char *pm4fw, *pfpfw;
 	uint32_t gmem;
 };
 
@@ -34,30 +33,19 @@ static const struct adreno_info gpulist[] = {
 		.rev   = ADRENO_REV(3, 0, 5, ANY_ID),
 		.revn  = 305,
 		.name  = "A305",
-		.pm4fw = "a300_pm4.fw",
-		.pfpfw = "a300_pfp.fw",
 		.gmem  = SZ_256K,
 	}, {
 		.rev   = ADRENO_REV(3, 2, ANY_ID, ANY_ID),
 		.revn  = 320,
 		.name  = "A320",
-		.pm4fw = "a300_pm4.fw",
-		.pfpfw = "a300_pfp.fw",
 		.gmem  = SZ_512K,
 	}, {
 		.rev   = ADRENO_REV(3, 3, 0, ANY_ID),
 		.revn  = 330,
 		.name  = "A330",
-		.pm4fw = "a330_pm4.fw",
-		.pfpfw = "a330_pfp.fw",
 		.gmem  = SZ_1M,
 	},
 };
-
-MODULE_FIRMWARE("a300_pm4.fw");
-MODULE_FIRMWARE("a300_pfp.fw");
-MODULE_FIRMWARE("a330_pm4.fw");
-MODULE_FIRMWARE("a330_pfp.fw");
 
 #define RB_SIZE    SZ_32K
 #define RB_BLKSIZE 16
@@ -321,20 +309,6 @@ int adreno_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	gpu->gmem = gpu->info->gmem;
 	gpu->rev = rev;
 
-	ret = request_firmware(&gpu->pm4, gpu->info->pm4fw, drm->dev);
-	if (ret) {
-		dev_err(drm->dev, "failed to load %s PM4 firmware: %d\n",
-				gpu->info->pm4fw, ret);
-		return ret;
-	}
-
-	ret = request_firmware(&gpu->pfp, gpu->info->pfpfw, drm->dev);
-	if (ret) {
-		dev_err(drm->dev, "failed to load %s PFP firmware: %d\n",
-				gpu->info->pfpfw, ret);
-		return ret;
-	}
-
 	ret = msm_gpu_init(drm, pdev, &gpu->base, &funcs->base,
 			gpu->info->name, "kgsl_3d0_reg_memory", "kgsl_3d0_irq",
 			RB_SIZE);
@@ -381,9 +355,5 @@ void adreno_gpu_cleanup(struct adreno_gpu *gpu)
 			msm_gem_put_iova(gpu->memptrs_bo, gpu->base.id);
 		drm_gem_object_unreference(gpu->memptrs_bo);
 	}
-	if (gpu->pm4)
-		release_firmware(gpu->pm4);
-	if (gpu->pfp)
-		release_firmware(gpu->pfp);
 	msm_gpu_cleanup(&gpu->base);
 }
