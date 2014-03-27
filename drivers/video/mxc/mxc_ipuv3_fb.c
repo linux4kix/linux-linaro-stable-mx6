@@ -2345,7 +2345,6 @@ static int mxcfb_probe(struct platform_device *pdev)
 	struct fb_info *fbi;
 	struct mxcfb_info *mxcfbi;
 	struct resource *res;
-	char *fix = kmalloc(11, GFP_KERNEL);
 	int ret = 0;
 
 	dev_dbg(&pdev->dev, "%s enter\n", __func__);
@@ -2354,11 +2353,6 @@ static int mxcfb_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "can not get alias id\n");
 		return pdev->id;
 	}
-
-	strlcpy(fix, pdev->name, 11);
-	pr_info("FB name %s\n", pdev->name);
-	pr_info("FB name %s\n", fix);
-	pdev->name = fix;
 
 	plat_data = devm_kzalloc(&pdev->dev, sizeof(struct
 					ipuv3_fb_platform_data), GFP_KERNEL);
