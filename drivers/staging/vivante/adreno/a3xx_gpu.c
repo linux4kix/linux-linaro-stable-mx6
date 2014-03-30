@@ -15,10 +15,6 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef CONFIG_MSM_OCMEM
-#  include <mach/ocmem.h>
-#endif
-
 #include "a3xx_gpu.h"
 
 #define A3XX_INT0_MASK \
@@ -194,12 +190,6 @@ static int a3xx_hw_init(struct msm_gpu *gpu)
 	else if (adreno_is_a330(adreno_gpu))
 		gpu_write(gpu, REG_A3XX_RBBM_GPR0_CTL, 0x00000000);
 
-	/* Set the OCMEM base address for A330, etc */
-	if (a3xx_gpu->ocmem_hdl) {
-		gpu_write(gpu, REG_A3XX_RB_GMEM_BASE_ADDR,
-			(unsigned int)(a3xx_gpu->ocmem_base >> 14));
-	}
-
 	/* Turn on performance counters: */
 	gpu_write(gpu, REG_A3XX_RBBM_PERFCTR_CTL, 0x01);
 
@@ -278,11 +268,6 @@ static void a3xx_destroy(struct msm_gpu *gpu)
 	DBG("%s", gpu->name);
 
 	adreno_gpu_cleanup(adreno_gpu);
-
-#ifdef CONFIG_MSM_OCMEM
-	if (a3xx_gpu->ocmem_base)
-		ocmem_free(OCMEM_GRAPHICS, a3xx_gpu->ocmem_hdl);
-#endif
 
 	put_device(&a3xx_gpu->pdev->dev);
 	kfree(a3xx_gpu);
@@ -446,21 +431,6 @@ struct msm_gpu *a3xx_gpu_init(struct drm_device *dev)
 	ret = adreno_gpu_init(dev, pdev, adreno_gpu, &funcs, config->rev);
 	if (ret)
 		goto fail;
-
-	/* if needed, allocate gmem: */
-	if (adreno_is_a330(adreno_gpu)) {
-#ifdef CONFIG_MSM_OCMEM
-		/* TODO this is different/missing upstream: */
-		struct ocmem_buf *ocmem_hdl =
-				ocmem_allocate(OCMEM_GRAPHICS, adreno_gpu->gmem);
-
-		a3xx_gpu->ocmem_hdl = ocmem_hdl;
-		a3xx_gpu->ocmem_base = ocmem_hdl->addr;
-		adreno_gpu->gmem = ocmem_hdl->len;
-		DBG("using %dK of OCMEM at 0x%08x", adreno_gpu->gmem / 1024,
-				a3xx_gpu->ocmem_base);
-#endif
-	}
 
 	if (!gpu->mmu) {
 		/* TODO we think it is possible to configure the GPU to
