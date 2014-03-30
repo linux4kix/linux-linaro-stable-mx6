@@ -127,6 +127,37 @@ static int vivante_unload(struct drm_device *dev)
 	return 0;
 }
 
+static void load_gpu(struct drm_device *dev)
+{
+	struct msm_drm_private *priv = dev->dev_private;
+	struct msm_gpu *gpu;
+
+	if (priv->gpu)
+		return;
+
+	mutex_lock(&dev->struct_mutex);
+	gpu = a3xx_gpu_init(dev);
+	if (IS_ERR(gpu)) {
+		dev_warn(dev->dev, "failed to load a3xx gpu\n");
+		gpu = NULL;
+		/* not fatal */
+	}
+	mutex_unlock(&dev->struct_mutex);
+
+	if (gpu) {
+		int ret;
+		gpu->funcs->pm_resume(gpu);
+		ret = gpu->funcs->hw_init(gpu);
+		if (ret) {
+			dev_err(dev->dev, "gpu hw init failed: %d\n", ret);
+			gpu->funcs->destroy(gpu);
+			gpu = NULL;
+		}
+	}
+
+	priv->gpu = gpu;
+}
+
 static int vivante_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
@@ -191,6 +222,9 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	}
 
 	platform_set_drvdata(pdev, dev);
+
+	load_gpu(dev);
+
 	return 0;
 
 fail:
@@ -198,45 +232,10 @@ fail:
 	return ret;
 }
 
-static void load_gpu(struct drm_device *dev)
-{
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu;
-
-	if (priv->gpu)
-		return;
-
-	mutex_lock(&dev->struct_mutex);
-	gpu = a3xx_gpu_init(dev);
-	if (IS_ERR(gpu)) {
-		dev_warn(dev->dev, "failed to load a3xx gpu\n");
-		gpu = NULL;
-		/* not fatal */
-	}
-	mutex_unlock(&dev->struct_mutex);
-
-	if (gpu) {
-		int ret;
-		gpu->funcs->pm_resume(gpu);
-		ret = gpu->funcs->hw_init(gpu);
-		if (ret) {
-			dev_err(dev->dev, "gpu hw init failed: %d\n", ret);
-			gpu->funcs->destroy(gpu);
-			gpu = NULL;
-		}
-	}
-
-	priv->gpu = gpu;
-}
 
 static int msm_open(struct drm_device *dev, struct drm_file *file)
 {
 	struct msm_file_private *ctx;
-
-	/* For now, load gpu on open.. to avoid the requirement of having
-	 * firmware in the initrd.
-	 */
-	load_gpu(dev);
 
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
