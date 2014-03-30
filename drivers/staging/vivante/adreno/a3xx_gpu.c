@@ -462,7 +462,6 @@ fail:
 static int a3xx_probe(struct platform_device *pdev)
 {
 	static struct adreno_platform_config config = {};
-#ifdef CONFIG_OF
 	struct device_node *child, *node = pdev->dev.of_node;
 	u32 val;
 	int ret;
@@ -498,51 +497,6 @@ static int a3xx_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "could not find clk rates\n");
 		return -ENXIO;
 	}
-
-#else
-	struct kgsl_device_platform_data *pdata = pdev->dev.platform_data;
-	uint32_t version = socinfo_get_version();
-	if (cpu_is_apq8064ab()) {
-		config.fast_rate = 450000000;
-		config.slow_rate = 27000000;
-		config.bus_freq  = 4;
-		config.rev = ADRENO_REV(3, 2, 1, 0);
-	} else if (cpu_is_apq8064()) {
-		config.fast_rate = 400000000;
-		config.slow_rate = 27000000;
-		config.bus_freq  = 4;
-
-		if (SOCINFO_VERSION_MAJOR(version) == 2)
-			config.rev = ADRENO_REV(3, 2, 0, 2);
-		else if ((SOCINFO_VERSION_MAJOR(version) == 1) &&
-				(SOCINFO_VERSION_MINOR(version) == 1))
-			config.rev = ADRENO_REV(3, 2, 0, 1);
-		else
-			config.rev = ADRENO_REV(3, 2, 0, 0);
-
-	} else if (cpu_is_msm8960ab()) {
-		config.fast_rate = 400000000;
-		config.slow_rate = 320000000;
-		config.bus_freq  = 4;
-
-		if (SOCINFO_VERSION_MINOR(version) == 0)
-			config.rev = ADRENO_REV(3, 2, 1, 0);
-		else
-			config.rev = ADRENO_REV(3, 2, 1, 1);
-
-	} else if (cpu_is_msm8930()) {
-		config.fast_rate = 400000000;
-		config.slow_rate = 27000000;
-		config.bus_freq  = 3;
-
-		if ((SOCINFO_VERSION_MAJOR(version) == 1) &&
-			(SOCINFO_VERSION_MINOR(version) == 2))
-			config.rev = ADRENO_REV(3, 0, 5, 2);
-		else
-			config.rev = ADRENO_REV(3, 0, 5, 0);
-
-	}
-#endif
 	pdev->dev.platform_data = &config;
 	a3xx_pdev = pdev;
 	return 0;
