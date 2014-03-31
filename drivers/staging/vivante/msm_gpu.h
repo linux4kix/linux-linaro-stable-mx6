@@ -40,7 +40,7 @@ struct msm_gem_submit;
  *      + a2xx_gpu
  *    + z180_gpu
  */
-struct msm_gpu_funcs {
+struct vivante_gpu_funcs {
 	int (*get_param)(struct msm_gpu *gpu, uint32_t param, uint64_t *value);
 	int (*hw_init)(struct msm_gpu *gpu);
 	int (*pm_suspend)(struct msm_gpu *gpu);
@@ -62,7 +62,7 @@ struct msm_gpu_funcs {
 struct msm_gpu {
 	const char *name;
 	struct drm_device *dev;
-	const struct msm_gpu_funcs *funcs;
+	const struct vivante_gpu_funcs *funcs;
 
 	struct msm_ringbuffer *rb;
 	uint32_t rb_iova;
@@ -112,7 +112,7 @@ int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
 		struct msm_file_private *ctx);
 
 int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
-		struct msm_gpu *gpu, const struct msm_gpu_funcs *funcs,
+		struct msm_gpu *gpu, const struct vivante_gpu_funcs *funcs,
 		const char *name, const char *ioname, const char *irqname, int ringsz);
 void msm_gpu_cleanup(struct msm_gpu *gpu);
 

@@ -313,7 +313,7 @@ static const char *clk_names[] = {
 };
 
 int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
-		struct msm_gpu *gpu, const struct msm_gpu_funcs *funcs,
+		struct msm_gpu *gpu, const struct vivante_gpu_funcs *funcs,
 		const char *name, const char *ioname, const char *irqname, int ringsz)
 {
 	struct iommu_domain *iommu;
