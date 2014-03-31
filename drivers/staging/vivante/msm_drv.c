@@ -355,7 +355,7 @@ static void msm_debugfs_cleanup(struct drm_minor *minor)
 /*
  * Fences:
  */
-
+#if 0
 int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout)
 {
@@ -530,8 +530,9 @@ static int msm_ioctl_wait_fence(struct drm_device *dev, void *data,
 	struct drm_msm_wait_fence *args = data;
 	return msm_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
 }
-
+#endif
 static const struct drm_ioctl_desc vivante_ioctls[] = {
+#if 0
 	DRM_IOCTL_DEF_DRV(MSM_GET_PARAM,    msm_ioctl_get_param,    DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_NEW,      msm_ioctl_gem_new,      DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_INFO,     msm_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
@@ -539,6 +540,7 @@ static const struct drm_ioctl_desc vivante_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_FINI, msm_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_SUBMIT,   msm_ioctl_gem_submit,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_WAIT_FENCE,   msm_ioctl_wait_fence,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+#endif
 };
 
 static const struct vm_operations_struct vm_ops = {
