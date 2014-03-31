@@ -4,7 +4,6 @@ ifeq (, $(findstring -W,$(EXTRA_CFLAGS)))
 endif
 
 vivante-y := \
-	adreno/adreno_gpu.o \
 	msm_drv.o \
 	msm_gem.o \
 	msm_gem_prime.o \
