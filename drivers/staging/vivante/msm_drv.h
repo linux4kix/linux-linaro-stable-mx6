@@ -58,6 +58,11 @@ struct msm_file_private {
 	int dummy;
 };
 
+enum GPU_PART {
+	GPU_2D = 0,
+	GPU_3D,
+	GPU_VG
+};
 #define MAX_GPU_PARTS 3
 
 struct msm_drm_private {
