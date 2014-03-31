@@ -96,6 +96,7 @@ u32 vivante_readl(const void __iomem *addr)
 static int vivante_unload(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
+	unsigned int i;
 
 	pm_runtime_get_sync(dev->dev);
 	drm_irq_uninstall(dev);
@@ -104,7 +105,7 @@ static int vivante_unload(struct drm_device *dev)
 	flush_workqueue(priv->wq);
 	destroy_workqueue(priv->wq);
 
-	for (unsigned int i = 0; i < MAX_GPU_PARTS; i++) {
+	for (i = 0; i < MAX_GPU_PARTS; i++) {
 		struct msm_gpu *gpu = priv->gpu[i];
 		if (gpu) {
 			mutex_lock(&dev->struct_mutex);
@@ -133,6 +134,7 @@ static void load_gpu(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_gpu *gpu[MAX_GPU_PARTS];
+	unsigned int i;
 
 	mutex_lock(&dev->struct_mutex);
 
@@ -142,7 +144,7 @@ static void load_gpu(struct drm_device *dev)
 
 	mutex_unlock(&dev->struct_mutex);
 
-	for (unsigned int i = 0; i < MAX_GPU_PARTS; i++) {
+	for (i = 0; i < MAX_GPU_PARTS; i++) {
 		struct msm_gpu *g = priv->gpu[i];
 		if (g) {
 			int ret;
