@@ -130,32 +130,33 @@ static int vivante_unload(struct drm_device *dev)
 static void load_gpu(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu;
-
-	if (priv->gpu)
-		return;
+	struct msm_gpu *gpu[MAX_GPU_PARTS];
 
 	mutex_lock(&dev->struct_mutex);
-	gpu = a3xx_gpu_init(dev);
-	if (IS_ERR(gpu)) {
-		dev_warn(dev->dev, "failed to load a3xx gpu\n");
-		gpu = NULL;
-		/* not fatal */
-	}
+
+	gpu[GPU_2D] = NULL;
+	gpu[GPU_3D] = vivante_gpu_3d_init(dev);
+	gpu[GPU_VG] = NULL;
+
 	mutex_unlock(&dev->struct_mutex);
 
-	if (gpu) {
-		int ret;
-		gpu->funcs->pm_resume(gpu);
-		ret = gpu->funcs->hw_init(gpu);
-		if (ret) {
-			dev_err(dev->dev, "gpu hw init failed: %d\n", ret);
-			gpu->funcs->destroy(gpu);
-			gpu = NULL;
+	for (unsigned int i = 0; i < MAX_GPU_PARTS; i++) {
+		struct msm_gpu *g = priv->gpu[i];
+		if (g) {
+			int ret;
+			g->funcs->pm_resume(g);
+			ret = g->funcs->hw_init(g);
+			if (ret) {
+				dev_err(dev->dev, "%s hw init failed: %d\n", g->name, ret);
+				g->funcs->destroy(g);
+				g = NULL;
+			}
 		}
 	}
 
-	priv->gpu = gpu;
+	priv->gpu[GPU_2D] = gpu[GPU_2D];
+	priv->gpu[GPU_3D] = gpu[GPU_3D];
+	priv->gpu[GPU_VG] = gpu[GPU_VG];
 }
 
 static int vivante_load(struct drm_device *dev, unsigned long flags)
