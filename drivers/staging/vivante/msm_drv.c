@@ -130,6 +130,11 @@ static int vivante_unload(struct drm_device *dev)
 	return 0;
 }
 
+static struct msm_gpu *vivante_gpu_3d_init(struct drm_device *dev)
+{
+	return NULL;
+}
+
 static void load_gpu(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
