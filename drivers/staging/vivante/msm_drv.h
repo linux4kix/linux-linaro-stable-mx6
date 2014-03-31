@@ -58,10 +58,10 @@ struct msm_file_private {
 	int dummy;
 };
 
-struct msm_drm_private {
+#define MAX_GPU_PARTS 3
 
-	/* when we have more than one 'msm_gpu' these need to be an array: */
-	struct msm_gpu *gpu;
+struct msm_drm_private {
+	struct msm_gpu *gpu[MAX_GPU_PARTS];
 	struct msm_file_private *lastctx;
 
 	uint32_t next_fence, completed_fence;
