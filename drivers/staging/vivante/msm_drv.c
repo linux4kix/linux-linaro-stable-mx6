@@ -269,6 +269,7 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
  */
 
 #ifdef CONFIG_DEBUG_FS
+#if 0
 static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
@@ -297,7 +298,7 @@ static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
 
 	return 0;
 }
-
+#endif
 static int msm_mm_show(struct drm_device *dev, struct seq_file *m)
 {
 	return drm_mm_dump_table(m, &dev->vma_offset_manager->vm_addr_space_mm);
@@ -323,8 +324,10 @@ static int show_locked(struct seq_file *m, void *arg)
 }
 
 static struct drm_info_list msm_debugfs_list[] = {
+#if 0
 		{"gpu", show_locked, 0, msm_gpu_show},
 		{"gem", show_locked, 0, msm_gem_show},
+#endif
 		{ "mm", show_locked, 0, msm_mm_show },
 };
 
