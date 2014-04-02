@@ -105,7 +105,7 @@ static int vivante_unload(struct drm_device *dev)
 	flush_workqueue(priv->wq);
 	destroy_workqueue(priv->wq);
 
-	for (i = 0; i < MAX_GPU_PARTS; i++) {
+	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
 		struct msm_gpu *gpu = priv->gpu[i];
 		if (gpu) {
 			mutex_lock(&dev->struct_mutex);
@@ -143,9 +143,9 @@ static void load_gpu(struct drm_device *dev)
 
 	mutex_lock(&dev->struct_mutex);
 
-	gpu[GPU_2D] = NULL;
-	gpu[GPU_3D] = vivante_gpu_3d_init(dev);
-	gpu[GPU_VG] = NULL;
+	gpu[VIVANTE_PIPE_2D] = NULL;
+	gpu[VIVANTE_PIPE_3D] = vivante_gpu_3d_init(dev);
+	gpu[VIVANTE_PIPE_VG] = NULL;
 
 	mutex_unlock(&dev->struct_mutex);
 
@@ -163,9 +163,9 @@ static void load_gpu(struct drm_device *dev)
 		}
 	}
 
-	priv->gpu[GPU_2D] = gpu[GPU_2D];
-	priv->gpu[GPU_3D] = gpu[GPU_3D];
-	priv->gpu[GPU_VG] = gpu[GPU_VG];
+	priv->gpu[VIVANTE_PIPE_2D] = gpu[VIVANTE_PIPE_2D];
+	priv->gpu[VIVANTE_PIPE_3D] = gpu[VIVANTE_PIPE_3D];
+	priv->gpu[VIVANTE_PIPE_VG] = gpu[VIVANTE_PIPE_VG];
 }
 
 static int vivante_load(struct drm_device *dev, unsigned long flags)
