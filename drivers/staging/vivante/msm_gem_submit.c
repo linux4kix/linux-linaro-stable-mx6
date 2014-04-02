@@ -329,13 +329,12 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 	unsigned i;
 	int ret;
 
-	/* for now, we just have 3d pipe.. eventually this would need to
-	 * be more clever to dispatch to appropriate gpu module:
-	 */
-	if (args->pipe != MSM_PIPE_3D0)
+	if (args->pipe > VIVANTE_PIPE_VG)
 		return -EINVAL;
 
-	gpu = priv->gpu;
+	gpu = priv->gpu[args->pipe];
+	if (!gpu)
+		return -ENXIO;
 
 	if (args->nr_cmds > MAX_CMDS)
 		return -EINVAL;
