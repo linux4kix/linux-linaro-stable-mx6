@@ -52,8 +52,8 @@ struct drm_msm_timespec {
 #define MSM_PARAM_GPU_ID     0x01
 #define MSM_PARAM_GMEM_SIZE  0x02
 
-struct drm_msm_param {
-	uint32_t pipe;           /* in, MSM_PIPE_x */
+struct drm_vivante_param {
+	uint32_t pipe;           /* in, VIVANTE_PIPE_x */
 	uint32_t param;          /* in, MSM_PARAM_x */
 	uint64_t value;          /* out (get_param) or in (set_param) */
 };

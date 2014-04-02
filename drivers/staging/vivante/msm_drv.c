@@ -274,15 +274,17 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
  */
 
 #ifdef CONFIG_DEBUG_FS
-#if 0
 static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu = priv->gpu;
+	struct msm_gpu *gpu;
 
-	if (gpu) {
-		seq_printf(m, "%s Status:\n", gpu->name);
-		gpu->funcs->show(gpu, m);
+	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
+		gpu =  = priv->gpu[i];
+		if (gpu) {
+			seq_printf(m, "%s Status:\n", gpu->name);
+			gpu->funcs->show(gpu, m);
+		}
 	}
 
 	return 0;
@@ -291,11 +293,14 @@ static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu = priv->gpu;
+	struct msm_gpu *gpu;
 
-	if (gpu) {
-		seq_printf(m, "Active Objects (%s):\n", gpu->name);
-		msm_gem_describe_objects(&gpu->active_list, m);
+	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
+		gpu =  = priv->gpu[i];
+		if (gpu) {
+			seq_printf(m, "Active Objects (%s):\n", gpu->name);
+			msm_gem_describe_objects(&gpu->active_list, m);
+		}
 	}
 
 	seq_printf(m, "Inactive Objects:\n");
@@ -329,10 +334,8 @@ static int show_locked(struct seq_file *m, void *arg)
 }
 
 static struct drm_info_list msm_debugfs_list[] = {
-#if 0
 		{"gpu", show_locked, 0, msm_gpu_show},
 		{"gem", show_locked, 0, msm_gem_show},
-#endif
 		{ "mm", show_locked, 0, msm_mm_show },
 };
 
@@ -358,7 +361,7 @@ static void msm_debugfs_cleanup(struct drm_minor *minor)
 	drm_debugfs_remove_files(msm_debugfs_list,
 			ARRAY_SIZE(msm_debugfs_list), minor);
 }
-#endif
+
 
 /*
  * Fences:
@@ -439,7 +442,7 @@ void __msm_fence_worker(struct work_struct *work)
 	struct msm_fence_cb *cb = container_of(work, struct msm_fence_cb, work);
 	cb->func(cb);
 }
-
+#endif
 /*
  * DRM ioctls:
  */
@@ -448,17 +451,13 @@ static int msm_ioctl_get_param(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct drm_msm_param *args = data;
+	struct drm_vivante_param *args = data;
 	struct msm_gpu *gpu;
 
-	/* for now, we just have 3d pipe.. eventually this would need to
-	 * be more clever to dispatch to appropriate gpu module:
-	 */
-	if (args->pipe != MSM_PIPE_3D0)
+	if (args->pipe > VIVANTE_PIPE_VG)
 		return -EINVAL;
 
-	gpu = priv->gpu;
-
+	gpu = priv->gpu[args->pipe];
 	if (!gpu)
 		return -ENXIO;
 
@@ -538,9 +537,7 @@ static int msm_ioctl_wait_fence(struct drm_device *dev, void *data,
 	struct drm_msm_wait_fence *args = data;
 	return msm_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
 }
-#endif
 static const struct drm_ioctl_desc vivante_ioctls[] = {
-#if 0
 	DRM_IOCTL_DEF_DRV(MSM_GET_PARAM,    msm_ioctl_get_param,    DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_NEW,      msm_ioctl_gem_new,      DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_INFO,     msm_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
@@ -548,7 +545,6 @@ static const struct drm_ioctl_desc vivante_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_FINI, msm_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_SUBMIT,   msm_ioctl_gem_submit,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_WAIT_FENCE,   msm_ioctl_wait_fence,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-#endif
 };
 
 static const struct vm_operations_struct vm_ops = {
