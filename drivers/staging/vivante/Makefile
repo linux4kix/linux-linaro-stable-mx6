@@ -10,7 +10,6 @@ vivante-y := \
 	msm_gem_submit.o \
 	msm_gpu.o \
 	msm_iommu.o \
-	msm_ringbuffer.o \
-	vivante_3d.c
+	msm_ringbuffer.o
 
 obj-$(CONFIG_DRM_VIVANTE)	+= vivante.o
