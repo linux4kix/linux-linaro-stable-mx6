@@ -59,6 +59,7 @@ static int disable_pwrrail(struct msm_gpu *gpu)
 
 static int enable_clk(struct msm_gpu *gpu)
 {
+#if 0
 	struct clk *rate_clk = NULL;
 	int i;
 
@@ -76,12 +77,13 @@ static int enable_clk(struct msm_gpu *gpu)
 	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--)
 		if (gpu->grp_clks[i])
 			clk_enable(gpu->grp_clks[i]);
-
+#endif
 	return 0;
 }
 
 static int disable_clk(struct msm_gpu *gpu)
 {
+#if 0
 	struct clk *rate_clk = NULL;
 	int i;
 
@@ -99,21 +101,25 @@ static int disable_clk(struct msm_gpu *gpu)
 	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--)
 		if (gpu->grp_clks[i])
 			clk_unprepare(gpu->grp_clks[i]);
-
+#endif
 	return 0;
 }
 
 static int enable_axi(struct msm_gpu *gpu)
 {
+#if 0
 	if (gpu->ebi1_clk)
 		clk_prepare_enable(gpu->ebi1_clk);
+#endif
 	return 0;
 }
 
 static int disable_axi(struct msm_gpu *gpu)
 {
+#if 0
 	if (gpu->ebi1_clk)
 		clk_disable_unprepare(gpu->ebi1_clk);
+#endif
 	return 0;
 }
 
