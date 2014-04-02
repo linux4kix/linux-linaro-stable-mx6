@@ -361,6 +361,7 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	}
 
 	/* Acquire clocks: */
+#if 0
 	for (i = 0; i < ARRAY_SIZE(clk_names); i++) {
 		gpu->grp_clks[i] = devm_clk_get(&pdev->dev, clk_names[i]);
 		DBG("grp_clks[%s]: %p", clk_names[i], gpu->grp_clks[i]);
@@ -372,7 +373,7 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	DBG("ebi1_clk: %p", gpu->ebi1_clk);
 	if (IS_ERR(gpu->ebi1_clk))
 		gpu->ebi1_clk = NULL;
-
+#endif
 	/* Acquire regulators: */
 	gpu->gpu_reg = devm_regulator_get(&pdev->dev, "vdd");
 	DBG("gpu_reg: %p", gpu->gpu_reg);
