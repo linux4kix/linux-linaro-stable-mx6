@@ -278,6 +278,7 @@ static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_gpu *gpu;
+	unsigned int i;
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
 		gpu =  = priv->gpu[i];
@@ -294,6 +295,7 @@ static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct msm_gpu *gpu;
+	unsigned int i;
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
 		gpu =  = priv->gpu[i];
