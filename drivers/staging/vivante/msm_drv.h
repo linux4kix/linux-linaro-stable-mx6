@@ -43,7 +43,7 @@ static inline struct device *msm_iommu_get_ctx(const char *ctx_name)
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_fb_helper.h>
-#include <drm/msm_drm.h>
+#include <drm/vivante_drm.h>
 
 struct msm_gpu;
 struct msm_mmu;
@@ -58,15 +58,8 @@ struct msm_file_private {
 	int dummy;
 };
 
-enum GPU_PART {
-	GPU_2D = 0,
-	GPU_3D,
-	GPU_VG
-};
-#define MAX_GPU_PARTS 3
-
 struct msm_drm_private {
-	struct msm_gpu *gpu[MAX_GPU_PARTS];
+	struct msm_gpu *gpu[VIVANTE_MAX_PIPES];
 	struct msm_file_private *lastctx;
 
 	uint32_t next_fence, completed_fence;
