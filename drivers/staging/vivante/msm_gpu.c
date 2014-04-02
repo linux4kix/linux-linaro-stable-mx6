@@ -323,7 +323,7 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 		const char *name, const char *ioname, const char *irqname, int ringsz)
 {
 	struct iommu_domain *iommu;
-	int i, ret;
+	int /*i, */ret;
 
 	gpu->dev = drm;
 	gpu->funcs = funcs;
