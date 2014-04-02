@@ -138,7 +138,7 @@ static struct msm_gpu *vivante_gpu_3d_init(struct drm_device *dev)
 static void load_gpu(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu[MAX_GPU_PARTS];
+	struct msm_gpu *gpu[VIVANTE_MAX_PIPES];
 	unsigned int i;
 
 	mutex_lock(&dev->struct_mutex);
@@ -149,7 +149,7 @@ static void load_gpu(struct drm_device *dev)
 
 	mutex_unlock(&dev->struct_mutex);
 
-	for (i = 0; i < MAX_GPU_PARTS; i++) {
+	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
 		struct msm_gpu *g = priv->gpu[i];
 		if (g) {
 			int ret;
