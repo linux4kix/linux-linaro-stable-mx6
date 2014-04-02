@@ -281,7 +281,7 @@ static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 	unsigned int i;
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		gpu =  = priv->gpu[i];
+		gpu = priv->gpu[i];
 		if (gpu) {
 			seq_printf(m, "%s Status:\n", gpu->name);
 			gpu->funcs->show(gpu, m);
@@ -298,7 +298,7 @@ static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
 	unsigned int i;
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		gpu =  = priv->gpu[i];
+		gpu = priv->gpu[i];
 		if (gpu) {
 			seq_printf(m, "Active Objects (%s):\n", gpu->name);
 			msm_gem_describe_objects(&gpu->active_list, m);
