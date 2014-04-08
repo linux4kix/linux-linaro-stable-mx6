@@ -371,8 +371,10 @@ static void msm_debugfs_cleanup(struct drm_minor *minor)
 int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout)
 {
+#if 0
 	struct msm_drm_private *priv = dev->dev_private;
 	int ret;
+#endif
 
 	/* TODO */
 	return 0;
