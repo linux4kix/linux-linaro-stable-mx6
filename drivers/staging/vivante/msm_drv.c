@@ -368,13 +368,15 @@ static void msm_debugfs_cleanup(struct drm_minor *minor)
 /*
  * Fences:
  */
-#if 0
 int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	int ret;
 
+	/* TODO */
+	return 0;
+#if 0
 	if (!priv->gpu)
 		return 0;
 
@@ -411,11 +413,13 @@ int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 	}
 
 	return ret;
+#endif
 }
 
 /* called from workqueue */
 void msm_update_fence(struct drm_device *dev, uint32_t fence)
 {
+#if 0
 	struct msm_drm_private *priv = dev->dev_private;
 
 	mutex_lock(&dev->struct_mutex);
@@ -437,8 +441,10 @@ void msm_update_fence(struct drm_device *dev, uint32_t fence)
 	mutex_unlock(&dev->struct_mutex);
 
 	wake_up_all(&priv->fence_event);
+#endif
 }
 
+#if 0
 void __msm_fence_worker(struct work_struct *work)
 {
 	struct msm_fence_cb *cb = container_of(work, struct msm_fence_cb, work);
