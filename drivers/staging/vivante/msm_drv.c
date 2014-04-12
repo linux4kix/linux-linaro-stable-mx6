@@ -99,7 +99,7 @@ static int vivante_unload(struct drm_device *dev)
 	unsigned int i;
 
 	pm_runtime_get_sync(dev->dev);
-	drm_irq_uninstall(dev);
+	/*drm_irq_uninstall(dev);*/
 	pm_runtime_put_sync(dev->dev);
 
 	flush_workqueue(priv->wq);
@@ -224,7 +224,7 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	}
 
 	pm_runtime_get_sync(dev->dev);
-	ret = drm_irq_install(dev);
+	ret = 0; /*drm_irq_install(dev);*/
 	pm_runtime_put_sync(dev->dev);
 	if (ret < 0) {
 		dev_err(dev->dev, "failed to install IRQ handler\n");
