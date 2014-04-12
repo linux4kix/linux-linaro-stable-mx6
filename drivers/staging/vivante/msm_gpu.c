@@ -318,10 +318,11 @@ static const char *clk_names[] = {
 		"gpu3d_core", "gpu3d_shader", "gpu3d_axi", "gpu2d", "gpu2d_axi", "openvg_axi",
 };
 
-int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
-		struct msm_gpu *gpu, const struct vivante_gpu_funcs *funcs,
-		const char *name, const char *ioname, const char *irqname, int ringsz)
+int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
+		const struct vivante_gpu_funcs *funcs, 	const char *name,
+		const char *ioname, const char *irqname, int ringsz)
 {
+	struct platform_device *pdev = drm->platformdev;
 	struct iommu_domain *iommu;
 	int /*i, */ret;
 

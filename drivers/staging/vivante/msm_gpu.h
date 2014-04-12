@@ -111,9 +111,9 @@ void msm_gpu_retire(struct msm_gpu *gpu);
 int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
 		struct msm_file_private *ctx);
 
-int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
-		struct msm_gpu *gpu, const struct vivante_gpu_funcs *funcs,
-		const char *name, const char *ioname, const char *irqname, int ringsz);
+int msm_gpu_init(struct drm_device *drm, struct msm_gpu *gpu,
+		const struct vivante_gpu_funcs *funcs, const char *name,
+		const char *ioname, const char *irqname, int ringsz);
 void msm_gpu_cleanup(struct msm_gpu *gpu);
 
 struct msm_gpu *a3xx_gpu_init(struct drm_device *dev);
