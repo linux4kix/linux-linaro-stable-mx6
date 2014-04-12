@@ -400,6 +400,7 @@ int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 	gpu->id = msm_register_mmu(drm, gpu->mmu);
 
 	/* Create ringbuffer: */
+#if 0
 	gpu->rb = msm_ringbuffer_new(gpu, ringsz);
 	if (IS_ERR(gpu->rb)) {
 		ret = PTR_ERR(gpu->rb);
@@ -414,7 +415,7 @@ int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 		dev_err(drm->dev, "could not map ringbuffer: %d\n", ret);
 		goto fail;
 	}
-
+#endif
 	return 0;
 
 fail:
