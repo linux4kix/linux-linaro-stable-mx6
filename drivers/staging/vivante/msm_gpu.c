@@ -91,7 +91,6 @@ static int disable_pwrrail(struct msm_gpu *gpu)
 
 static int enable_clk(struct msm_gpu *gpu)
 {
-#if 0
 	struct clk *rate_clk = NULL;
 	int i;
 
@@ -102,20 +101,19 @@ static int enable_clk(struct msm_gpu *gpu)
 			rate_clk = gpu->grp_clks[i];
 		}
 	}
-
+#if 0
 	if (rate_clk && gpu->fast_rate)
 		clk_set_rate(rate_clk, gpu->fast_rate);
-
+#endif
 	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--)
 		if (gpu->grp_clks[i])
 			clk_enable(gpu->grp_clks[i]);
-#endif
+
 	return 0;
 }
 
 static int disable_clk(struct msm_gpu *gpu)
 {
-#if 0
 	struct clk *rate_clk = NULL;
 	int i;
 
@@ -126,14 +124,14 @@ static int disable_clk(struct msm_gpu *gpu)
 			rate_clk = gpu->grp_clks[i];
 		}
 	}
-
+#if 0
 	if (rate_clk && gpu->slow_rate)
 		clk_set_rate(rate_clk, gpu->slow_rate);
-
+#endif
 	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--)
 		if (gpu->grp_clks[i])
 			clk_unprepare(gpu->grp_clks[i]);
-#endif
+
 	return 0;
 }
 
@@ -356,7 +354,7 @@ int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 {
 	struct platform_device *pdev = drm->platformdev;
 	struct iommu_domain *iommu;
-	int /*i, */ret;
+	int i, ret;
 
 	gpu->dev = drm;
 	gpu->funcs = funcs;
@@ -394,14 +392,13 @@ int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 	}
 
 	/* Acquire clocks: */
-#if 0
 	for (i = 0; i < ARRAY_SIZE(clk_names); i++) {
 		gpu->grp_clks[i] = devm_clk_get(&pdev->dev, clk_names[i]);
 		DBG("grp_clks[%s]: %p", clk_names[i], gpu->grp_clks[i]);
 		if (IS_ERR(gpu->grp_clks[i]))
 			gpu->grp_clks[i] = NULL;
 	}
-
+#if 0
 	gpu->ebi1_clk = devm_clk_get(&pdev->dev, "bus_clk");
 	DBG("ebi1_clk: %p", gpu->ebi1_clk);
 	if (IS_ERR(gpu->ebi1_clk))
