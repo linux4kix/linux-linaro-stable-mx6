@@ -59,10 +59,65 @@ struct vivante_gpu_funcs {
 #endif
 };
 
+struct vivante_chip_identity
+{
+	/* Chip model. */
+	uint32_t chipModel;
+
+	/* Revision value.*/
+	uint32_t chipRevision;
+
+	/* Supported feature fields. */
+	uint32_t chipFeatures;
+
+	/* Supported minor feature fields. */
+	uint32_t chipMinorFeatures;
+
+	/* Supported minor feature 1 fields. */
+	uint32_t chipMinorFeatures1;
+
+	/* Supported minor feature 2 fields. */
+	uint32_t chipMinorFeatures2;
+
+	/* Supported minor feature 3 fields. */
+	uint32_t chipMinorFeatures3;
+
+	/* Number of streams supported. */
+	uint32_t streamCount;
+
+	/* Total number of temporary registers per thread. */
+	uint32_t registerMax;
+
+	/* Maximum number of threads. */
+	uint32_t threadCount;
+
+	/* Number of shader cores. */
+	uint32_t shaderCoreCount;
+
+	/* Size of the vertex cache. */
+	uint32_t vertexCacheSize;
+
+	/* Number of entries in the vertex output buffer. */
+	uint32_t vertexOutputBufferSize;
+
+	/* Number of pixel pipes. */
+	uint32_t pixelPipes;
+
+	/* Number of instructions. */
+	uint32_t instructionCount;
+
+	/* Number of constants. */
+	uint32_t numConstants;
+
+	/* Buffer size */
+	uint32_t bufferSize;
+};
+
 struct msm_gpu {
 	const char *name;
 	struct drm_device *dev;
 	const struct vivante_gpu_funcs *funcs;
+	struct vivante_chip_identity identity;
 
 	struct msm_ringbuffer *rb;
 	uint32_t rb_iova;
