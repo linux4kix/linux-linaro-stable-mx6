@@ -30,6 +30,8 @@ int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 
 static const struct vivante_gpu_funcs funcs = {
 	.get_param = vivante_get_param,
+	.pm_suspend = msm_gpu_pm_suspend,
+	.pm_resume = msm_gpu_pm_resume,
 };
 
 struct msm_gpu *vivante_gpu_3d_init(struct drm_device *dev)
