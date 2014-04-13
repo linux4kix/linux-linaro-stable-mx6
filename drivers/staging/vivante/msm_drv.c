@@ -183,7 +183,6 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
 	struct msm_drm_private *priv;
-	int ret;
 
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	if (!priv) {
@@ -232,11 +231,6 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 		dev_info(dev->dev, "VRAM: %08x->%08x\n",
 				(uint32_t)priv->vram.paddr,
 				(uint32_t)(priv->vram.paddr + size));
-	}
-
-	if (ret < 0) {
-		dev_err(dev->dev, "failed to install IRQ handler\n");
-		goto fail;
 	}
 
 	platform_set_drvdata(pdev, dev);
