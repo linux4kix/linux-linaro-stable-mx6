@@ -126,26 +126,6 @@ static int vivante_unload(struct drm_device *dev)
 	return 0;
 }
 
-static struct msm_gpu *vivante_gpu_3d_init(struct drm_device *dev)
-{
-	int ret;
-	struct msm_gpu *gpu;
-
-	gpu = kzalloc(sizeof(*gpu), GFP_KERNEL);
-	if (!gpu) {
-		return NULL;
-	}
-
-	ret = msm_gpu_init(dev, gpu, NULL, "vivante_gpu_3d", "iobase-3d", "irq-3d", 0);
-	if (ret < 0) {
-		dev_err(dev->dev, "%s init failed: %d\n", __func__, ret);
-		kfree(gpu);
-		gpu = NULL;
-	}
-
-	return gpu;
-}
-
 static void load_gpu(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
