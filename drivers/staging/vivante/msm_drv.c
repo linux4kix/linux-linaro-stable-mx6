@@ -141,7 +141,7 @@ static void load_gpu(struct drm_device *dev)
 	mutex_unlock(&dev->struct_mutex);
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		struct msm_gpu *g = priv->gpu[i];
+		struct msm_gpu *g = gpu[i];
 		if (g) {
 			int ret;
 			g->funcs->pm_resume(g);
