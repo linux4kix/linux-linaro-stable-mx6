@@ -159,7 +159,8 @@ static inline u32 gpu_read(struct msm_gpu *gpu, u32 reg)
 	return vivante_readl(gpu->mmio + (reg << 2));
 }
 
-struct msm_gpu *vivante_gpu_3d_init(struct drm_device *dev);
+struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
+		const char *ioname, const char *irqname, int ringsz)
 
 int msm_gpu_pm_suspend(struct msm_gpu *gpu);
 int msm_gpu_pm_resume(struct msm_gpu *gpu);

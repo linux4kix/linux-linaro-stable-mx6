@@ -42,7 +42,8 @@ static const struct vivante_gpu_funcs funcs = {
 	.pm_resume = msm_gpu_pm_resume,
 };
 
-struct msm_gpu *vivante_gpu_3d_init(struct drm_device *dev)
+struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
+		const char *ioname, const char *irqname, int ringsz)
 {
 	int ret;
 	struct msm_gpu *gpu;
@@ -52,7 +53,7 @@ struct msm_gpu *vivante_gpu_3d_init(struct drm_device *dev)
 		return NULL;
 	}
 
-	ret = msm_gpu_init(dev, gpu, &funcs, "vivante_gpu_3d", "iobase-3d", "irq-3d", 0);
+	ret = msm_gpu_init(dev, gpu, &funcs, name, ioname, irqname, ringsz);
 	if (ret < 0) {
 		dev_err(dev->dev, "%s init failed: %d\n", __func__, ret);
 		kfree(gpu);
