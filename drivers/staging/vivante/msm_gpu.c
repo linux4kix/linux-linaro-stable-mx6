@@ -28,8 +28,14 @@ int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 	}
 }
 
+int vivante_hw_init(struct msm_gpu *gpu)
+{
+	return 0;
+}
+
 static const struct vivante_gpu_funcs funcs = {
 	.get_param = vivante_get_param,
+	.hw_init = vivante_hw_init,
 	.pm_suspend = msm_gpu_pm_suspend,
 	.pm_resume = msm_gpu_pm_resume,
 };
