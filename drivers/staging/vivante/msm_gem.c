@@ -24,44 +24,6 @@
 #include "msm_gpu.h"
 #include "msm_mmu.h"
 
-static dma_addr_t physaddr(struct drm_gem_object *obj)
-{
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
-	struct msm_drm_private *priv = obj->dev->dev_private;
-	return (((dma_addr_t)msm_obj->vram_node->start) << PAGE_SHIFT) +
-			priv->vram.paddr;
-}
-
-/* allocate pages from VRAM carveout, used when no IOMMU: */
-static struct page **get_pages_vram(struct drm_gem_object *obj,
-		int npages)
-{
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
-	struct msm_drm_private *priv = obj->dev->dev_private;
-	dma_addr_t paddr;
-	struct page **p;
-	int ret, i;
-
-	p = drm_malloc_ab(npages, sizeof(struct page *));
-	if (!p)
-		return ERR_PTR(-ENOMEM);
-
-	ret = drm_mm_insert_node(&priv->vram.mm, msm_obj->vram_node,
-			npages, 0, DRM_MM_SEARCH_DEFAULT);
-	if (ret) {
-		drm_free_large(p);
-		return ERR_PTR(ret);
-	}
-
-	paddr = physaddr(obj);
-	for (i = 0; i < npages; i++) {
-		p[i] = phys_to_page(paddr);
-		paddr += PAGE_SIZE;
-	}
-
-	return p;
-}
-
 /* called with dev->struct_mutex held */
 static struct page **get_pages(struct drm_gem_object *obj)
 {
@@ -72,10 +34,7 @@ static struct page **get_pages(struct drm_gem_object *obj)
 		struct page **p;
 		int npages = obj->size >> PAGE_SHIFT;
 
-		if (iommu_present(&platform_bus_type))
-			p = drm_gem_get_pages(obj, 0);
-		else
-			p = get_pages_vram(obj, npages);
+		p = drm_gem_get_pages(obj, 0);
 
 		if (IS_ERR(p)) {
 			dev_err(dev->dev, "could not get pages: %ld\n",
@@ -116,10 +75,7 @@ static void put_pages(struct drm_gem_object *obj)
 		sg_free_table(msm_obj->sgt);
 		kfree(msm_obj->sgt);
 
-		if (iommu_present(&platform_bus_type))
-			drm_gem_put_pages(obj, msm_obj->pages, true, false);
-		else
-			drm_mm_remove_node(msm_obj->vram_node);
+		drm_gem_put_pages(obj, msm_obj->pages, true, false);
 
 		msm_obj->pages = NULL;
 	}
@@ -282,18 +238,15 @@ int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 		struct msm_drm_private *priv = obj->dev->dev_private;
 		struct msm_mmu *mmu = priv->mmus[id];
 		struct page **pages = get_pages(obj);
+		uint32_t offset;
 
 		if (IS_ERR(pages))
 			return PTR_ERR(pages);
 
-		if (iommu_present(&platform_bus_type)) {
-			uint32_t offset = (uint32_t)mmap_offset(obj);
-			ret = mmu->funcs->map(mmu, offset, msm_obj->sgt,
-					obj->size, IOMMU_READ | IOMMU_WRITE);
-			msm_obj->domain[id].iova = offset;
-		} else {
-			msm_obj->domain[id].iova = physaddr(obj);
-		}
+		offset = (uint32_t)mmap_offset(obj);
+		ret = mmu->funcs->map(mmu, offset, msm_obj->sgt,
+				obj->size, IOMMU_READ | IOMMU_WRITE);
+		msm_obj->domain[id].iova = offset;
 	}
 
 	if (!ret)
@@ -595,15 +548,10 @@ static int msm_gem_new_impl(struct drm_device *dev,
 	}
 
 	sz = sizeof(*msm_obj);
-	if (!iommu_present(&platform_bus_type))
-		sz += sizeof(struct drm_mm_node);
 
 	msm_obj = kzalloc(sz, GFP_KERNEL);
 	if (!msm_obj)
 		return -ENOMEM;
-
-	if (!iommu_present(&platform_bus_type))
-		msm_obj->vram_node = (void *)&msm_obj[1];
 
 	msm_obj->flags = flags;
 
@@ -632,13 +580,9 @@ struct drm_gem_object *msm_gem_new(struct drm_device *dev,
 	if (ret)
 		goto fail;
 
-	if (iommu_present(&platform_bus_type)) {
-		ret = drm_gem_object_init(dev, obj, size);
-		if (ret)
-			goto fail;
-	} else {
-		drm_gem_private_object_init(dev, obj, size);
-	}
+	ret = drm_gem_object_init(dev, obj, size);
+	if (ret)
+		goto fail;
 
 	return obj;
 
@@ -655,12 +599,6 @@ struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 	struct msm_gem_object *msm_obj;
 	struct drm_gem_object *obj;
 	int ret, npages;
-
-	/* if we don't have IOMMU, don't bother pretending we can import: */
-	if (!iommu_present(&platform_bus_type)) {
-		dev_err(dev->dev, "cannot import without IOMMU\n");
-		return ERR_PTR(-EINVAL);
-	}
 
 	size = PAGE_ALIGN(size);
 

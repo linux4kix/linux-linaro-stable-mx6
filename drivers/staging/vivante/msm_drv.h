@@ -74,16 +74,6 @@ struct msm_drm_private {
 	/* registered MMUs: */
 	unsigned int num_mmus;
 	struct msm_mmu *mmus[NUM_DOMAINS];
-
-	/* VRAM carveout, used when no IOMMU: */
-	struct {
-		unsigned long size;
-		dma_addr_t paddr;
-		/* NOTE: mm managed at the page level, size is in # of pages
-		 * and position mm_node->start is in # of pages:
-		 */
-		struct drm_mm mm;
-	} vram;
 };
 
 struct msm_format {

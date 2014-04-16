@@ -39,10 +39,6 @@ module_param(reglog, bool, 0600);
 #define reglog 0
 #endif
 
-static char *vram;
-MODULE_PARM_DESC(vram, "Configure VRAM size (for devices without IOMMU/GPUMMU");
-module_param(vram, charp, 0);
-
 void __iomem *vivante_ioremap(struct platform_device *pdev, const char *name,
 		const char *dbgname)
 {
@@ -111,14 +107,6 @@ static int vivante_unload(struct drm_device *dev)
 		}
 	}
 
-	if (priv->vram.paddr) {
-		DEFINE_DMA_ATTRS(attrs);
-		dma_set_attr(DMA_ATTR_NO_KERNEL_MAPPING, &attrs);
-		drm_mm_takedown(&priv->vram.mm);
-		dma_free_attrs(dev->dev, priv->vram.size, NULL,
-				priv->vram.paddr, &attrs);
-	}
-
 	dev->dev_private = NULL;
 
 	kfree(priv);
@@ -163,7 +151,6 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
 	struct msm_drm_private *priv;
-	int ret;
 
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	if (!priv) {
@@ -179,52 +166,12 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	INIT_LIST_HEAD(&priv->inactive_list);
 	INIT_LIST_HEAD(&priv->fence_cbs);
 
-	/* if we have no IOMMU, then we need to use carveout allocator.
-	 * Grab the entire CMA chunk carved out in early startup in
-	 * mach-msm:
-	 */
-	if (!iommu_present(&platform_bus_type)) {
-		DEFINE_DMA_ATTRS(attrs);
-		unsigned long size;
-		void *p;
-
-		DBG("using %s VRAM carveout", vram);
-		size = memparse(vram, NULL);
-		priv->vram.size = size;
-
-		drm_mm_init(&priv->vram.mm, 0, (size >> PAGE_SHIFT) - 1);
-
-		dma_set_attr(DMA_ATTR_NO_KERNEL_MAPPING, &attrs);
-		dma_set_attr(DMA_ATTR_WRITE_COMBINE, &attrs);
-
-		/* note that for no-kernel-mapping, the vaddr returned
-		 * is bogus, but non-null if allocation succeeded:
-		 */
-		p = dma_alloc_attrs(dev->dev, size,
-				&priv->vram.paddr, 0, &attrs);
-		if (!p) {
-			dev_err(dev->dev, "failed to allocate VRAM\n");
-			priv->vram.paddr = 0;
-			ret = -ENOMEM;
-			goto fail;
-		}
-
-		dev_info(dev->dev, "VRAM: %08x->%08x\n",
-				(uint32_t)priv->vram.paddr,
-				(uint32_t)(priv->vram.paddr + size));
-	}
-
 	platform_set_drvdata(pdev, dev);
 
 	load_gpu(dev);
 
 	return 0;
-
-fail:
-	vivante_unload(dev);
-	return ret;
 }
-
 
 static int msm_open(struct drm_device *dev, struct drm_file *file)
 {
