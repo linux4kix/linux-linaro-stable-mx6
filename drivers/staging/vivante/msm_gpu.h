@@ -151,12 +151,12 @@ struct msm_gpu {
 
 static inline void gpu_write(struct msm_gpu *gpu, u32 reg, u32 data)
 {
-	vivante_writel(data, gpu->mmio + (reg << 2));
+	vivante_writel(data, gpu->mmio + reg);
 }
 
 static inline u32 gpu_read(struct msm_gpu *gpu, u32 reg)
 {
-	return vivante_readl(gpu->mmio + (reg << 2));
+	return vivante_readl(gpu->mmio + reg);
 }
 
 struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
