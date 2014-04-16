@@ -18,6 +18,7 @@
 #include "msm_gpu.h"
 #include "msm_gem.h"
 #include "msm_mmu.h"
+#include "state_hi.xml.h"
 
 int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 {
@@ -32,6 +33,45 @@ int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 
 int vivante_hw_init(struct msm_gpu *gpu)
 {
+	u32 chipIdentity;
+
+	chipIdentity = gpu_read(gpu, VIVS_HI_CHIP_IDENTITY);
+
+	/* Special case for older graphic cores. */
+	if (((chipIdentity & 0xFF000000) >> 24) ==  0x01) {
+		gpu->identity.chipModel    = 0x500; /* gc500 */
+		gpu->identity.chipRevision = (chipIdentity & 0xF000) >> 12;
+	} else {
+
+		gpu->identity.chipModel = gpu_read(gpu, VIVS_HI_CHIP_MODEL);
+
+		/* !!!! HACK ALERT !!!! */
+		/* Because people change device IDs without letting software know
+		** about it - here is the hack to make it all look the same.  Only
+		** for GC400 family.  Next time - TELL ME!!! */
+		if (((gpu->identity.chipModel & 0xFF00) == 0x0400)
+		 && (gpu->identity.chipModel != 0x0420)) {
+			gpu->identity.chipModel = gpu->identity.chipModel & 0x0400;
+		}
+
+		gpu->identity.chipRevision = gpu_read(gpu, VIVS_HI_CHIP_REV);
+
+		/* An other special case */
+		if ((gpu->identity.chipModel    == 0x300)
+		&&  (gpu->identity.chipRevision == 0x2201)) {
+			u32 chipDate = gpu_read(gpu, VIVS_HI_CHIP_DATE);
+			u32 chipTime = gpu_read(gpu, VIVS_HI_CHIP_TIME);
+
+			if ((chipDate == 0x20080814) && (chipTime == 0x12051100)) {
+				/* This IP has an ECO; put the correct revision in it. */
+				gpu->identity.chipRevision = 0x1051;
+			}
+		}
+	}
+
+	dev_info(gpu->dev->dev, "model: %x\n", gpu->identity.chipModel);
+	dev_info(gpu->dev->dev, "revision: %x\n", gpu->identity.chipRevision);
+
 	return 0;
 }
 
