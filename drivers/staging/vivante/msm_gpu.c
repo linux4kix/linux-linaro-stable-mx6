@@ -26,6 +26,8 @@ int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 		DBG("%s: invalid param: %u", gpu->name, param);
 		return -EINVAL;
 	}
+
+	return 0;
 }
 
 int vivante_hw_init(struct msm_gpu *gpu)
