@@ -160,7 +160,7 @@ static inline u32 gpu_read(struct msm_gpu *gpu, u32 reg)
 }
 
 struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
-		const char *ioname, const char *irqname, int ringsz)
+		const char *ioname, const char *irqname, int ringsz);
 
 int msm_gpu_pm_suspend(struct msm_gpu *gpu);
 int msm_gpu_pm_resume(struct msm_gpu *gpu);
