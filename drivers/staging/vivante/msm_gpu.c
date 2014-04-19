@@ -31,7 +31,7 @@ int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 	return 0;
 }
 
-int vivante_hw_init(struct msm_gpu *gpu)
+static void vivante_hw_identify(struct msm_gpu *gpu)
 {
 	u32 chipIdentity;
 
@@ -98,6 +98,11 @@ int vivante_hw_init(struct msm_gpu *gpu)
 	dev_info(gpu->dev->dev, "MinorFeatures1: %x\n", gpu->identity.chipMinorFeatures1);
 	dev_info(gpu->dev->dev, "MinorFeatures2: %x\n", gpu->identity.chipMinorFeatures2);
 	dev_info(gpu->dev->dev, "MinorFeatures3: %x\n", gpu->identity.chipMinorFeatures3);
+}
+
+int vivante_hw_init(struct msm_gpu *gpu)
+{
+	vivante_hw_identify(gpu);
 
 	return 0;
 }
