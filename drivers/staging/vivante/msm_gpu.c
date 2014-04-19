@@ -44,6 +44,7 @@ int vivante_hw_init(struct msm_gpu *gpu)
 	} else {
 
 		gpu->identity.chipModel = gpu_read(gpu, VIVS_HI_CHIP_MODEL);
+		gpu->identity.chipRevision = gpu_read(gpu, VIVS_HI_CHIP_REV);
 
 		/* !!!! HACK ALERT !!!! */
 		/* Because people change device IDs without letting software know
@@ -53,8 +54,6 @@ int vivante_hw_init(struct msm_gpu *gpu)
 		 && (gpu->identity.chipModel != 0x0420)) {
 			gpu->identity.chipModel = gpu->identity.chipModel & 0x0400;
 		}
-
-		gpu->identity.chipRevision = gpu_read(gpu, VIVS_HI_CHIP_REV);
 
 		/* An other special case */
 		if ((gpu->identity.chipModel    == 0x300)
