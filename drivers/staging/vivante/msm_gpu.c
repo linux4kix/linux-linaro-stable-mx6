@@ -71,6 +71,34 @@ int vivante_hw_init(struct msm_gpu *gpu)
 	dev_info(gpu->dev->dev, "model: %x\n", gpu->identity.chipModel);
 	dev_info(gpu->dev->dev, "revision: %x\n", gpu->identity.chipRevision);
 
+	gpu->identity.chipFeatures = gpu_read(gpu, VIVS_HI_CHIP_FEATURE);
+
+	/* Disable fast clear on GC700. */
+	if (gpu->identity.chipModel == 0x700)
+		gpu->identity.chipFeatures &= ~BIT(0);
+
+	if (((gpu->identity.chipModel == 0x500) && (gpu->identity.chipRevision < 2))
+	||  ((gpu->identity.chipModel == 0x300) && (gpu->identity.chipRevision < 0x2000))) {
+
+		/* GC500 rev 1.x and GC300 rev < 2.0 doesn't have these registers. */
+		gpu->identity.chipMinorFeatures  = 0;
+		gpu->identity.chipMinorFeatures1 = 0;
+		gpu->identity.chipMinorFeatures2 = 0;
+		gpu->identity.chipMinorFeatures3 = 0;
+	} else
+		gpu->identity.chipMinorFeatures = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_0);
+
+	if (gpu->identity.chipMinorFeatures & BIT(21)) {
+		gpu->identity.chipMinorFeatures1 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_1);
+		gpu->identity.chipMinorFeatures2 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_2);
+		gpu->identity.chipMinorFeatures3 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_3);
+	}
+
+	dev_info(gpu->dev->dev, "MinorFeatures: %x\n", gpu->identity.chipMinorFeatures);
+	dev_info(gpu->dev->dev, "MinorFeatures1: %x\n", gpu->identity.chipMinorFeatures1);
+	dev_info(gpu->dev->dev, "MinorFeatures2: %x\n", gpu->identity.chipMinorFeatures2);
+	dev_info(gpu->dev->dev, "MinorFeatures3: %x\n", gpu->identity.chipMinorFeatures3);
+
 	return 0;
 }
 
