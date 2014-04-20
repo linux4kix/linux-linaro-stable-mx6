@@ -1,8 +1,15 @@
 /*
- * Copyright (C) 2013,2014 Russell King
+ * Copyright 2013 Russell King
  *
- * This describes the hookup for an AR8035 to the iMX6 on the SolidRun
+ * The code contained herein is licensed under the GNU General Public
+ * License version 2.
+ *
+ * This describes the hookup for an AR8035 to the IMX6 on the Cubox-i
  * MicroSOM.
+ *
+ * FIXME: we need to configure PLL_ENET to produce 25MHz, but there
+ * doesn't seem to be a way to do that yet from DT.  (Writing 0x2000
+ * to 0x020c80e0 phys will do this.)
  */
 &fec {
 	pinctrl-names = "default";
@@ -45,17 +52,6 @@
 				MX6QDL_PAD_RGMII_RD3__RGMII_RD3		0x1b0b0
 				/* AR8035 pin strapping: MODE#0: pull down */
 				MX6QDL_PAD_RGMII_RX_CTL__RGMII_RX_CTL	0x130b0
-
-				/*
-				 * As the RMII pins are also connected to RGMII
-				 * so that an AR8030 can be placed, set these
-				 * to high-z with the same pulls as above.
-				 * Use the GPIO settings to avoid changing the
-				 * input select registers.
-				 */
-				MX6QDL_PAD_ENET_CRS_DV__GPIO1_IO25	0x03000
-				MX6QDL_PAD_ENET_RXD0__GPIO1_IO27	0x03000
-				MX6QDL_PAD_ENET_RXD1__GPIO1_IO26	0x03000
 			>;
 		};
 	};
