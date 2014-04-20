@@ -39,65 +39,65 @@ static void vivante_hw_identify(struct msm_gpu *gpu)
 
 	/* Special case for older graphic cores. */
 	if (((chipIdentity & 0xFF000000) >> 24) ==  0x01) {
-		gpu->identity.chipModel    = 0x500; /* gc500 */
-		gpu->identity.chipRevision = (chipIdentity & 0xF000) >> 12;
+		gpu->identity.model    = 0x500; /* gc500 */
+		gpu->identity.revision = (chipIdentity & 0xF000) >> 12;
 	} else {
 
-		gpu->identity.chipModel = gpu_read(gpu, VIVS_HI_CHIP_MODEL);
-		gpu->identity.chipRevision = gpu_read(gpu, VIVS_HI_CHIP_REV);
+		gpu->identity.model = gpu_read(gpu, VIVS_HI_CHIP_MODEL);
+		gpu->identity.revision = gpu_read(gpu, VIVS_HI_CHIP_REV);
 
 		/* !!!! HACK ALERT !!!! */
 		/* Because people change device IDs without letting software know
 		** about it - here is the hack to make it all look the same.  Only
 		** for GC400 family.  Next time - TELL ME!!! */
-		if (((gpu->identity.chipModel & 0xFF00) == 0x0400)
-		 && (gpu->identity.chipModel != 0x0420)) {
-			gpu->identity.chipModel = gpu->identity.chipModel & 0x0400;
+		if (((gpu->identity.model & 0xFF00) == 0x0400)
+		&& (gpu->identity.model != 0x0420)) {
+			gpu->identity.model = gpu->identity.model & 0x0400;
 		}
 
 		/* An other special case */
-		if ((gpu->identity.chipModel    == 0x300)
-		&&  (gpu->identity.chipRevision == 0x2201)) {
+		if ((gpu->identity.model    == 0x300)
+		&&  (gpu->identity.revision == 0x2201)) {
 			u32 chipDate = gpu_read(gpu, VIVS_HI_CHIP_DATE);
 			u32 chipTime = gpu_read(gpu, VIVS_HI_CHIP_TIME);
 
 			if ((chipDate == 0x20080814) && (chipTime == 0x12051100)) {
 				/* This IP has an ECO; put the correct revision in it. */
-				gpu->identity.chipRevision = 0x1051;
+				gpu->identity.revision = 0x1051;
 			}
 		}
 	}
 
-	dev_info(gpu->dev->dev, "model: %x\n", gpu->identity.chipModel);
-	dev_info(gpu->dev->dev, "revision: %x\n", gpu->identity.chipRevision);
+	dev_info(gpu->dev->dev, "model: %x\n", gpu->identity.model);
+	dev_info(gpu->dev->dev, "revision: %x\n", gpu->identity.revision);
 
-	gpu->identity.chipFeatures = gpu_read(gpu, VIVS_HI_CHIP_FEATURE);
+	gpu->identity.features = gpu_read(gpu, VIVS_HI_CHIP_FEATURE);
 
 	/* Disable fast clear on GC700. */
-	if (gpu->identity.chipModel == 0x700)
-		gpu->identity.chipFeatures &= ~BIT(0);
+	if (gpu->identity.model == 0x700)
+		gpu->identity.features &= ~BIT(0);
 
-	if (((gpu->identity.chipModel == 0x500) && (gpu->identity.chipRevision < 2))
-	||  ((gpu->identity.chipModel == 0x300) && (gpu->identity.chipRevision < 0x2000))) {
+	if (((gpu->identity.model == 0x500) && (gpu->identity.revision < 2))
+	||  ((gpu->identity.model == 0x300) && (gpu->identity.revision < 0x2000))) {
 
 		/* GC500 rev 1.x and GC300 rev < 2.0 doesn't have these registers. */
-		gpu->identity.chipMinorFeatures  = 0;
-		gpu->identity.chipMinorFeatures1 = 0;
-		gpu->identity.chipMinorFeatures2 = 0;
-		gpu->identity.chipMinorFeatures3 = 0;
+		gpu->identity.minor_features  = 0;
+		gpu->identity.minor_features1 = 0;
+		gpu->identity.minor_features2 = 0;
+		gpu->identity.minor_features3 = 0;
 	} else
-		gpu->identity.chipMinorFeatures = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_0);
+		gpu->identity.minor_features = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_0);
 
-	if (gpu->identity.chipMinorFeatures & BIT(21)) {
-		gpu->identity.chipMinorFeatures1 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_1);
-		gpu->identity.chipMinorFeatures2 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_2);
-		gpu->identity.chipMinorFeatures3 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_3);
+	if (gpu->identity.minor_features & BIT(21)) {
+		gpu->identity.minor_features1 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_1);
+		gpu->identity.minor_features2 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_2);
+		gpu->identity.minor_features3 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_3);
 	}
 
-	dev_info(gpu->dev->dev, "MinorFeatures: %x\n", gpu->identity.chipMinorFeatures);
-	dev_info(gpu->dev->dev, "MinorFeatures1: %x\n", gpu->identity.chipMinorFeatures1);
-	dev_info(gpu->dev->dev, "MinorFeatures2: %x\n", gpu->identity.chipMinorFeatures2);
-	dev_info(gpu->dev->dev, "MinorFeatures3: %x\n", gpu->identity.chipMinorFeatures3);
+	dev_info(gpu->dev->dev, "minor_features:  %x\n", gpu->identity.minor_features);
+	dev_info(gpu->dev->dev, "minor_features1: %x\n", gpu->identity.minor_features1);
+	dev_info(gpu->dev->dev, "minor_features2: %x\n", gpu->identity.minor_features2);
+	dev_info(gpu->dev->dev, "minor_features3: %x\n", gpu->identity.minor_features3);
 }
 
 int vivante_hw_init(struct msm_gpu *gpu)

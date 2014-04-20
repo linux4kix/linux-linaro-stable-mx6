@@ -62,55 +62,55 @@ struct vivante_gpu_funcs {
 struct vivante_chip_identity
 {
 	/* Chip model. */
-	uint32_t chipModel;
+	uint32_t model;
 
 	/* Revision value.*/
-	uint32_t chipRevision;
+	uint32_t revision;
 
 	/* Supported feature fields. */
-	uint32_t chipFeatures;
+	uint32_t features;
 
 	/* Supported minor feature fields. */
-	uint32_t chipMinorFeatures;
+	uint32_t minor_features;
 
 	/* Supported minor feature 1 fields. */
-	uint32_t chipMinorFeatures1;
+	uint32_t minor_features1;
 
 	/* Supported minor feature 2 fields. */
-	uint32_t chipMinorFeatures2;
+	uint32_t minor_features2;
 
 	/* Supported minor feature 3 fields. */
-	uint32_t chipMinorFeatures3;
+	uint32_t minor_features3;
 
 	/* Number of streams supported. */
-	uint32_t streamCount;
+	uint32_t stream_count;
 
 	/* Total number of temporary registers per thread. */
-	uint32_t registerMax;
+	uint32_t register_max;
 
 	/* Maximum number of threads. */
-	uint32_t threadCount;
+	uint32_t thread_count;
 
 	/* Number of shader cores. */
-	uint32_t shaderCoreCount;
+	uint32_t shader_core_count;
 
 	/* Size of the vertex cache. */
-	uint32_t vertexCacheSize;
+	uint32_t vertex_cache_size;
 
 	/* Number of entries in the vertex output buffer. */
-	uint32_t vertexOutputBufferSize;
+	uint32_t vertex_output_buffer_size;
 
 	/* Number of pixel pipes. */
-	uint32_t pixelPipes;
+	uint32_t pixel_pipes;
 
 	/* Number of instructions. */
-	uint32_t instructionCount;
+	uint32_t instruction_count;
 
 	/* Number of constants. */
-	uint32_t numConstants;
+	uint32_t num_constants;
 
 	/* Buffer size */
-	uint32_t bufferSize;
+	uint32_t buffer_size;
 };
 
 struct msm_gpu {
