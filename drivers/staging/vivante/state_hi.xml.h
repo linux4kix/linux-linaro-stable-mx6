@@ -8,12 +8,12 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- /home/orion/projects/etna_viv/rnndb/state.xml    (  18526 bytes, from 2013-09-11 16:52:32)
-- /home/orion/projects/etna_viv/rnndb/common.xml   (  18379 bytes, from 2014-01-27 15:58:05)
-- /home/orion/projects/etna_viv/rnndb/state_hi.xml (  22236 bytes, from 2014-01-27 15:56:46)
-- /home/orion/projects/etna_viv/rnndb/state_2d.xml (  51191 bytes, from 2013-10-04 06:36:55)
-- /home/orion/projects/etna_viv/rnndb/state_3d.xml (  54570 bytes, from 2013-10-12 15:25:03)
-- /home/orion/projects/etna_viv/rnndb/state_vg.xml (   5942 bytes, from 2013-09-01 10:53:22)
+- /home/debian/etna_viv/rnndb/state.xml    (  18526 bytes, from 2014-04-21 10:54:26)
+- /home/debian/etna_viv/rnndb/common.xml   (  18379 bytes, from 2014-04-21 10:54:26)
+- /home/debian/etna_viv/rnndb/state_hi.xml (  22495 bytes, from 2014-04-21 11:14:48)
+- /home/debian/etna_viv/rnndb/state_2d.xml (  51191 bytes, from 2014-04-21 10:54:26)
+- /home/debian/etna_viv/rnndb/state_3d.xml (  54570 bytes, from 2014-04-21 10:54:26)
+- /home/debian/etna_viv/rnndb/state_vg.xml (   5942 bytes, from 2014-04-21 10:54:26)
 
 Copyright (C) 2014
 */
@@ -93,6 +93,15 @@ Copyright (C) 2014
 #define VIVS_HI_INTR_ENBL_INTR_ENBL_VEC(x)			(((x) << VIVS_HI_INTR_ENBL_INTR_ENBL_VEC__SHIFT) & VIVS_HI_INTR_ENBL_INTR_ENBL_VEC__MASK)
 
 #define VIVS_HI_CHIP_IDENTITY					0x00000018
+#define VIVS_HI_CHIP_IDENTITY_FAMILY__MASK			0xff000000
+#define VIVS_HI_CHIP_IDENTITY_FAMILY__SHIFT			24
+#define VIVS_HI_CHIP_IDENTITY_FAMILY(x)				(((x) << VIVS_HI_CHIP_IDENTITY_FAMILY__SHIFT) & VIVS_HI_CHIP_IDENTITY_FAMILY__MASK)
+#define VIVS_HI_CHIP_IDENTITY_PRODUCT__MASK			0x00ff0000
+#define VIVS_HI_CHIP_IDENTITY_PRODUCT__SHIFT			16
+#define VIVS_HI_CHIP_IDENTITY_PRODUCT(x)			(((x) << VIVS_HI_CHIP_IDENTITY_PRODUCT__SHIFT) & VIVS_HI_CHIP_IDENTITY_PRODUCT__MASK)
+#define VIVS_HI_CHIP_IDENTITY_REVISION__MASK			0x0000f000
+#define VIVS_HI_CHIP_IDENTITY_REVISION__SHIFT			12
+#define VIVS_HI_CHIP_IDENTITY_REVISION(x)			(((x) << VIVS_HI_CHIP_IDENTITY_REVISION__SHIFT) & VIVS_HI_CHIP_IDENTITY_REVISION__MASK)
 
 #define VIVS_HI_CHIP_FEATURE					0x0000001c
 
