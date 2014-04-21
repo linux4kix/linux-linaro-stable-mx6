@@ -38,9 +38,9 @@ static void vivante_hw_identify(struct msm_gpu *gpu)
 	chipIdentity = gpu_read(gpu, VIVS_HI_CHIP_IDENTITY);
 
 	/* Special case for older graphic cores. */
-	if (((chipIdentity & 0xFF000000) >> 24) ==  0x01) {
+	if (VIVS_HI_CHIP_IDENTITY_FAMILY(chipIdentity) ==  0x01) {
 		gpu->identity.model    = 0x500; /* gc500 */
-		gpu->identity.revision = (chipIdentity & 0xF000) >> 12;
+		gpu->identity.revision = VIVS_HI_CHIP_IDENTITY_REVISION(chipIdentity);
 	} else {
 
 		gpu->identity.model = gpu_read(gpu, VIVS_HI_CHIP_MODEL);
