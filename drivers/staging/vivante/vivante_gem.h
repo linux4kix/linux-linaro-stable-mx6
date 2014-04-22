@@ -19,7 +19,7 @@
 #define __MSM_GEM_H__
 
 #include <linux/reservation.h>
-#include "msm_drv.h"
+#include "vivante_drv.h"
 
 struct msm_gem_object {
 	struct drm_gem_object base;

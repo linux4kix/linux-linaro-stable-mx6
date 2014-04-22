@@ -21,8 +21,8 @@
 #include <linux/clk.h>
 #include <linux/regulator/consumer.h>
 
-#include "msm_drv.h"
-#include "msm_ringbuffer.h"
+#include "vivante_drv.h"
+#include "vivante_ringbuffer.h"
 
 struct msm_gem_submit;
 

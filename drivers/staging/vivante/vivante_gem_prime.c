@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "msm_drv.h"
-#include "msm_gem.h"
+#include "vivante_drv.h"
+#include "vivante_gem.h"
 
 
 struct sg_table *msm_gem_prime_get_sg_table(struct drm_gem_object *obj)

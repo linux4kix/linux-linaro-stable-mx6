@@ -15,9 +15,9 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "msm_gpu.h"
-#include "msm_gem.h"
-#include "msm_mmu.h"
+#include "vivante_gpu.h"
+#include "vivante_gem.h"
+#include "vivante_mmu.h"
 #include "state_hi.xml.h"
 
 int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)

@@ -15,9 +15,9 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "msm_drv.h"
-#include "msm_gpu.h"
-#include "msm_gem.h"
+#include "vivante_drv.h"
+#include "vivante_gpu.h"
+#include "vivante_gem.h"
 
 /*
  * Cmdstream submission:

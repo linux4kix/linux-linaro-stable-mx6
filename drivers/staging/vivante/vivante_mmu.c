@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "msm_drv.h"
-#include "msm_mmu.h"
+#include "vivante_drv.h"
+#include "vivante_mmu.h"
 
 struct msm_iommu {
 	struct msm_mmu base;

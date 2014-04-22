@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "msm_drv.h"
-#include "msm_gpu.h"
+#include "vivante_drv.h"
+#include "vivante_gpu.h"
 
 int msm_register_mmu(struct drm_device *dev, struct msm_mmu *mmu)
 {

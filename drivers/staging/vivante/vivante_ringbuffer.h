@@ -18,7 +18,7 @@
 #ifndef __MSM_RINGBUFFER_H__
 #define __MSM_RINGBUFFER_H__
 
-#include "msm_drv.h"
+#include "vivante_drv.h"
 
 struct msm_ringbuffer {
 	struct msm_gpu *gpu;

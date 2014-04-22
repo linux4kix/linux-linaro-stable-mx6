@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "msm_ringbuffer.h"
-#include "msm_gpu.h"
+#include "vivante_ringbuffer.h"
+#include "vivante_gpu.h"
 
 struct msm_ringbuffer *msm_ringbuffer_new(struct msm_gpu *gpu, int size)
 {

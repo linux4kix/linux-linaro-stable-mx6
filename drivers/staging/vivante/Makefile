@@ -4,12 +4,12 @@ ifeq (, $(findstring -W,$(EXTRA_CFLAGS)))
 endif
 
 vivante-y := \
-	msm_drv.o \
-	msm_gem.o \
-	msm_gem_prime.o \
-	msm_gem_submit.o \
-	msm_gpu.o \
-	msm_iommu.o \
-	msm_ringbuffer.o
+	vivante_drv.o \
+	vivante_gem.o \
+	vivante_gem_prime.o \
+	vivante_gem_submit.o \
+	vivante_gpu.o \
+	vivante_mmu.o \
+	vivante_ringbuffer.o
 
 obj-$(CONFIG_DRM_VIVANTE)	+= vivante.o
