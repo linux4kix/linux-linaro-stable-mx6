@@ -1590,8 +1590,13 @@ static int mxc_edid_read_internal(struct mxc_hdmi *hdmi, unsigned char *edid,
 
 	ret = mxc_edid_parse_ext_blk(edid + EDID_LENGTH,
 			cfg, &fbi->monspecs);
-	if (ret < 0)
-		return -ENOENT;
+	if (ret < 0) {
+                fb_edid_add_monspecs(edid + EDID_LENGTH, &fbi->monspecs);
+                if (fbi->monspecs.modedb_len > 0)
+                        hdmi->edid_cfg.hdmi_cap = false;
+                else
+			return -ENOENT;
+	}
 
 	/* need read segment block? */
 	if (extblknum > 1) {
@@ -1810,20 +1815,21 @@ static void mxc_hdmi_edid_rebuild_modelist(struct mxc_hdmi *hdmi)
 		 */
 		mode = &hdmi->fbi->monspecs.modedb[i];
 
-		if (!(mode->vmode & FB_VMODE_INTERLACED) &&
-				(mxc_edid_mode_to_vic(mode) != 0)) {
+		if (hdmi->edid_cfg.hdmi_cap &&
+		    (mode->vmode & FB_VMODE_INTERLACED) &&
+		    (mxc_edid_mode_to_vic(mode) == 0))
+			continue;
 
-			dev_dbg(&hdmi->pdev->dev, "Added mode %d:", i);
-			dev_dbg(&hdmi->pdev->dev,
-				"xres = %d, yres = %d, freq = %d, vmode = %d, flag = %d\n",
-				hdmi->fbi->monspecs.modedb[i].xres,
-				hdmi->fbi->monspecs.modedb[i].yres,
-				hdmi->fbi->monspecs.modedb[i].refresh,
-				hdmi->fbi->monspecs.modedb[i].vmode,
-				hdmi->fbi->monspecs.modedb[i].flag);
+		dev_dbg(&hdmi->pdev->dev, "Added mode %d:", i);
+		dev_dbg(&hdmi->pdev->dev,
+			"xres = %d, yres = %d, freq = %d, vmode = %d, flag = %d\n",
+			hdmi->fbi->monspecs.modedb[i].xres,
+			hdmi->fbi->monspecs.modedb[i].yres,
+			hdmi->fbi->monspecs.modedb[i].refresh,
+			hdmi->fbi->monspecs.modedb[i].vmode,
+			hdmi->fbi->monspecs.modedb[i].flag);
 
-			fb_add_videomode(mode, &hdmi->fbi->modelist);
-		}
+		fb_add_videomode(mode, &hdmi->fbi->modelist);
 	}
 
 	console_unlock();
