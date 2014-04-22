@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MSM_GPU_H__
-#define __MSM_GPU_H__
+#ifndef __VIVANTE_GPU_H__
+#define __VIVANTE_GPU_H__
 
 #include <linux/clk.h>
 #include <linux/regulator/consumer.h>
@@ -174,4 +174,4 @@ int msm_gpu_init(struct drm_device *drm, struct msm_gpu *gpu,
 		const char *ioname, const char *irqname, int ringsz);
 void msm_gpu_cleanup(struct msm_gpu *gpu);
 
-#endif /* __MSM_GPU_H__ */
+#endif /* __VIVANTE_GPU_H__ */

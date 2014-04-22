@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MSM_GEM_H__
-#define __MSM_GEM_H__
+#ifndef __VIVANTE_GEM_H__
+#define __VIVANTE_GEM_H__
 
 #include <linux/reservation.h>
 #include "vivante_drv.h"
@@ -98,4 +98,4 @@ struct msm_gem_submit {
 	} bos[0];
 };
 
-#endif /* __MSM_GEM_H__ */
+#endif /* __VIVANTE_GEM_H__ */

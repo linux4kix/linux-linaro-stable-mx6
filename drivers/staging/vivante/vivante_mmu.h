@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MSM_MMU_H__
-#define __MSM_MMU_H__
+#ifndef __VIVANTE_MMU_H__
+#define __VIVANTE_MMU_H__
 
 #include <linux/iommu.h>
 
@@ -44,4 +44,4 @@ static inline void msm_mmu_init(struct msm_mmu *mmu, struct drm_device *dev,
 struct msm_mmu *msm_iommu_new(struct drm_device *dev, struct iommu_domain *domain);
 struct msm_mmu *msm_gpummu_new(struct drm_device *dev, struct msm_gpu *gpu);
 
-#endif /* __MSM_MMU_H__ */
+#endif /* __VIVANTE_MMU_H__ */

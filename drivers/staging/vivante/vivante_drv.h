@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MSM_DRV_H__
-#define __MSM_DRV_H__
+#ifndef __VIVANTE_DRV_H__
+#define __VIVANTE_DRV_H__
 
 #include <linux/kernel.h>
 #include <linux/clk.h>
@@ -180,4 +180,4 @@ static inline int align_pitch(int width, int bpp)
 #define COND(bool, val) ((bool) ? (val) : 0)
 
 
-#endif /* __MSM_DRV_H__ */
+#endif /* __VIVANTE_DRV_H__ */

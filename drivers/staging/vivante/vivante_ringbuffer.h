@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MSM_RINGBUFFER_H__
-#define __MSM_RINGBUFFER_H__
+#ifndef __VIVANTE_RINGBUFFER_H__
+#define __VIVANTE_RINGBUFFER_H__
 
 #include "vivante_drv.h"
 
@@ -40,4 +40,4 @@ OUT_RING(struct msm_ringbuffer *ring, uint32_t data)
 	*(ring->cur++) = data;
 }
 
-#endif /* __MSM_RINGBUFFER_H__ */
+#endif /* __VIVANTE_RINGBUFFER_H__ */
