@@ -1514,7 +1514,7 @@ static void sdhci_do_set_ios(struct sdhci_host *host, struct mmc_ios *ios)
 			sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 
 			/* Wait max 5 ms */
-			timeout = 5;
+			timeout = 10;
 			while (!((clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL))
 				& SDHCI_CLOCK_INT_STABLE)) {
 				if (timeout == 0) {
