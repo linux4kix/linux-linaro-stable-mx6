@@ -338,6 +338,9 @@ static int fsl_hdmi_update_constraints(struct snd_pcm_substream *substream)
 
 	hdmi_get_edid_cfg(&edid_cfg);
 
+	if (!edid_cfg.hdmi_cap)
+		return -1;
+
 	fsl_hdmi_get_playback_rates();
 	ret = snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
 			&playback_constraint_rates);
@@ -369,16 +372,16 @@ static int fsl_hdmi_soc_startup(struct snd_pcm_substream *substream,
 	struct imx_hdmi *hdmi_data = snd_soc_dai_get_drvdata(dai);
 	int ret;
 
+	ret = fsl_hdmi_update_constraints(substream);
+	if (ret < 0)
+		return ret;
+
 	clk_prepare_enable(hdmi_data->isfr_clk);
 	clk_prepare_enable(hdmi_data->iahb_clk);
 
 	dev_dbg(dai->dev, "%s hdmi clks: isfr:%d iahb:%d\n", __func__,
 			(int)clk_get_rate(hdmi_data->isfr_clk),
 			(int)clk_get_rate(hdmi_data->iahb_clk));
-
-	ret = fsl_hdmi_update_constraints(substream);
-	if (ret < 0)
-		return ret;
 
 	/* Indicates the subpacket represents a flatline sample */
 	hdmi_audio_writeb(FC_AUDSCONF, AUD_PACKET_SAMPFIT, 0x0);
