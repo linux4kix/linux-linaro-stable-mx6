@@ -428,7 +428,7 @@ static irqreturn_t irq_handler(int irq, void *data)
 }
 
 static const char *clk_names[] = {
-		"gpu3d_core", "gpu3d_shader", "gpu3d_axi", "gpu2d", "gpu2d_axi", "openvg_axi",
+		"gpu3d_core", "gpu3d_shader", "gpu3d_axi", "gpu2d_core", "gpu2d_axi", "openvg_axi",
 };
 
 int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
