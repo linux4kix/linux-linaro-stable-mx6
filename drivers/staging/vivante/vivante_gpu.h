@@ -160,7 +160,7 @@ static inline u32 gpu_read(struct msm_gpu *gpu, u32 reg)
 }
 
 struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
-		const char *ioname, const char *irqname, int ringsz);
+		const char *ioname, const char *irqname);
 
 int msm_gpu_pm_suspend(struct msm_gpu *gpu);
 int msm_gpu_pm_resume(struct msm_gpu *gpu);
@@ -171,7 +171,7 @@ int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
 
 int msm_gpu_init(struct drm_device *drm, struct msm_gpu *gpu,
 		const struct vivante_gpu_funcs *funcs, const char *name,
-		const char *ioname, const char *irqname, int ringsz);
+		const char *ioname, const char *irqname);
 void msm_gpu_cleanup(struct msm_gpu *gpu);
 
 #endif /* __VIVANTE_GPU_H__ */

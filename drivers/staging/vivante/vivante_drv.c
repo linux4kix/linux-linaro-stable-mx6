@@ -122,9 +122,9 @@ static void load_gpu(struct drm_device *dev)
 
 	mutex_lock(&dev->struct_mutex);
 
-	gpu[VIVANTE_PIPE_2D] = vivante_gpu_init(dev, "vivante_gpu_2d", "iobase-2d", "irq-2d", 0);
-	gpu[VIVANTE_PIPE_3D] = vivante_gpu_init(dev, "vivante_gpu_3d", "iobase-3d", "irq-3d", 0);
-	gpu[VIVANTE_PIPE_VG] = vivante_gpu_init(dev, "vivante_gpu_vg", "iobase-vg", "irq-vg", 0);
+	gpu[VIVANTE_PIPE_2D] = vivante_gpu_init(dev, "vivante_gpu_2d", "iobase-2d", "irq-2d");
+	gpu[VIVANTE_PIPE_3D] = vivante_gpu_init(dev, "vivante_gpu_3d", "iobase-3d", "irq-3d");
+	gpu[VIVANTE_PIPE_VG] = vivante_gpu_init(dev, "vivante_gpu_vg", "iobase-vg", "irq-vg");
 
 	mutex_unlock(&dev->struct_mutex);
 

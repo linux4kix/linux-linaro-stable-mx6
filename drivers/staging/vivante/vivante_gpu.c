@@ -115,7 +115,7 @@ static const struct vivante_gpu_funcs funcs = {
 };
 
 struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
-		const char *ioname, const char *irqname, int ringsz)
+		const char *ioname, const char *irqname)
 {
 	int ret;
 	struct msm_gpu *gpu;
@@ -125,7 +125,7 @@ struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
 		return NULL;
 	}
 
-	ret = msm_gpu_init(dev, gpu, &funcs, name, ioname, irqname, ringsz);
+	ret = msm_gpu_init(dev, gpu, &funcs, name, ioname, irqname);
 	if (ret < 0) {
 		dev_err(dev->dev, "%s init failed: %d\n", __func__, ret);
 		kfree(gpu);
@@ -433,7 +433,7 @@ static const char *clk_names[] = {
 
 int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 		const struct vivante_gpu_funcs *funcs, 	const char *name,
-		const char *ioname, const char *irqname, int ringsz)
+		const char *ioname, const char *irqname)
 {
 	struct platform_device *pdev = drm->platformdev;
 	struct iommu_domain *iommu;
