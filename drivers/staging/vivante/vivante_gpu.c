@@ -19,6 +19,43 @@
 #include "vivante_gem.h"
 #include "vivante_mmu.h"
 #include "state_hi.xml.h"
+#include "cmdstream.xml.h"
+
+/*
+ * Command Buffer helper:
+ */
+
+static inline void CMD_LOAD_STATE(struct msm_ringbuffer *rb, u32 offset, u32 value)
+{
+	/* write a register via cmd stream */
+	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER | VIV_FE_LOAD_STATE_HEADER_COUNT(1) | VIV_FE_LOAD_STATE_HEADER_OFFSET(offset));
+	OUT_RING(rb, value);
+}
+
+static inline void CMD_END(struct msm_ringbuffer *rb)
+{
+	OUT_RING(rb, VIV_FE_END_HEADER);
+}
+
+static inline void CMD_NOP(struct msm_ringbuffer *rb)
+{
+	OUT_RING(rb, VIV_FE_NOP_HEADER);
+}
+
+static inline void CMD_WAIT(struct msm_ringbuffer *rb)
+{
+	OUT_RING(rb, VIV_FE_WAIT_HEADER_OP_WAIT | 200);
+}
+
+static inline void CMD_LINK(struct msm_ringbuffer *rb, u16 prefetch, u32 address)
+{
+	OUT_RING(rb, VIV_FE_LINK_HEADER | VIV_FE_LINK_HEADER_PREFETCH(prefetch));
+	OUT_RING(rb, address);
+}
+
+/*
+ * Driver functions:
+ */
 
 int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 {
