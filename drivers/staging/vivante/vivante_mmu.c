@@ -45,7 +45,7 @@ int vivante_iommu_attach(struct vivante_iommu *iommu, const char **names, int cn
 	return 0;
 }
 
-int msm_iommu_map(struct vivante_iommu *iommu, uint32_t iova,
+int vivante_iommu_map(struct vivante_iommu *iommu, uint32_t iova,
 		struct sg_table *sgt, unsigned len, int prot)
 {
 	struct iommu_domain *domain = iommu->domain;
@@ -83,7 +83,7 @@ fail:
 	return ret;
 }
 
-int msm_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova,
+int vivante_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova,
 		struct sg_table *sgt, unsigned len)
 {
 	struct iommu_domain *domain = iommu->domain;
@@ -109,13 +109,13 @@ int msm_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova,
 	return 0;
 }
 
-void msm_iommu_destroy(struct vivante_iommu *mmu)
+void vivante_iommu_destroy(struct vivante_iommu *mmu)
 {
 	iommu_domain_free(mmu->domain);
 	kfree(mmu);
 }
 
-struct vivante_iommu *msm_iommu_new(struct drm_device *dev, struct iommu_domain *domain)
+struct vivante_iommu *vivante_iommu_new(struct drm_device *dev, struct iommu_domain *domain)
 {
 	struct vivante_iommu *mmu;
 

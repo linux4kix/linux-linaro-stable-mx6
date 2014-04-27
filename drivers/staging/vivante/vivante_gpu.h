@@ -133,7 +133,7 @@ struct msm_gpu {
 	void __iomem *mmio;
 	int irq;
 
-	struct vivante_mmu *mmu;
+	struct vivante_iommu *mmu;
 	int id;
 
 	/* Power Control: */

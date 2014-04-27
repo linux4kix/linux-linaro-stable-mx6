@@ -542,7 +542,7 @@ int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 	iommu = iommu_domain_alloc(&platform_bus_type);
 	if (iommu) {
 		dev_info(drm->dev, "%s: using IOMMU\n", name);
-		gpu->mmu = msm_iommu_new(drm, iommu);
+		gpu->mmu = vivante_iommu_new(drm, iommu);
 	} else {
 		dev_info(drm->dev, "%s: no IOMMU, fallback to VRAM carveout!\n", name);
 	}
@@ -583,5 +583,5 @@ void msm_gpu_cleanup(struct msm_gpu *gpu)
 	}
 
 	if (gpu->mmu)
-		gpu->mmu->funcs->destroy(gpu->mmu);
+		vivante_iommu_destroy(gpu->mmu);
 }

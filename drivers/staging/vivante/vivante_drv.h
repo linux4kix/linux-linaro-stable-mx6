@@ -73,7 +73,7 @@ struct msm_drm_private {
 
 	/* registered MMUs: */
 	unsigned int num_mmus;
-	struct msm_mmu *mmus[NUM_DOMAINS];
+	struct vivante_iommu *mmus[NUM_DOMAINS];
 };
 
 struct msm_format {
@@ -94,7 +94,7 @@ void __msm_fence_worker(struct work_struct *work);
 		(_cb)->func = _func;                         \
 	} while (0)
 
-int msm_register_mmu(struct drm_device *dev, struct msm_mmu *mmu);
+int msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
 
 int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout);
