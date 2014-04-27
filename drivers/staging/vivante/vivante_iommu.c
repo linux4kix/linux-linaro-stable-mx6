@@ -15,7 +15,9 @@
  */
 
 #include <linux/iommu.h>
+#include <linux/platform_device.h>
 #include <linux/sizes.h>
+#include <linux/slab.h>
 
 struct vivante_iommu_domain
 {
@@ -25,7 +27,6 @@ struct vivante_iommu_domain
 static int vivante_iommu_domain_init(struct iommu_domain *domain)
 {
 	struct vivante_iommu_domain *vivante_domain;
-	int i, ret;
 
 	vivante_domain = kmalloc(sizeof(*vivante_domain), GFP_KERNEL);
 	if (!vivante_domain)
@@ -46,7 +47,7 @@ static void vivante_iommu_domain_destroy(struct iommu_domain *domain)
 static int vivante_iommu_map(struct iommu_domain *domain, unsigned long iova,
 	   phys_addr_t paddr, size_t size, int prot)
 {
-	struct vivante_iommu_domain *vivante_domain = domain->priv;
+	/*struct vivante_iommu_domain *vivante_domain = domain->priv;*/
 
 	return 0;
 }
@@ -54,14 +55,14 @@ static int vivante_iommu_map(struct iommu_domain *domain, unsigned long iova,
 static size_t vivante_iommu_unmap(struct iommu_domain *domain, unsigned long iova,
 	     size_t size)
 {
-	struct vivante_iommu_domain *vivante_domain = domain->priv;
+	/*struct vivante_iommu_domain *vivante_domain = domain->priv;*/
 
 	return 0;
 }
 
 phys_addr_t vivante_iommu_iova_to_phys(struct iommu_domain *domain, dma_addr_t iova)
 {
-	struct vivante_iommu_domain *vivante_domain = domain->priv;
+	/*struct vivante_iommu_domain *vivante_domain = domain->priv;*/
 
 	return 0;
 }

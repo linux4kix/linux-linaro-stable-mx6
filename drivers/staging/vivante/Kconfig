@@ -4,6 +4,7 @@ config DRM_VIVANTE
 	depends on DRM
 	select SHMEM
 	select TMPFS
+	select IOMMU_API
 	default y
 	help
 	  DRM driver for Vivante GPUs.
