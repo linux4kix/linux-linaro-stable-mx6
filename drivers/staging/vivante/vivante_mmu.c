@@ -18,23 +18,16 @@
 #include "vivante_drv.h"
 #include "vivante_mmu.h"
 
-struct msm_iommu {
-	struct msm_mmu base;
-	struct iommu_domain *domain;
-};
-#define to_msm_iommu(x) container_of(x, struct msm_iommu, base)
-
-static int msm_fault_handler(struct iommu_domain *iommu, struct device *dev,
+static int vivante_fault_handler(struct iommu_domain *iommu, struct device *dev,
 		unsigned long iova, int flags, void *arg)
 {
 	DBG("*** fault: iova=%08lx, flags=%d", iova, flags);
 	return 0;
 }
 
-static int msm_iommu_attach(struct msm_mmu *mmu, const char **names, int cnt)
+int vivante_iommu_attach(struct vivante_iommu *iommu, const char **names, int cnt)
 {
-	struct drm_device *dev = mmu->dev;
-	struct msm_iommu *iommu = to_msm_iommu(mmu);
+	struct drm_device *dev = iommu->dev;
 	int i, ret;
 
 	for (i = 0; i < cnt; i++) {
@@ -52,10 +45,9 @@ static int msm_iommu_attach(struct msm_mmu *mmu, const char **names, int cnt)
 	return 0;
 }
 
-static int msm_iommu_map(struct msm_mmu *mmu, uint32_t iova,
+int msm_iommu_map(struct vivante_iommu *iommu, uint32_t iova,
 		struct sg_table *sgt, unsigned len, int prot)
 {
-	struct msm_iommu *iommu = to_msm_iommu(mmu);
 	struct iommu_domain *domain = iommu->domain;
 	struct scatterlist *sg;
 	unsigned int da = iova;
@@ -91,10 +83,9 @@ fail:
 	return ret;
 }
 
-static int msm_iommu_unmap(struct msm_mmu *mmu, uint32_t iova,
+int msm_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova,
 		struct sg_table *sgt, unsigned len)
 {
-	struct msm_iommu *iommu = to_msm_iommu(mmu);
 	struct iommu_domain *domain = iommu->domain;
 	struct scatterlist *sg;
 	unsigned int da = iova;
@@ -118,31 +109,23 @@ static int msm_iommu_unmap(struct msm_mmu *mmu, uint32_t iova,
 	return 0;
 }
 
-static void msm_iommu_destroy(struct msm_mmu *mmu)
+void msm_iommu_destroy(struct vivante_iommu *mmu)
 {
-	struct msm_iommu *iommu = to_msm_iommu(mmu);
-	iommu_domain_free(iommu->domain);
-	kfree(iommu);
+	iommu_domain_free(mmu->domain);
+	kfree(mmu);
 }
 
-static const struct msm_mmu_funcs funcs = {
-		.attach = msm_iommu_attach,
-		.map = msm_iommu_map,
-		.unmap = msm_iommu_unmap,
-		.destroy = msm_iommu_destroy,
-};
-
-struct msm_mmu *msm_iommu_new(struct drm_device *dev, struct iommu_domain *domain)
+struct vivante_iommu *msm_iommu_new(struct drm_device *dev, struct iommu_domain *domain)
 {
-	struct msm_iommu *iommu;
+	struct vivante_iommu *mmu;
 
-	iommu = kzalloc(sizeof(*iommu), GFP_KERNEL);
-	if (!iommu)
+	mmu = kzalloc(sizeof(*mmu), GFP_KERNEL);
+	if (!mmu)
 		return ERR_PTR(-ENOMEM);
 
-	iommu->domain = domain;
-	msm_mmu_init(&iommu->base, dev, &funcs);
-	iommu_set_fault_handler(domain, msm_fault_handler, dev);
+	mmu->domain = domain;
+	mmu->dev = dev;
+	iommu_set_fault_handler(domain, vivante_fault_handler, dev);
 
-	return &iommu->base;
+	return mmu;
 }

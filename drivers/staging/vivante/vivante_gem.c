@@ -236,7 +236,7 @@ int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 
 	if (!msm_obj->domain[id].iova) {
 		struct msm_drm_private *priv = obj->dev->dev_private;
-		struct msm_mmu *mmu = priv->mmus[id];
+		struct vivante_mmu *mmu = priv->mmus[id];
 		struct page **pages = get_pages(obj);
 		uint32_t offset;
 
@@ -244,7 +244,7 @@ int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 			return PTR_ERR(pages);
 
 		offset = (uint32_t)mmap_offset(obj);
-		ret = mmu->funcs->map(mmu, offset, msm_obj->sgt,
+		ret = vivante_iommu_map(mmu, offset, msm_obj->sgt,
 				obj->size, IOMMU_READ | IOMMU_WRITE);
 		msm_obj->domain[id].iova = offset;
 	}
@@ -469,10 +469,10 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 	list_del(&msm_obj->mm_list);
 
 	for (id = 0; id < ARRAY_SIZE(msm_obj->domain); id++) {
-		struct msm_mmu *mmu = priv->mmus[id];
+		struct vivante_mmu *mmu = priv->mmus[id];
 		if (mmu && msm_obj->domain[id].iova) {
 			uint32_t offset = (uint32_t)mmap_offset(obj);
-			mmu->funcs->unmap(mmu, offset, msm_obj->sgt, obj->size);
+			vivante_iommu_unmap(mmu, offset, msm_obj->sgt, obj->size);
 		}
 	}
 

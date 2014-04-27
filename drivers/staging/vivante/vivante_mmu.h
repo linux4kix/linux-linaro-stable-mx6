@@ -20,28 +20,18 @@
 
 #include <linux/iommu.h>
 
-struct msm_mmu_funcs {
-	int (*attach)(struct msm_mmu *mmu, const char **names, int cnt);
-	int (*map)(struct msm_mmu *mmu, uint32_t iova, struct sg_table *sgt,
-			unsigned len, int prot);
-	int (*unmap)(struct msm_mmu *mmu, uint32_t iova, struct sg_table *sgt,
-			unsigned len);
-	void (*destroy)(struct msm_mmu *mmu);
-};
-
-struct msm_mmu {
-	const struct msm_mmu_funcs *funcs;
+struct vivante_iommu {
 	struct drm_device *dev;
+	struct iommu_domain *domain;
 };
 
-static inline void msm_mmu_init(struct msm_mmu *mmu, struct drm_device *dev,
-		const struct msm_mmu_funcs *funcs)
-{
-	mmu->dev = dev;
-	mmu->funcs = funcs;
-}
+int vivante_iommu_attach(struct vivante_iommu *iommu, const char **names, int cnt);
+int vivante_iommu_map(struct vivante_iommu *iommu, uint32_t iova, struct sg_table *sgt,
+		unsigned len, int prot);
+int vivante_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova, struct sg_table *sgt,
+		unsigned len);
+void vivante_iommu_destroy(struct vivante_iommu *iommu);
 
-struct msm_mmu *msm_iommu_new(struct drm_device *dev, struct iommu_domain *domain);
-struct msm_mmu *msm_gpummu_new(struct drm_device *dev, struct msm_gpu *gpu);
+struct vivante_iommu *vivante_iommu_new(struct drm_device *dev, struct iommu_domain *domain);
 
 #endif /* __VIVANTE_MMU_H__ */
