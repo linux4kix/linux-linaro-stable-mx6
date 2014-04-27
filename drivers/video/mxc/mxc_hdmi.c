@@ -1815,9 +1815,9 @@ static void mxc_hdmi_edid_rebuild_modelist(struct mxc_hdmi *hdmi)
 		 */
 		mode = &hdmi->fbi->monspecs.modedb[i];
 
-		if (hdmi->edid_cfg.hdmi_cap &&
-		    (mode->vmode & FB_VMODE_INTERLACED) &&
-		    (mxc_edid_mode_to_vic(mode) == 0))
+		if ((mode->vmode & FB_VMODE_INTERLACED) ||
+		    (hdmi->edid_cfg.hdmi_cap &&
+		    (mxc_edid_mode_to_vic(mode) == 0)))
 			continue;
 
 		dev_dbg(&hdmi->pdev->dev, "Added mode %d:", i);
