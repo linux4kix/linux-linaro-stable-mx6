@@ -9,6 +9,7 @@ vivante-y := \
 	vivante_gem_prime.o \
 	vivante_gem_submit.o \
 	vivante_gpu.o \
+	vivante_iommu.o \
 	vivante_mmu.o \
 	vivante_ringbuffer.o
 
