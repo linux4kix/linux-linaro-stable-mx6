@@ -2037,6 +2037,7 @@ static int mac80211_hwsim_create_radio(int channels, const char *reg_alpha2,
 			    WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL |
 			    WIPHY_FLAG_AP_UAPSD;
 	hw->wiphy->features |= NL80211_FEATURE_ACTIVE_MONITOR;
+	hw->wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE;
 
 	/* ask mac80211 to reserve space for magic */
 	hw->vif_data_size = sizeof(struct hwsim_vif_priv);
