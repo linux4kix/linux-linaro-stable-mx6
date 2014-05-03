@@ -22,6 +22,7 @@
 #include <linux/bitops.h>
 
 #include "vivante_gpu.h"
+#include "state_hi.xml.h"
 
 #define PT_SIZE 	SZ_256K
 #define PT_ENTRIES	(PT_SIZE / sizeof(uint32_t))
@@ -154,6 +155,7 @@ static struct iommu_ops vivante_iommu_ops = {
 struct iommu_domain *vivante_iommu_domain_alloc(struct msm_gpu *gpu)
 {
 	struct iommu_domain *domain;
+	struct vivante_iommu_domain *vivante_domain;
 	int ret;
 
 	domain = kzalloc(sizeof(*domain), GFP_KERNEL);
@@ -165,6 +167,15 @@ struct iommu_domain *vivante_iommu_domain_alloc(struct msm_gpu *gpu)
 	ret = domain->ops->domain_init(domain);
 	if (ret)
 		goto out_free;
+
+	/* set page table address in MC */
+	vivante_domain = domain->priv;
+
+	gpu_write(gpu, VIVS_MC_MMU_FE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
+	gpu_write(gpu, VIVS_MC_MMU_TX_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
+	gpu_write(gpu, VIVS_MC_MMU_PE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
+	gpu_write(gpu, VIVS_MC_MMU_PEZ_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
+	gpu_write(gpu, VIVS_MC_MMU_RA_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
 
 	return domain;
 
