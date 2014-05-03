@@ -79,7 +79,7 @@ static int vivante_iommu_domain_init(struct iommu_domain *domain)
 	if (!vivante_domain)
 		return -ENOMEM;
 
-	ret = pgtable_alloc(&vivante_domain->pgtable, SZ_32K);
+	ret = pgtable_alloc(&vivante_domain->pgtable, SZ_32K * sizeof(uint32_t)));
 	if (ret < 0) {
 		kfree(vivante_domain);
 		return ret;
@@ -93,7 +93,7 @@ static void vivante_iommu_domain_destroy(struct iommu_domain *domain)
 {
 	struct vivante_iommu_domain *vivante_domain = domain->priv;
 
-	pgtable_free(&vivante_domain->pgtable, SZ_32K);
+	pgtable_free(&vivante_domain->pgtable, SZ_32K * sizeof(uint32_t));
 
 	kfree(vivante_domain);
 	domain->priv = NULL;
