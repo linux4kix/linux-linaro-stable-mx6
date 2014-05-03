@@ -49,8 +49,14 @@ struct drm_msm_timespec {
 	int64_t tv_nsec;         /* nanoseconds */
 };
 
-#define MSM_PARAM_GPU_ID     0x01
-#define MSM_PARAM_GMEM_SIZE  0x02
+#define VIVANTE_PARAM_GPU_MODEL		0x01
+#define VIVANTE_PARAM_GPU_REVISION	0x02
+#define VIVANTE_PARAM_GPU_FEATURES_0	0x03
+#define VIVANTE_PARAM_GPU_FEATURES_1	0x04
+#define VIVANTE_PARAM_GPU_FEATURES_2	0x05
+#define VIVANTE_PARAM_GPU_FEATURES_3	0x06
+
+//#define MSM_PARAM_GMEM_SIZE  0x02
 
 struct drm_vivante_param {
 	uint32_t pipe;           /* in, VIVANTE_PIPE_x */

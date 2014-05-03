@@ -61,6 +61,30 @@ static inline void CMD_LINK(struct msm_ringbuffer *rb, u16 prefetch, u32 address
 int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 {
 	switch (param) {
+	case VIVANTE_PARAM_GPU_MODEL:
+		*value = gpu->identity.model;
+		break;
+
+	case VIVANTE_PARAM_GPU_REVISION:
+		*value = gpu->identity.revision;
+		break;
+
+	case VIVANTE_PARAM_GPU_FEATURES_0:
+		*value = gpu->identity.features;
+		break;
+
+	case VIVANTE_PARAM_GPU_FEATURES_1:
+		*value = gpu->identity.minor_features;
+		break;
+
+	case VIVANTE_PARAM_GPU_FEATURES_2:
+		*value = gpu->identity.minor_features1;
+		break;
+
+	case VIVANTE_PARAM_GPU_FEATURES_3:
+		*value = gpu->identity.minor_features2;
+		break;
+
 	default:
 		DBG("%s: invalid param: %u", gpu->name, param);
 		return -EINVAL;
