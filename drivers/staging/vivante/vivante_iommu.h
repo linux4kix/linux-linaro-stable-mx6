@@ -17,6 +17,9 @@
 #ifndef __VIVANTE_IOMMU_H__
 #define __VIVANTE_IOMMU_H__
 
-int vivante_iommu_init(void);
+#include <linux/iommu.h>
+struct msm_gpu;
+
+struct iommu_domain *vivante_iommu_domain_alloc(struct msm_gpu *gpu);
 
 #endif /* __VIVANTE_IOMMU_H__ */

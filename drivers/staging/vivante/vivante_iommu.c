@@ -19,6 +19,8 @@
 #include <linux/sizes.h>
 #include <linux/slab.h>
 
+#include "vivante_gpu.h"
+
 struct vivante_iommu_domain
 {
 	spinlock_t map_lock;
@@ -76,8 +78,24 @@ static struct iommu_ops vivante_iommu_ops = {
 		.pgsize_bitmap = SZ_4K,
 };
 
-int vivante_iommu_init(void)
+struct iommu_domain *vivante_iommu_domain_alloc(struct msm_gpu *gpu)
 {
-	bus_set_iommu(&platform_bus_type, &vivante_iommu_ops);
-	return 0;
+	struct iommu_domain *domain;
+	int ret;
+
+	domain = kzalloc(sizeof(*domain), GFP_KERNEL);
+	if (!domain)
+		return NULL;
+
+	domain->ops = &vivante_iommu_ops;
+
+	ret = domain->ops->domain_init(domain);
+	if (ret)
+		goto out_free;
+
+	return domain;
+
+out_free:
+	kfree(domain);
+	return NULL;
 }

@@ -18,6 +18,7 @@
 #include "vivante_gpu.h"
 #include "vivante_gem.h"
 #include "vivante_mmu.h"
+#include "vivante_iommu.h"
 #include "state_hi.xml.h"
 #include "cmdstream.xml.h"
 
@@ -539,12 +540,13 @@ int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 	 * and have separate page tables per context.  For now, to keep things
 	 * simple and to get something working, just use a single address space:
 	 */
-	iommu = iommu_domain_alloc(&platform_bus_type);
+	iommu = vivante_iommu_domain_alloc(gpu);
 	if (iommu) {
 		dev_info(drm->dev, "%s: using IOMMU\n", name);
 		gpu->mmu = vivante_iommu_new(drm, iommu);
 	} else {
-		dev_info(drm->dev, "%s: no IOMMU, fallback to VRAM carveout!\n", name);
+		ret = -ENOMEM;
+		goto fail;
 	}
 	gpu->id = msm_register_mmu(drm, gpu->mmu);
 
