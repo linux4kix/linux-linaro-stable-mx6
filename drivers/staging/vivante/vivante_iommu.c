@@ -23,18 +23,14 @@
 
 #include "vivante_gpu.h"
 
-/* Page table entry bits */
-#define PTE_PHYS_PFN(x)	(x >> 8)
-
 #define PT_SIZE 	SZ_256K
 #define PT_ENTRIES	(PT_SIZE / sizeof(uint32_t))
+
+#define GPU_MEM_START	0x80000000
 
 struct vivante_iommu_domain_pgtable {
 	uint32_t *pgtable;
 	dma_addr_t handle;
-
-	uint32_t free_map_start;
-	unsigned long *free_map;
 };
 
 struct vivante_iommu_domain
@@ -50,35 +46,34 @@ static int pgtable_alloc(struct vivante_iommu_domain_pgtable *pgtable,
 	if (!pgtable->pgtable)
 		return -ENOMEM;
 
-	pgtable->free_map = kmalloc(PT_ENTRIES / 8, GFP_KERNEL);
-	if (!pgtable->free_map) {
-		dma_free_coherent(NULL, size, pgtable->pgtable, pgtable->handle);
-		return -ENOMEM;
-	}
-
 	return 0;
 }
 
 static void pgtable_free(struct vivante_iommu_domain_pgtable *pgtable,
 			 size_t size)
 {
-	kfree(pgtable->free_map);
 	dma_free_coherent(NULL, size, pgtable->pgtable, pgtable->handle);
 }
 
 static uint32_t pgtable_read(struct vivante_iommu_domain_pgtable *pgtable,
-			     unsigned int index)
+			   unsigned long iova)
 {
-	return pgtable->pgtable[index];
+	/* calcuate index into page table */
+	unsigned int index = (iova - GPU_MEM_START) / SZ_4K;
+	phys_addr_t paddr;
+
+	paddr = pgtable->pgtable[index];
+
+	return paddr;
 }
 
 static void pgtable_write(struct vivante_iommu_domain_pgtable *pgtable,
-			  unsigned int index, unsigned int count, uint32_t val)
+			  unsigned long iova, phys_addr_t paddr)
 {
-	unsigned int i;
+	/* calcuate index into page table */
+	unsigned int index = (iova - GPU_MEM_START) / SZ_4K;
 
-	for (i = 0; i < count; i++)
-		pgtable->pgtable[index + i] = val;
+	pgtable->pgtable[index] = paddr;
 }
 
 static int vivante_iommu_domain_init(struct iommu_domain *domain)
@@ -113,7 +108,14 @@ static void vivante_iommu_domain_destroy(struct iommu_domain *domain)
 static int vivante_iommu_map(struct iommu_domain *domain, unsigned long iova,
 	   phys_addr_t paddr, size_t size, int prot)
 {
-	/*struct vivante_iommu_domain *vivante_domain = domain->priv;*/
+	struct vivante_iommu_domain *vivante_domain = domain->priv;
+
+	if (size != SZ_4K)
+		return -EINVAL;
+
+	spin_lock(&vivante_domain->map_lock);
+	pgtable_write(&vivante_domain->pgtable, iova, paddr);
+	spin_unlock(&vivante_domain->map_lock);
 
 	return 0;
 }
@@ -121,16 +123,23 @@ static int vivante_iommu_map(struct iommu_domain *domain, unsigned long iova,
 static size_t vivante_iommu_unmap(struct iommu_domain *domain, unsigned long iova,
 	     size_t size)
 {
-	/*struct vivante_iommu_domain *vivante_domain = domain->priv;*/
+	struct vivante_iommu_domain *vivante_domain = domain->priv;
+
+	if (size != SZ_4K)
+		return -EINVAL;
+
+	spin_lock(&vivante_domain->map_lock);
+	pgtable_write(&vivante_domain->pgtable, iova, ~0);
+	spin_unlock(&vivante_domain->map_lock);
 
 	return 0;
 }
 
 phys_addr_t vivante_iommu_iova_to_phys(struct iommu_domain *domain, dma_addr_t iova)
 {
-	/*struct vivante_iommu_domain *vivante_domain = domain->priv;*/
+	struct vivante_iommu_domain *vivante_domain = domain->priv;
 
-	return 0;
+	return pgtable_read(&vivante_domain->pgtable, iova);
 }
 
 static struct iommu_ops vivante_iommu_ops = {
