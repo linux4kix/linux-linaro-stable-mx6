@@ -32,6 +32,9 @@
 struct vivante_iommu_domain_pgtable {
 	uint32_t *pgtable;
 	dma_addr_t handle;
+
+	uint32_t free_map_start;
+	unsigned long *free_map;
 };
 
 struct vivante_iommu_domain
@@ -47,12 +50,19 @@ static int pgtable_alloc(struct vivante_iommu_domain_pgtable *pgtable,
 	if (!pgtable->pgtable)
 		return -ENOMEM;
 
+	pgtable->free_map = kmalloc(PT_ENTRIES / 8, GFP_KERNEL);
+	if (!pgtable->free_map) {
+		dma_free_coherent(NULL, size, pgtable->pgtable, pgtable->handle);
+		return -ENOMEM;
+	}
+
 	return 0;
 }
 
 static void pgtable_free(struct vivante_iommu_domain_pgtable *pgtable,
 			 size_t size)
 {
+	kfree(pgtable->free_map);
 	dma_free_coherent(NULL, size, pgtable->pgtable, pgtable->handle);
 }
 
