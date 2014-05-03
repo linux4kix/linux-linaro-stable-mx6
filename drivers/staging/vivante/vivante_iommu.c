@@ -18,13 +18,51 @@
 #include <linux/platform_device.h>
 #include <linux/sizes.h>
 #include <linux/slab.h>
+#include <linux/dma-mapping.h>
 
 #include "vivante_gpu.h"
 
+struct vivante_iommu_domain_pgtable {
+	uint32_t *pgtable;
+	dma_addr_t handle;
+};
+
 struct vivante_iommu_domain
 {
+	struct vivante_iommu_domain_pgtable pgtable;
 	spinlock_t map_lock;
 };
+
+static int pgtable_alloc(struct vivante_iommu_domain_pgtable *pgtable,
+			 struct device *dev, size_t size)
+{
+	pgtable->pgtable = dma_alloc_coherent(dev, size, &pgtable->handle, GFP_KERNEL);
+	if (!pgtable->pgtable)
+		return -ENOMEM;
+
+	return 0;
+}
+
+static void pgtable_free(struct vivante_iommu_domain_pgtable *pgtable,
+			 struct device *dev, size_t size)
+{
+	dma_free_coherent(dev, size, pgtable->pgtable, pgtable->handle);
+}
+
+static uint32_t pgtable_read(struct vivante_iommu_domain_pgtable *pgtable,
+			     unsigned int index)
+{
+	return pgtable->pgtable[index];
+}
+
+static void pgtable_write(struct vivante_iommu_domain_pgtable *pgtable,
+			  unsigned int index, unsigned int count, uint32_t val)
+{
+	unsigned int i;
+
+	for (i = 0; i < count; i++)
+		pgtable->pgtable[index + i] = val;
+}
 
 static int vivante_iommu_domain_init(struct iommu_domain *domain)
 {
