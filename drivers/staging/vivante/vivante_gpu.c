@@ -558,14 +558,14 @@ int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
 		dev_err(drm->dev, "could not create ringbuffer: %d\n", ret);
 		goto fail;
 	}
-#if 0
+
 	ret = msm_gem_get_iova_locked(gpu->rb->bo, gpu->id, &gpu->rb_iova);
 	if (ret) {
 		gpu->rb_iova = 0;
 		dev_err(drm->dev, "could not map ringbuffer: %d\n", ret);
 		goto fail;
 	}
-#endif
+
 	return 0;
 
 fail:
