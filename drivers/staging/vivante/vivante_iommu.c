@@ -26,6 +26,9 @@
 /* Page table entry bits */
 #define PTE_PHYS_PFN(x)	(x >> 8)
 
+#define PT_SIZE 	SZ_256K
+#define PT_ENTRIES	(PT_SIZE / sizeof(uint32_t))
+
 struct vivante_iommu_domain_pgtable {
 	uint32_t *pgtable;
 	dma_addr_t handle;
@@ -77,7 +80,7 @@ static int vivante_iommu_domain_init(struct iommu_domain *domain)
 	if (!vivante_domain)
 		return -ENOMEM;
 
-	ret = pgtable_alloc(&vivante_domain->pgtable, SZ_32K * sizeof(uint32_t)));
+	ret = pgtable_alloc(&vivante_domain->pgtable, PT_SIZE);
 	if (ret < 0) {
 		kfree(vivante_domain);
 		return ret;
@@ -91,7 +94,7 @@ static void vivante_iommu_domain_destroy(struct iommu_domain *domain)
 {
 	struct vivante_iommu_domain *vivante_domain = domain->priv;
 
-	pgtable_free(&vivante_domain->pgtable, SZ_32K * sizeof(uint32_t));
+	pgtable_free(&vivante_domain->pgtable, PT_SIZE);
 
 	kfree(vivante_domain);
 	domain->priv = NULL;
