@@ -139,7 +139,7 @@ static struct iommu_ops vivante_iommu_ops = {
 		.map = vivante_iommu_map,
 		.unmap = vivante_iommu_unmap,
 		.iova_to_phys = vivante_iommu_iova_to_phys,
-		.pgsize_bitmap = SZ_128K,
+		.pgsize_bitmap = SZ_4K,
 };
 
 struct iommu_domain *vivante_iommu_domain_alloc(struct msm_gpu *gpu)
