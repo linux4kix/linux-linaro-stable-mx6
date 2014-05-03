@@ -19,8 +19,13 @@
 #include <linux/sizes.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>
+#include <linux/bitops.h>
 
 #include "vivante_gpu.h"
+
+/* Page table entry bits */
+#define PTE_SINGLE	BIT(4)
+#define PTE_FREE	BIT(5)
 
 struct vivante_iommu_domain_pgtable {
 	uint32_t *pgtable;
