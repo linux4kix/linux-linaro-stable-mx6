@@ -24,8 +24,9 @@
 #include "vivante_gpu.h"
 
 /* Page table entry bits */
-#define PTE_SINGLE	BIT(4)
-#define PTE_FREE	BIT(5)
+#define PTE_SINGLE		BIT(4)
+#define PTE_FREE		BIT(5)
+#define PTE_USED_PAGES(x)	(x >> 8)
 
 struct vivante_iommu_domain_pgtable {
 	uint32_t *pgtable;
