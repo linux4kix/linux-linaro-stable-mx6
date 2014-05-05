@@ -164,9 +164,45 @@ static void vivante_hw_identify(struct vivante_gpu *gpu)
 
 int vivante_hw_init(struct vivante_gpu *gpu)
 {
+	struct iommu_domain *iommu;
+	int ret;
+
 	vivante_hw_identify(gpu);
 
+	/* Setup IOMMU.. eventually we will (I think) do this once per context
+	 * and have separate page tables per context.  For now, to keep things
+	 * simple and to get something working, just use a single address space:
+	 */
+	iommu = vivante_iommu_domain_alloc(gpu);
+	if (iommu) {
+		dev_info(gpu->dev->dev, "%s: using IOMMU\n", name);
+		gpu->mmu = vivante_iommu_new(gpu->dev, iommu);
+	} else {
+		ret = -ENOMEM;
+		goto fail;
+	}
+	gpu->id = msm_register_mmu(gpu->dev, gpu->mmu);
+
+	/* Create ringbuffer: */
+	gpu->rb = msm_ringbuffer_new(gpu, PAGE_SIZE);
+	if (IS_ERR(gpu->rb)) {
+		ret = PTR_ERR(gpu->rb);
+		gpu->rb = NULL;
+		dev_err(gpu->dev->dev, "could not create ringbuffer: %d\n", ret);
+		goto fail;
+	}
+
+	ret = msm_gem_get_iova_locked(gpu->rb->bo, gpu->id, &gpu->rb_iova);
+	if (ret) {
+		gpu->rb_iova = 0;
+		dev_err(gpu->dev->dev, "could not map ringbuffer: %d\n", ret);
+		goto fail;
+	}
+
 	return 0;
+
+fail:
+	return ret;
 }
 
 static const struct vivante_gpu_funcs funcs = {
@@ -498,7 +534,6 @@ int msm_gpu_init(struct drm_device *drm,struct vivante_gpu *gpu,
 		const char *ioname, const char *irqname)
 {
 	struct platform_device *pdev = drm->platformdev;
-	struct iommu_domain *iommu;
 	int i, ret;
 
 	gpu->dev = drm;
@@ -559,36 +594,6 @@ int msm_gpu_init(struct drm_device *drm,struct vivante_gpu *gpu,
 	DBG("gpu_cx: %p", gpu->gpu_cx);
 	if (IS_ERR(gpu->gpu_cx))
 		gpu->gpu_cx = NULL;
-
-	/* Setup IOMMU.. eventually we will (I think) do this once per context
-	 * and have separate page tables per context.  For now, to keep things
-	 * simple and to get something working, just use a single address space:
-	 */
-	iommu = vivante_iommu_domain_alloc(gpu);
-	if (iommu) {
-		dev_info(drm->dev, "%s: using IOMMU\n", name);
-		gpu->mmu = vivante_iommu_new(drm, iommu);
-	} else {
-		ret = -ENOMEM;
-		goto fail;
-	}
-	gpu->id = msm_register_mmu(drm, gpu->mmu);
-
-	/* Create ringbuffer: */
-	gpu->rb = msm_ringbuffer_new(gpu, PAGE_SIZE);
-	if (IS_ERR(gpu->rb)) {
-		ret = PTR_ERR(gpu->rb);
-		gpu->rb = NULL;
-		dev_err(drm->dev, "could not create ringbuffer: %d\n", ret);
-		goto fail;
-	}
-
-	ret = msm_gem_get_iova_locked(gpu->rb->bo, gpu->id, &gpu->rb_iova);
-	if (ret) {
-		gpu->rb_iova = 0;
-		dev_err(drm->dev, "could not map ringbuffer: %d\n", ret);
-		goto fail;
-	}
 
 	return 0;
 
