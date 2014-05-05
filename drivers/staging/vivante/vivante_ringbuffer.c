@@ -18,9 +18,9 @@
 #include "vivante_ringbuffer.h"
 #include "vivante_gpu.h"
 
-struct msm_ringbuffer *msm_ringbuffer_new(struct vivante_gpu *gpu, int size)
+struct vivante_ringbuffer *msm_ringbuffer_new(struct vivante_gpu *gpu, int size)
 {
-	struct msm_ringbuffer *ring;
+	struct vivante_ringbuffer *ring;
 	int ret;
 
 	size = ALIGN(size, 4);   /* size should be dword aligned */
@@ -53,7 +53,7 @@ fail:
 	return ERR_PTR(ret);
 }
 
-void msm_ringbuffer_destroy(struct msm_ringbuffer *ring)
+void msm_ringbuffer_destroy(struct vivante_ringbuffer *ring)
 {
 	if (ring->bo)
 		drm_gem_object_unreference(ring->bo);

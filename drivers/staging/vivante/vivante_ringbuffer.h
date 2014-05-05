@@ -20,20 +20,20 @@
 
 #include "vivante_drv.h"
 
-struct msm_ringbuffer {
+struct vivante_ringbuffer {
 	struct vivante_gpu *gpu;
 	int size;
 	struct drm_gem_object *bo;
 	uint32_t *start, *end, *cur;
 };
 
-struct msm_ringbuffer *msm_ringbuffer_new(struct vivante_gpu *gpu, int size);
-void msm_ringbuffer_destroy(struct msm_ringbuffer *ring);
+struct vivante_ringbuffer *msm_ringbuffer_new(struct vivante_gpu *gpu, int size);
+void msm_ringbuffer_destroy(struct vivante_ringbuffer *ring);
 
 /* ringbuffer helpers (the parts that are same for a3xx/a2xx/z180..) */
 
 static inline void
-OUT_RING(struct msm_ringbuffer *ring, uint32_t data)
+OUT_RING(struct vivante_ringbuffer *ring, uint32_t data)
 {
 	if (ring->cur == ring->end)
 		ring->cur = ring->start;

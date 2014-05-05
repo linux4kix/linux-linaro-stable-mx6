@@ -119,7 +119,7 @@ struct vivante_gpu {
 	const struct vivante_gpu_funcs *funcs;
 	struct vivante_chip_identity identity;
 
-	struct msm_ringbuffer *rb;
+	struct vivante_ringbuffer *rb;
 	uint32_t rb_iova;
 
 	/* list of GEM active objects: */
