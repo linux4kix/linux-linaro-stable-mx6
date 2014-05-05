@@ -58,7 +58,7 @@ static inline void CMD_LINK(struct msm_ringbuffer *rb, u16 prefetch, u32 address
  * Driver functions:
  */
 
-int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
+int vivante_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *value)
 {
 	switch (param) {
 	case VIVANTE_PARAM_GPU_MODEL:
@@ -93,7 +93,7 @@ int vivante_get_param(struct msm_gpu *gpu, uint32_t param, uint64_t *value)
 	return 0;
 }
 
-static void vivante_hw_identify(struct msm_gpu *gpu)
+static void vivante_hw_identify(struct vivante_gpu *gpu)
 {
 	u32 chipIdentity;
 
@@ -162,7 +162,7 @@ static void vivante_hw_identify(struct msm_gpu *gpu)
 	dev_info(gpu->dev->dev, "minor_features3: %x\n", gpu->identity.minor_features3);
 }
 
-int vivante_hw_init(struct msm_gpu *gpu)
+int vivante_hw_init(struct vivante_gpu *gpu)
 {
 	vivante_hw_identify(gpu);
 
@@ -176,11 +176,11 @@ static const struct vivante_gpu_funcs funcs = {
 	.pm_resume = msm_gpu_pm_resume,
 };
 
-struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
+struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
 		const char *ioname, const char *irqname)
 {
 	int ret;
-	struct msm_gpu *gpu;
+	struct vivante_gpu *gpu;
 
 	gpu = kzalloc(sizeof(*gpu), GFP_KERNEL);
 	if (!gpu) {
@@ -201,7 +201,7 @@ struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
  * Power Management:
  */
 
-static int enable_pwrrail(struct msm_gpu *gpu)
+static int enable_pwrrail(struct vivante_gpu *gpu)
 {
 	struct drm_device *dev = gpu->dev;
 	int ret = 0;
@@ -225,7 +225,7 @@ static int enable_pwrrail(struct msm_gpu *gpu)
 	return 0;
 }
 
-static int disable_pwrrail(struct msm_gpu *gpu)
+static int disable_pwrrail(struct vivante_gpu *gpu)
 {
 	if (gpu->gpu_cx)
 		regulator_disable(gpu->gpu_cx);
@@ -234,7 +234,7 @@ static int disable_pwrrail(struct msm_gpu *gpu)
 	return 0;
 }
 
-static int enable_clk(struct msm_gpu *gpu)
+static int enable_clk(struct vivante_gpu *gpu)
 {
 	struct clk *rate_clk = NULL;
 	int i;
@@ -257,7 +257,7 @@ static int enable_clk(struct msm_gpu *gpu)
 	return 0;
 }
 
-static int disable_clk(struct msm_gpu *gpu)
+static int disable_clk(struct vivante_gpu *gpu)
 {
 	struct clk *rate_clk = NULL;
 	int i;
@@ -280,7 +280,7 @@ static int disable_clk(struct msm_gpu *gpu)
 	return 0;
 }
 
-static int enable_axi(struct msm_gpu *gpu)
+static int enable_axi(struct vivante_gpu *gpu)
 {
 #if 0
 	if (gpu->ebi1_clk)
@@ -289,7 +289,7 @@ static int enable_axi(struct msm_gpu *gpu)
 	return 0;
 }
 
-static int disable_axi(struct msm_gpu *gpu)
+static int disable_axi(struct vivante_gpu *gpu)
 {
 #if 0
 	if (gpu->ebi1_clk)
@@ -298,7 +298,7 @@ static int disable_axi(struct msm_gpu *gpu)
 	return 0;
 }
 
-int msm_gpu_pm_resume(struct msm_gpu *gpu)
+int msm_gpu_pm_resume(struct vivante_gpu *gpu)
 {
 	int ret;
 
@@ -319,7 +319,7 @@ int msm_gpu_pm_resume(struct msm_gpu *gpu)
 	return 0;
 }
 
-int msm_gpu_pm_suspend(struct msm_gpu *gpu)
+int msm_gpu_pm_suspend(struct vivante_gpu *gpu)
 {
 	int ret;
 
@@ -346,7 +346,7 @@ int msm_gpu_pm_suspend(struct msm_gpu *gpu)
 
 static void recover_worker(struct work_struct *work)
 {
-	struct msm_gpu *gpu = container_of(work, struct msm_gpu, recover_work);
+	struct vivante_gpu *gpu = container_of(work, struct vivante_gpu, recover_work);
 	struct drm_device *dev = gpu->dev;
 
 	dev_err(dev->dev, "%s: hangcheck recover!\n", gpu->name);
@@ -358,7 +358,7 @@ static void recover_worker(struct work_struct *work)
 	msm_gpu_retire(gpu);
 }
 
-static void hangcheck_timer_reset(struct msm_gpu *gpu)
+static void hangcheck_timer_reset(struct vivante_gpu *gpu)
 {
 	DBG("%s", gpu->name);
 	mod_timer(&gpu->hangcheck_timer,
@@ -367,7 +367,7 @@ static void hangcheck_timer_reset(struct msm_gpu *gpu)
 
 static void hangcheck_handler(unsigned long data)
 {
-	struct msm_gpu *gpu = (struct msm_gpu *)data;
+	struct vivante_gpu *gpu = (struct vivante_gpu *)data;
 	struct drm_device *dev = gpu->dev;
 	struct msm_drm_private *priv = dev->dev_private;
 	uint32_t fence = gpu->funcs->last_fence(gpu);
@@ -401,7 +401,7 @@ static void hangcheck_handler(unsigned long data)
 
 static void retire_worker(struct work_struct *work)
 {
-	struct msm_gpu *gpu = container_of(work, struct msm_gpu, retire_work);
+	struct vivante_gpu *gpu = container_of(work, struct vivante_gpu, retire_work);
 	struct drm_device *dev = gpu->dev;
 	uint32_t fence = gpu->funcs->last_fence(gpu);
 
@@ -430,14 +430,14 @@ static void retire_worker(struct work_struct *work)
 }
 
 /* call from irq handler to schedule work to retire bo's */
-void msm_gpu_retire(struct msm_gpu *gpu)
+void msm_gpu_retire(struct vivante_gpu *gpu)
 {
 	struct msm_drm_private *priv = gpu->dev->dev_private;
 	queue_work(priv->wq, &gpu->retire_work);
 }
 
 /* add bo's to gpu's ring, and kick gpu: */
-int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
+int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 		struct msm_file_private *ctx)
 {
 	struct drm_device *dev = gpu->dev;
@@ -485,7 +485,7 @@ int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
 
 static irqreturn_t irq_handler(int irq, void *data)
 {
-	struct msm_gpu *gpu = data;
+	struct vivante_gpu *gpu = data;
 	return gpu->funcs->irq(gpu);
 }
 
@@ -493,7 +493,7 @@ static const char *clk_names[] = {
 		"gpu3d_core", "gpu3d_shader", "gpu3d_axi", "gpu2d_core", "gpu2d_axi", "openvg_axi",
 };
 
-int msm_gpu_init(struct drm_device *drm,struct msm_gpu *gpu,
+int msm_gpu_init(struct drm_device *drm,struct vivante_gpu *gpu,
 		const struct vivante_gpu_funcs *funcs, 	const char *name,
 		const char *ioname, const char *irqname)
 {
@@ -596,7 +596,7 @@ fail:
 	return ret;
 }
 
-void msm_gpu_cleanup(struct msm_gpu *gpu)
+void msm_gpu_cleanup(struct vivante_gpu *gpu)
 {
 	DBG("%s", gpu->name);
 

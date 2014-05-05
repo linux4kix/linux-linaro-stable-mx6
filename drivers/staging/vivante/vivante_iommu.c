@@ -152,7 +152,7 @@ static struct iommu_ops vivante_iommu_ops = {
 		.pgsize_bitmap = SZ_4K,
 };
 
-struct iommu_domain *vivante_iommu_domain_alloc(struct msm_gpu *gpu)
+struct iommu_domain *vivante_iommu_domain_alloc(struct vivante_gpu *gpu)
 {
 	struct iommu_domain *domain;
 	struct vivante_iommu_domain *vivante_domain;

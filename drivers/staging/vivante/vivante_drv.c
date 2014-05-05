@@ -98,7 +98,7 @@ static int vivante_unload(struct drm_device *dev)
 	destroy_workqueue(priv->wq);
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		struct msm_gpu *gpu = priv->gpu[i];
+		struct vivante_gpu *gpu = priv->gpu[i];
 		if (gpu) {
 			mutex_lock(&dev->struct_mutex);
 			gpu->funcs->pm_suspend(gpu);
@@ -117,7 +117,7 @@ static int vivante_unload(struct drm_device *dev)
 static void load_gpu(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu[VIVANTE_MAX_PIPES];
+	struct vivante_gpu *gpu[VIVANTE_MAX_PIPES];
 	unsigned int i;
 
 	mutex_lock(&dev->struct_mutex);
@@ -129,7 +129,7 @@ static void load_gpu(struct drm_device *dev)
 	mutex_unlock(&dev->struct_mutex);
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		struct msm_gpu *g = gpu[i];
+		struct vivante_gpu *g = gpu[i];
 		if (g) {
 			int ret;
 			g->funcs->pm_resume(g);
@@ -207,7 +207,7 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
 static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu;
+	struct vivante_gpu *gpu;
 	unsigned int i;
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
@@ -224,7 +224,7 @@ static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_gpu *gpu;
+	struct vivante_gpu *gpu;
 	unsigned int i;
 
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
@@ -392,7 +392,7 @@ static int vivante_ioctl_get_param(struct drm_device *dev, void *data,
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct drm_vivante_param *args = data;
-	struct msm_gpu *gpu;
+	struct vivante_gpu *gpu;
 
 	if (args->pipe > VIVANTE_PIPE_VG)
 		return -EINVAL;

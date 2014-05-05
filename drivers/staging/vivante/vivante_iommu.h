@@ -18,8 +18,8 @@
 #define __VIVANTE_IOMMU_H__
 
 #include <linux/iommu.h>
-struct msm_gpu;
+struct vivante_gpu;
 
-struct iommu_domain *vivante_iommu_domain_alloc(struct msm_gpu *gpu);
+struct iommu_domain *vivante_iommu_domain_alloc(struct vivante_gpu *gpu);
 
 #endif /* __VIVANTE_IOMMU_H__ */

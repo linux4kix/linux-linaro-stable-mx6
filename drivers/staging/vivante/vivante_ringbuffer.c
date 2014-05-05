@@ -18,7 +18,7 @@
 #include "vivante_ringbuffer.h"
 #include "vivante_gpu.h"
 
-struct msm_ringbuffer *msm_ringbuffer_new(struct msm_gpu *gpu, int size)
+struct msm_ringbuffer *msm_ringbuffer_new(struct vivante_gpu *gpu, int size)
 {
 	struct msm_ringbuffer *ring;
 	int ret;

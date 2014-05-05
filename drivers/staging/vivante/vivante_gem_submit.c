@@ -35,7 +35,7 @@ static inline void __user *to_user_ptr(u64 address)
 }
 
 static struct msm_gem_submit *submit_create(struct drm_device *dev,
-		struct msm_gpu *gpu, int nr)
+		struct vivante_gpu *gpu, int nr)
 {
 	struct msm_gem_submit *submit;
 	int sz = sizeof(*submit) + (nr * sizeof(submit->bos[0]));
@@ -325,7 +325,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 	struct drm_msm_gem_submit *args = data;
 	struct msm_file_private *ctx = file->driver_priv;
 	struct msm_gem_submit *submit;
-	struct msm_gpu *gpu;
+	struct vivante_gpu *gpu;
 	unsigned i;
 	int ret;
 

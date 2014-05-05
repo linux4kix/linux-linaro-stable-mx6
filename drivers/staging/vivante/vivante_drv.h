@@ -43,7 +43,7 @@ static inline struct device *msm_iommu_get_ctx(const char *ctx_name)
 #include <drm/drm_fb_helper.h>
 #include <drm/vivante_drm.h>
 
-struct msm_gpu;
+struct vivante_gpu;
 struct msm_mmu;
 
 #define NUM_DOMAINS 2    /* one for KMS, then one per gpu core (?) */
@@ -57,7 +57,7 @@ struct msm_file_private {
 };
 
 struct msm_drm_private {
-	struct msm_gpu *gpu[VIVANTE_MAX_PIPES];
+	struct vivante_gpu *gpu[VIVANTE_MAX_PIPES];
 	struct msm_file_private *lastctx;
 
 	uint32_t next_fence, completed_fence;
@@ -128,7 +128,7 @@ void *msm_gem_vaddr(struct drm_gem_object *obj);
 int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
 		struct msm_fence_cb *cb);
 void msm_gem_move_to_active(struct drm_gem_object *obj,
-		struct msm_gpu *gpu, bool write, uint32_t fence);
+		struct vivante_gpu *gpu, bool write, uint32_t fence);
 void msm_gem_move_to_inactive(struct drm_gem_object *obj);
 int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout);

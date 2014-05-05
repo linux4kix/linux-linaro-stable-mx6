@@ -21,13 +21,13 @@
 #include "vivante_drv.h"
 
 struct msm_ringbuffer {
-	struct msm_gpu *gpu;
+	struct vivante_gpu *gpu;
 	int size;
 	struct drm_gem_object *bo;
 	uint32_t *start, *end, *cur;
 };
 
-struct msm_ringbuffer *msm_ringbuffer_new(struct msm_gpu *gpu, int size);
+struct msm_ringbuffer *msm_ringbuffer_new(struct vivante_gpu *gpu, int size);
 void msm_ringbuffer_destroy(struct msm_ringbuffer *ring);
 
 /* ringbuffer helpers (the parts that are same for a3xx/a2xx/z180..) */

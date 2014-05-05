@@ -41,21 +41,21 @@ struct msm_gem_submit;
  *    + z180_gpu
  */
 struct vivante_gpu_funcs {
-	int (*get_param)(struct msm_gpu *gpu, uint32_t param, uint64_t *value);
-	int (*hw_init)(struct msm_gpu *gpu);
-	int (*pm_suspend)(struct msm_gpu *gpu);
-	int (*pm_resume)(struct msm_gpu *gpu);
-	int (*submit)(struct msm_gpu *gpu, struct msm_gem_submit *submit,
+	int (*get_param)(struct vivante_gpu *gpu, uint32_t param, uint64_t *value);
+	int (*hw_init)(struct vivante_gpu *gpu);
+	int (*pm_suspend)(struct vivante_gpu *gpu);
+	int (*pm_resume)(struct vivante_gpu *gpu);
+	int (*submit)(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 			struct msm_file_private *ctx);
-	void (*flush)(struct msm_gpu *gpu);
-	void (*idle)(struct msm_gpu *gpu);
-	irqreturn_t (*irq)(struct msm_gpu *irq);
-	uint32_t (*last_fence)(struct msm_gpu *gpu);
-	void (*recover)(struct msm_gpu *gpu);
-	void (*destroy)(struct msm_gpu *gpu);
+	void (*flush)(struct vivante_gpu *gpu);
+	void (*idle)(struct vivante_gpu *gpu);
+	irqreturn_t (*irq)(struct vivante_gpu *irq);
+	uint32_t (*last_fence)(struct vivante_gpu *gpu);
+	void (*recover)(struct vivante_gpu *gpu);
+	void (*destroy)(struct vivante_gpu *gpu);
 #ifdef CONFIG_DEBUG_FS
 	/* show GPU status in debugfs: */
-	void (*show)(struct msm_gpu *gpu, struct seq_file *m);
+	void (*show)(struct vivante_gpu *gpu, struct seq_file *m);
 #endif
 };
 
@@ -113,7 +113,7 @@ struct vivante_chip_identity
 	uint32_t buffer_size;
 };
 
-struct msm_gpu {
+struct vivante_gpu {
 	const char *name;
 	struct drm_device *dev;
 	const struct vivante_gpu_funcs *funcs;
@@ -149,29 +149,29 @@ struct msm_gpu {
 	struct work_struct recover_work;
 };
 
-static inline void gpu_write(struct msm_gpu *gpu, u32 reg, u32 data)
+static inline void gpu_write(struct vivante_gpu *gpu, u32 reg, u32 data)
 {
 	vivante_writel(data, gpu->mmio + reg);
 }
 
-static inline u32 gpu_read(struct msm_gpu *gpu, u32 reg)
+static inline u32 gpu_read(struct vivante_gpu *gpu, u32 reg)
 {
 	return vivante_readl(gpu->mmio + reg);
 }
 
-struct msm_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
+struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
 		const char *ioname, const char *irqname);
 
-int msm_gpu_pm_suspend(struct msm_gpu *gpu);
-int msm_gpu_pm_resume(struct msm_gpu *gpu);
+int msm_gpu_pm_suspend(struct vivante_gpu *gpu);
+int msm_gpu_pm_resume(struct vivante_gpu *gpu);
 
-void msm_gpu_retire(struct msm_gpu *gpu);
-int msm_gpu_submit(struct msm_gpu *gpu, struct msm_gem_submit *submit,
+void msm_gpu_retire(struct vivante_gpu *gpu);
+int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 		struct msm_file_private *ctx);
 
-int msm_gpu_init(struct drm_device *drm, struct msm_gpu *gpu,
+int msm_gpu_init(struct drm_device *drm, struct vivante_gpu *gpu,
 		const struct vivante_gpu_funcs *funcs, const char *name,
 		const char *ioname, const char *irqname);
-void msm_gpu_cleanup(struct msm_gpu *gpu);
+void msm_gpu_cleanup(struct vivante_gpu *gpu);
 
 #endif /* __VIVANTE_GPU_H__ */

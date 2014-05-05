@@ -35,7 +35,7 @@ struct msm_gem_object {
 	 *
 	 */
 	struct list_head mm_list;
-	struct msm_gpu *gpu;     /* non-null if active */
+	struct vivante_gpu *gpu;     /* non-null if active */
 	uint32_t read_fence, write_fence;
 
 	/* Transiently in the process of submit ioctl, objects associated
@@ -79,7 +79,7 @@ static inline bool is_active(struct msm_gem_object *msm_obj)
  */
 struct msm_gem_submit {
 	struct drm_device *dev;
-	struct msm_gpu *gpu;
+	struct vivante_gpu *gpu;
 	struct list_head bo_list;
 	struct ww_acquire_ctx ticket;
 	uint32_t fence;

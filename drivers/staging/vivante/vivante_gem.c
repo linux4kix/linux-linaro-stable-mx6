@@ -363,7 +363,7 @@ int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
 }
 
 void msm_gem_move_to_active(struct drm_gem_object *obj,
-		struct msm_gpu *gpu, bool write, uint32_t fence)
+		struct vivante_gpu *gpu, bool write, uint32_t fence)
 {
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 	msm_obj->gpu = gpu;
