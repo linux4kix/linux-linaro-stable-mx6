@@ -175,7 +175,7 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 	 */
 	iommu = vivante_iommu_domain_alloc(gpu);
 	if (iommu) {
-		dev_info(gpu->dev->dev, "%s: using IOMMU\n", name);
+		dev_info(gpu->dev->dev, "%s: using IOMMU\n", gpu->name);
 		gpu->mmu = vivante_iommu_new(gpu->dev, iommu);
 	} else {
 		ret = -ENOMEM;
