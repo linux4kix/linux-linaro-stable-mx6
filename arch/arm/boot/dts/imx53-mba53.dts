@@ -25,6 +25,10 @@
 		enable-active-low;
 	};
 
+	chosen {
+		stdout-path = &uart2;
+	};
+
 	backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm2 0 50000>;
