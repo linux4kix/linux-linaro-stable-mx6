@@ -126,8 +126,6 @@ static void load_gpu(struct drm_device *dev)
 	gpu[VIVANTE_PIPE_3D] = NULL; //vivante_gpu_init(dev, "vivante_gpu_3d", "iobase-3d", "irq-3d");
 	gpu[VIVANTE_PIPE_VG] = NULL; //vivante_gpu_init(dev, "vivante_gpu_vg", "iobase-vg", "irq-vg");
 
-	mutex_unlock(&dev->struct_mutex);
-
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
 		struct vivante_gpu *g = gpu[i];
 		if (g) {
@@ -141,6 +139,8 @@ static void load_gpu(struct drm_device *dev)
 			}
 		}
 	}
+
+	mutex_unlock(&dev->struct_mutex);
 
 	priv->gpu[VIVANTE_PIPE_2D] = gpu[VIVANTE_PIPE_2D];
 	priv->gpu[VIVANTE_PIPE_3D] = gpu[VIVANTE_PIPE_3D];
