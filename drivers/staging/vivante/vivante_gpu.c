@@ -162,12 +162,72 @@ static void vivante_hw_identify(struct vivante_gpu *gpu)
 	dev_info(gpu->dev->dev, "minor_features3: %x\n", gpu->identity.minor_features3);
 }
 
+static void vivante_hw_reset(struct vivante_gpu *gpu)
+{
+    u32 control, idle;
+
+    /* TODO
+     *
+     * - clock gating
+     * - puls eater
+     * - what about VG?
+     */
+
+    while (true)
+    {
+        control = gpu_read(gpu, VIVS_HI_CLOCK_CONTROL);
+
+        /* isolate the GPU. */
+        control |= VIVS_HI_CLOCK_CONTROL_ISOLATE_GPU;
+        gpu_write(gpu, VIVS_HI_CLOCK_CONTROL, control);
+
+        /* set soft reset. */
+        control |= VIVS_HI_CLOCK_CONTROL_SOFT_RESET;
+        gpu_write(gpu, VIVS_HI_CLOCK_CONTROL, control);
+
+        /* wait for reset. */
+        msleep(1);
+
+        /* reset soft reset bit. */
+        control &= ~VIVS_HI_CLOCK_CONTROL_SOFT_RESET;
+        gpu_write(gpu, VIVS_HI_CLOCK_CONTROL, control);
+
+        /* reset GPU isolation. */
+        control &= ~VIVS_HI_CLOCK_CONTROL_ISOLATE_GPU;
+        gpu_write(gpu, VIVS_HI_CLOCK_CONTROL, control);
+
+        /* read idle register. */
+        idle = gpu_read(gpu, VIVS_HI_IDLE_STATE);
+
+        /* try reseting again if FE it not idle */
+        if ((idle & VIVS_HI_IDLE_STATE_FE) == 0)
+        {
+        	dev_dbg(gpu->dev->dev, "%s: FE is not idle\n", gpu->name);
+            continue;
+        }
+
+        /* read reset register. */
+        control = gpu_read(gpu, VIVS_HI_CLOCK_CONTROL);
+
+        /* is the GPU idle? */
+        if (((control & VIVS_HI_CLOCK_CONTROL_IDLE_3D) == 0)
+        || ((control & VIVS_HI_CLOCK_CONTROL_IDLE_2D) == 0))
+        {
+        	dev_dbg(gpu->dev->dev, "%s: GPU is not idle\n", gpu->name);
+            continue;
+        }
+
+        break;
+    }
+}
+
 int vivante_hw_init(struct vivante_gpu *gpu)
 {
 	struct iommu_domain *iommu;
 	int ret;
 
 	vivante_hw_identify(gpu);
+	vivante_hw_reset(gpu);
 
 	/* Setup IOMMU.. eventually we will (I think) do this once per context
 	 * and have separate page tables per context.  For now, to keep things
