@@ -229,6 +229,13 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 	vivante_hw_identify(gpu);
 	vivante_hw_reset(gpu);
 
+	/* set base addresses */
+	gpu_write(VIVS_MC_MEMORY_BASE_ADDR_RA, 0x0);
+	gpu_write(VIVS_MC_MEMORY_BASE_ADDR_FE, 0x0);
+	gpu_write(VIVS_MC_MEMORY_BASE_ADDR_TX, 0x0);
+	gpu_write(VIVS_MC_MEMORY_BASE_ADDR_PEZ, 0x0);
+	gpu_write(VIVS_MC_MEMORY_BASE_ADDR_PE, 0x0);
+
 	/* Setup IOMMU.. eventually we will (I think) do this once per context
 	 * and have separate page tables per context.  For now, to keep things
 	 * simple and to get something working, just use a single address space:
