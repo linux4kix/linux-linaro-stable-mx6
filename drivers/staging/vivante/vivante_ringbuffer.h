@@ -27,8 +27,8 @@ struct vivante_ringbuffer {
 	uint32_t *start, *end, *cur;
 };
 
-struct vivante_ringbuffer *msm_ringbuffer_new(struct vivante_gpu *gpu, int size);
-void msm_ringbuffer_destroy(struct vivante_ringbuffer *ring);
+struct vivante_ringbuffer *vivante_ringbuffer_new(struct vivante_gpu *gpu, int size);
+void vivante_ringbuffer_destroy(struct vivante_ringbuffer *ring);
 
 /* ringbuffer helpers (the parts that are same for a3xx/a2xx/z180..) */
 

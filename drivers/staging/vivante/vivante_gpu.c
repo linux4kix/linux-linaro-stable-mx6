@@ -251,7 +251,7 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 	gpu->id = msm_register_mmu(gpu->dev, gpu->mmu);
 
 	/* Create ringbuffer: */
-	gpu->rb = msm_ringbuffer_new(gpu, PAGE_SIZE);
+	gpu->rb = vivante_ringbuffer_new(gpu, PAGE_SIZE);
 	if (IS_ERR(gpu->rb)) {
 		ret = PTR_ERR(gpu->rb);
 		gpu->rb = NULL;
@@ -696,7 +696,7 @@ void msm_gpu_cleanup(struct vivante_gpu *gpu)
 	if (gpu->rb) {
 		if (gpu->rb_iova)
 			msm_gem_put_iova(gpu->rb->bo, gpu->id);
-		msm_ringbuffer_destroy(gpu->rb);
+		vivante_ringbuffer_destroy(gpu->rb);
 	}
 
 	if (gpu->mmu)
