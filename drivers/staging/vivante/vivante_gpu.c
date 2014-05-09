@@ -272,11 +272,30 @@ fail:
 	return ret;
 }
 
+irqreturn_t vivante_hw_irq(struct vivante_gpu *gpu)
+{
+	irqreturn_t ret = IRQ_NONE;
+	u32 irq = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
+
+	if (irq != 0)
+	{
+		if (irq & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
+			dev_err(gpu->dev->dev, "AXI bus error\n");
+
+		/* TODO: handle irq */
+		dev_info(gpu->dev->dev, "irq 0x%08x\n", irq);
+		ret = IRQ_HANDLED;
+	}
+
+	return ret;
+}
+
 static const struct vivante_gpu_funcs funcs = {
 	.get_param = vivante_get_param,
 	.hw_init = vivante_hw_init,
 	.pm_suspend = msm_gpu_pm_suspend,
 	.pm_resume = msm_gpu_pm_resume,
+	.irq = vivante_hw_irq,
 };
 
 struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
