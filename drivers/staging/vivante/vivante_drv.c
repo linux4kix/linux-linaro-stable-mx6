@@ -276,7 +276,7 @@ static int vivante_debugfs_init(struct drm_minor *minor)
 	struct drm_device *dev = minor->dev;
 	int ret;
 
-	ret = drm_debugfs_create_files(msm_debugfs_list,
+	ret = drm_debugfs_create_files(vivante_debugfs_list,
 			ARRAY_SIZE(vivante_debugfs_list),
 			minor->debugfs_root, minor);
 
@@ -290,8 +290,8 @@ static int vivante_debugfs_init(struct drm_minor *minor)
 
 static void vivante_debugfs_cleanup(struct drm_minor *minor)
 {
-	drm_debugfs_remove_files(msm_debugfs_list,
-			ARRAY_SIZE(msm_debugfs_list), minor);
+	drm_debugfs_remove_files(vivante_debugfs_list,
+			ARRAY_SIZE(vivante_debugfs_list), minor);
 }
 #endif
 
