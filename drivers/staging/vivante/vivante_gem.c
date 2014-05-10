@@ -26,8 +26,8 @@
 
 static dma_addr_t physaddr(struct drm_gem_object *obj)
 {
-	/* TODO */
-	return 0;
+	struct msm_gem_object *vivante_obj = to_vivante_bo(obj);
+	return (((dma_addr_t)vivante_obj->vram_node->start) << PAGE_SHIFT) + 0x80000000;
 }
 
 /* allocate pages from GPU memory area */
