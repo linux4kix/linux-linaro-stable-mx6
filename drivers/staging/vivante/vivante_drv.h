@@ -74,6 +74,9 @@ struct vivante_drm_private {
 	/* registered MMUs: */
 	unsigned int num_mmus;
 	struct vivante_iommu *mmus[NUM_DOMAINS];
+
+	/* memory manager for GPU address area */
+	struct drm_mm mm;
 };
 
 struct msm_format {

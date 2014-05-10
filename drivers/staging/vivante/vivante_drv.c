@@ -15,6 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/sizes.h>
+
 #include "vivante_drv.h"
 #include "vivante_gpu.h"
 
@@ -107,6 +109,8 @@ static int vivante_unload(struct drm_device *dev)
 		}
 	}
 
+	drm_mm_takedown(&priv->mm);
+
 	dev->dev_private = NULL;
 
 	kfree(priv);
@@ -165,6 +169,9 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 
 	INIT_LIST_HEAD(&priv->inactive_list);
 	INIT_LIST_HEAD(&priv->fence_cbs);
+
+	/* TODO: figure out max mapped size */
+	drm_mm_init(&priv->mm, 0x80000000, 0x80000000 + SZ_1G);
 
 	platform_set_drvdata(pdev, dev);
 
