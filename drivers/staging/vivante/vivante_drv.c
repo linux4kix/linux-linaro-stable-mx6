@@ -171,7 +171,7 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	INIT_LIST_HEAD(&priv->fence_cbs);
 
 	/* TODO: figure out max mapped size */
-	drm_mm_init(&priv->mm, 0x80000000, 0x80000000 + SZ_1G);
+	drm_mm_init(&priv->mm, 0x80000000, SZ_1G);
 
 	platform_set_drvdata(pdev, dev);
 

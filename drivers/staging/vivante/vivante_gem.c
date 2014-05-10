@@ -26,7 +26,7 @@
 
 static dma_addr_t physaddr(struct drm_gem_object *obj)
 {
-	struct msm_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	return (((dma_addr_t)vivante_obj->vram_node->start) << PAGE_SHIFT) + 0x80000000;
 }
 
