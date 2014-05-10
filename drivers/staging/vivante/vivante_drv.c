@@ -204,7 +204,7 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
  */
 
 #ifdef CONFIG_DEBUG_FS
-static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
+static int vivante_gpu_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct vivante_gpu *gpu;
@@ -221,7 +221,7 @@ static int msm_gpu_show(struct drm_device *dev, struct seq_file *m)
 	return 0;
 }
 
-static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
+static int vivante_gem_show(struct drm_device *dev, struct seq_file *m)
 {
 	struct msm_drm_private *priv = dev->dev_private;
 	struct vivante_gpu *gpu;
@@ -241,7 +241,7 @@ static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
 	return 0;
 }
 
-static int msm_mm_show(struct drm_device *dev, struct seq_file *m)
+static int vivante_mm_show(struct drm_device *dev, struct seq_file *m)
 {
 	return drm_mm_dump_table(m, &dev->vma_offset_manager->vm_addr_space_mm);
 }
@@ -265,30 +265,30 @@ static int show_locked(struct seq_file *m, void *arg)
 	return ret;
 }
 
-static struct drm_info_list msm_debugfs_list[] = {
-		{"gpu", show_locked, 0, msm_gpu_show},
-		{"gem", show_locked, 0, msm_gem_show},
-		{ "mm", show_locked, 0, msm_mm_show },
+static struct drm_info_list vivante_debugfs_list[] = {
+		{"gpu", show_locked, 0, vivante_gpu_show},
+		{"gem", show_locked, 0, vivante_gem_show},
+		{ "mm", show_locked, 0, vivante_mm_show },
 };
 
-static int msm_debugfs_init(struct drm_minor *minor)
+static int vivante_debugfs_init(struct drm_minor *minor)
 {
 	struct drm_device *dev = minor->dev;
 	int ret;
 
 	ret = drm_debugfs_create_files(msm_debugfs_list,
-			ARRAY_SIZE(msm_debugfs_list),
+			ARRAY_SIZE(vivante_debugfs_list),
 			minor->debugfs_root, minor);
 
 	if (ret) {
-		dev_err(dev->dev, "could not install msm_debugfs_list\n");
+		dev_err(dev->dev, "could not install vivante_debugfs_list\n");
 		return ret;
 	}
 
 	return ret;
 }
 
-static void msm_debugfs_cleanup(struct drm_minor *minor)
+static void vivante_debugfs_cleanup(struct drm_minor *minor)
 {
 	drm_debugfs_remove_files(msm_debugfs_list,
 			ARRAY_SIZE(msm_debugfs_list), minor);
@@ -532,8 +532,8 @@ static struct drm_driver vivante_driver = {
 	.gem_prime_vmap     = msm_gem_prime_vmap,
 	.gem_prime_vunmap   = msm_gem_prime_vunmap,
 #ifdef CONFIG_DEBUG_FS
-	.debugfs_init       = msm_debugfs_init,
-	.debugfs_cleanup    = msm_debugfs_cleanup,
+	.debugfs_init       = vivante_debugfs_init,
+	.debugfs_cleanup    = vivante_debugfs_cleanup,
 #endif
 	.ioctls             = vivante_ioctls,
 	.num_ioctls         = DRM_MSM_NUM_IOCTLS,
