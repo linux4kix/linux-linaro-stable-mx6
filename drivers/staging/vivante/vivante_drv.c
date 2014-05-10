@@ -20,7 +20,7 @@
 
 int msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	int idx = priv->num_mmus++;
 
 	if (WARN_ON(idx >= ARRAY_SIZE(priv->mmus)))
@@ -91,7 +91,7 @@ u32 vivante_readl(const void __iomem *addr)
 
 static int vivante_unload(struct drm_device *dev)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	unsigned int i;
 
 	flush_workqueue(priv->wq);
@@ -116,7 +116,7 @@ static int vivante_unload(struct drm_device *dev)
 
 static void load_gpu(struct drm_device *dev)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	struct vivante_gpu *gpu[VIVANTE_MAX_PIPES];
 	unsigned int i;
 
@@ -150,7 +150,7 @@ static void load_gpu(struct drm_device *dev)
 static int vivante_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
-	struct msm_drm_private *priv;
+	struct vivante_drm_private *priv;
 
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	if (!priv) {
@@ -175,7 +175,7 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 
 static int msm_open(struct drm_device *dev, struct drm_file *file)
 {
-	struct msm_file_private *ctx;
+	struct vivante_file_private *ctx;
 
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
@@ -188,8 +188,8 @@ static int msm_open(struct drm_device *dev, struct drm_file *file)
 
 static void msm_preclose(struct drm_device *dev, struct drm_file *file)
 {
-	struct msm_drm_private *priv = dev->dev_private;
-	struct msm_file_private *ctx = file->driver_priv;
+	struct vivante_drm_private *priv = dev->dev_private;
+	struct vivante_file_private *ctx = file->driver_priv;
 
 	mutex_lock(&dev->struct_mutex);
 	if (ctx == priv->lastctx)
@@ -206,7 +206,7 @@ static void msm_preclose(struct drm_device *dev, struct drm_file *file)
 #ifdef CONFIG_DEBUG_FS
 static int vivante_gpu_show(struct drm_device *dev, struct seq_file *m)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	struct vivante_gpu *gpu;
 	unsigned int i;
 
@@ -223,7 +223,7 @@ static int vivante_gpu_show(struct drm_device *dev, struct seq_file *m)
 
 static int vivante_gem_show(struct drm_device *dev, struct seq_file *m)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	struct vivante_gpu *gpu;
 	unsigned int i;
 
@@ -302,7 +302,7 @@ int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout)
 {
 #if 0
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	int ret;
 #endif
 
@@ -352,7 +352,7 @@ int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 void msm_update_fence(struct drm_device *dev, uint32_t fence)
 {
 #if 0
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 
 	mutex_lock(&dev->struct_mutex);
 	priv->completed_fence = max(fence, priv->completed_fence);
@@ -390,7 +390,7 @@ void __msm_fence_worker(struct work_struct *work)
 static int vivante_ioctl_get_param(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	struct drm_vivante_param *args = data;
 	struct vivante_gpu *gpu;
 

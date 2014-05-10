@@ -46,7 +46,7 @@ struct vivante_gpu_funcs {
 	int (*pm_suspend)(struct vivante_gpu *gpu);
 	int (*pm_resume)(struct vivante_gpu *gpu);
 	int (*submit)(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
-			struct msm_file_private *ctx);
+			struct vivante_file_private *ctx);
 	void (*flush)(struct vivante_gpu *gpu);
 	void (*idle)(struct vivante_gpu *gpu);
 	irqreturn_t (*irq)(struct vivante_gpu *irq);
@@ -167,7 +167,7 @@ int msm_gpu_pm_resume(struct vivante_gpu *gpu);
 
 void msm_gpu_retire(struct vivante_gpu *gpu);
 int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
-		struct msm_file_private *ctx);
+		struct vivante_file_private *ctx);
 
 int msm_gpu_init(struct drm_device *drm, struct vivante_gpu *gpu,
 		const struct vivante_gpu_funcs *funcs, const char *name,

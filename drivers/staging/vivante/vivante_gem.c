@@ -235,7 +235,7 @@ int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 	int ret = 0;
 
 	if (!msm_obj->domain[id].iova) {
-		struct msm_drm_private *priv = obj->dev->dev_private;
+		struct vivante_drm_private *priv = obj->dev->dev_private;
 		struct vivante_iommu *mmu = priv->mmus[id];
 		struct page **pages = get_pages(obj);
 		uint32_t offset;
@@ -344,7 +344,7 @@ int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
 		struct msm_fence_cb *cb)
 {
 	struct drm_device *dev = obj->dev;
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 	int ret = 0;
 
@@ -378,7 +378,7 @@ void msm_gem_move_to_active(struct drm_gem_object *obj,
 void msm_gem_move_to_inactive(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
@@ -457,7 +457,7 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 void msm_gem_free_object(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
-	struct msm_drm_private *priv = obj->dev->dev_private;
+	struct vivante_drm_private *priv = obj->dev->dev_private;
 	struct msm_gem_object *msm_obj = to_msm_bo(obj);
 	int id;
 
@@ -532,7 +532,7 @@ static int msm_gem_new_impl(struct drm_device *dev,
 		uint32_t size, uint32_t flags,
 		struct drm_gem_object **obj)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	struct msm_gem_object *msm_obj;
 	unsigned sz;
 

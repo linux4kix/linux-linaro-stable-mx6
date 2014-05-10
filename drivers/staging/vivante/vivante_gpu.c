@@ -491,7 +491,7 @@ static void hangcheck_handler(unsigned long data)
 {
 	struct vivante_gpu *gpu = (struct vivante_gpu *)data;
 	struct drm_device *dev = gpu->dev;
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	uint32_t fence = gpu->funcs->last_fence(gpu);
 
 	if (fence != gpu->hangcheck_fence) {
@@ -554,16 +554,16 @@ static void retire_worker(struct work_struct *work)
 /* call from irq handler to schedule work to retire bo's */
 void msm_gpu_retire(struct vivante_gpu *gpu)
 {
-	struct msm_drm_private *priv = gpu->dev->dev_private;
+	struct vivante_drm_private *priv = gpu->dev->dev_private;
 	queue_work(priv->wq, &gpu->retire_work);
 }
 
 /* add bo's to gpu's ring, and kick gpu: */
 int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
-		struct msm_file_private *ctx)
+		struct vivante_file_private *ctx)
 {
 	struct drm_device *dev = gpu->dev;
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	int i, ret;
 
 	submit->fence = ++priv->next_fence;

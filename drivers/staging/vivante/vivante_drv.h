@@ -48,7 +48,7 @@ struct msm_mmu;
 
 #define NUM_DOMAINS 2    /* one for KMS, then one per gpu core (?) */
 
-struct msm_file_private {
+struct vivante_file_private {
 	/* currently we don't do anything useful with this.. but when
 	 * per-context address spaces are supported we'd keep track of
 	 * the context's page-tables here.
@@ -56,9 +56,9 @@ struct msm_file_private {
 	int dummy;
 };
 
-struct msm_drm_private {
+struct vivante_drm_private {
 	struct vivante_gpu *gpu[VIVANTE_MAX_PIPES];
-	struct msm_file_private *lastctx;
+	struct vivante_file_private *lastctx;
 
 	uint32_t next_fence, completed_fence;
 	wait_queue_head_t fence_event;
@@ -157,7 +157,7 @@ u32 vivante_readl(const void __iomem *addr);
 
 static inline bool fence_completed(struct drm_device *dev, uint32_t fence)
 {
-	struct msm_drm_private *priv = dev->dev_private;
+	struct vivante_drm_private *priv = dev->dev_private;
 	return priv->completed_fence >= fence;
 }
 
