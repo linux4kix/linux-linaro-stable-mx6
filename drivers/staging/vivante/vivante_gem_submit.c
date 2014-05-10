@@ -247,7 +247,7 @@ static int submit_reloc(struct msm_gem_submit *submit, struct vivante_gem_object
 	/* For now, just map the entire thing.  Eventually we probably
 	 * to do it page-by-page, w/ kmap() if not vmap()d..
 	 */
-	ptr = msm_gem_vaddr_locked(&obj->base);
+	ptr = vivante_gem_vaddr_locked(&obj->base);
 
 	if (IS_ERR(ptr)) {
 		ret = PTR_ERR(ptr);

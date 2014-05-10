@@ -350,7 +350,7 @@ fail:
 	return ret;
 }
 
-void *msm_gem_vaddr_locked(struct drm_gem_object *obj)
+void *vivante_gem_vaddr_locked(struct drm_gem_object *obj)
 {
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	WARN_ON(!mutex_is_locked(&obj->dev->struct_mutex));
@@ -368,7 +368,7 @@ void *msm_gem_vaddr(struct drm_gem_object *obj)
 {
 	void *ret;
 	mutex_lock(&obj->dev->struct_mutex);
-	ret = msm_gem_vaddr_locked(obj);
+	ret = vivante_gem_vaddr_locked(obj);
 	mutex_unlock(&obj->dev->struct_mutex);
 	return ret;
 }
