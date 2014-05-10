@@ -590,6 +590,7 @@ static int msm_gem_new_impl(struct drm_device *dev,
 	if (!vivante_obj)
 		return -ENOMEM;
 
+	vivante_obj->vram_node = (void *)&vivante_obj[1];
 	vivante_obj->flags = flags;
 
 	vivante_obj->resv = &vivante_obj->_resv;
