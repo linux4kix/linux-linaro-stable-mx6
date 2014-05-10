@@ -240,7 +240,7 @@ static int msm_gem_show(struct drm_device *dev, struct seq_file *m)
 
 	return 0;
 }
-#endif
+
 static int msm_mm_show(struct drm_device *dev, struct seq_file *m)
 {
 	return drm_mm_dump_table(m, &dev->vma_offset_manager->vm_addr_space_mm);
@@ -293,7 +293,7 @@ static void msm_debugfs_cleanup(struct drm_minor *minor)
 	drm_debugfs_remove_files(msm_debugfs_list,
 			ARRAY_SIZE(msm_debugfs_list), minor);
 }
-
+#endif
 
 /*
  * Fences:
