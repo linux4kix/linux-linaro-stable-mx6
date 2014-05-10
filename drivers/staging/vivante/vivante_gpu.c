@@ -532,10 +532,10 @@ static void retire_worker(struct work_struct *work)
 	mutex_lock(&dev->struct_mutex);
 
 	while (!list_empty(&gpu->active_list)) {
-		struct msm_gem_object *obj;
+		struct vivante_gem_object *obj;
 
 		obj = list_first_entry(&gpu->active_list,
-				struct msm_gem_object, mm_list);
+				struct vivante_gem_object, mm_list);
 
 		if ((obj->read_fence <= fence) &&
 				(obj->write_fence <= fence)) {
@@ -574,7 +574,7 @@ int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 	priv->lastctx = ctx;
 
 	for (i = 0; i < submit->nr_bos; i++) {
-		struct msm_gem_object *msm_obj = submit->bos[i].obj;
+		struct vivante_gem_object *msm_obj = submit->bos[i].obj;
 
 		/* can't happen yet.. but when we add 2d support we'll have
 		 * to deal w/ cross-ring synchronization:

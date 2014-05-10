@@ -21,7 +21,7 @@
 
 struct sg_table *msm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *msm_obj = to_vivante_bo(obj);
 	BUG_ON(!msm_obj->sgt);  /* should have already pinned! */
 	return msm_obj->sgt;
 }

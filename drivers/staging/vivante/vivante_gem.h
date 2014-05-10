@@ -21,7 +21,7 @@
 #include <linux/reservation.h>
 #include "vivante_drv.h"
 
-struct msm_gem_object {
+struct vivante_gem_object {
 	struct drm_gem_object base;
 
 	uint32_t flags;
@@ -63,9 +63,9 @@ struct msm_gem_object {
 	 */
 	struct drm_mm_node *vram_node;
 };
-#define to_msm_bo(x) container_of(x, struct msm_gem_object, base)
+#define to_vivante_bo(x) container_of(x, struct vivante_gem_object, base)
 
-static inline bool is_active(struct msm_gem_object *msm_obj)
+static inline bool is_active(struct vivante_gem_object *msm_obj)
 {
 	return msm_obj->gpu != NULL;
 }
@@ -93,7 +93,7 @@ struct msm_gem_submit {
 	} cmd[MAX_CMDS];
 	struct {
 		uint32_t flags;
-		struct msm_gem_object *obj;
+		struct vivante_gem_object *obj;
 		uint32_t iova;
 	} bos[0];
 };

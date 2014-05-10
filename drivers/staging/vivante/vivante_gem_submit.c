@@ -67,7 +67,7 @@ static int submit_lookup_objects(struct msm_gem_submit *submit,
 	for (i = 0; i < args->nr_bos; i++) {
 		struct drm_msm_gem_submit_bo submit_bo;
 		struct drm_gem_object *obj;
-		struct msm_gem_object *msm_obj;
+		struct vivante_gem_object *vivante_obj;
 		void __user *userptr =
 			to_user_ptr(args->bos + (i * sizeof(submit_bo)));
 
@@ -97,9 +97,9 @@ static int submit_lookup_objects(struct msm_gem_submit *submit,
 			goto out_unlock;
 		}
 
-		msm_obj = to_msm_bo(obj);
+		vivante_obj = to_vivante_bo(obj);
 
-		if (!list_empty(&msm_obj->submit_entry)) {
+		if (!list_empty(&vivante_obj->submit_entry)) {
 			DRM_ERROR("handle %u at index %u already on submit list\n",
 					submit_bo.handle, i);
 			ret = -EINVAL;
@@ -108,9 +108,9 @@ static int submit_lookup_objects(struct msm_gem_submit *submit,
 
 		drm_gem_object_reference(obj);
 
-		submit->bos[i].obj = msm_obj;
+		submit->bos[i].obj = vivante_obj;
 
-		list_add_tail(&msm_obj->submit_entry, &submit->bo_list);
+		list_add_tail(&vivante_obj->submit_entry, &submit->bo_list);
 	}
 
 out_unlock:
@@ -122,13 +122,13 @@ out_unlock:
 
 static void submit_unlock_unpin_bo(struct msm_gem_submit *submit, int i)
 {
-	struct msm_gem_object *msm_obj = submit->bos[i].obj;
+	struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
 
 	if (submit->bos[i].flags & BO_PINNED)
-		msm_gem_put_iova(&msm_obj->base, submit->gpu->id);
+		msm_gem_put_iova(&vivante_obj->base, submit->gpu->id);
 
 	if (submit->bos[i].flags & BO_LOCKED)
-		ww_mutex_unlock(&msm_obj->resv->lock);
+		ww_mutex_unlock(&vivante_obj->resv->lock);
 
 	if (!(submit->bos[i].flags & BO_VALID))
 		submit->bos[i].iova = 0;
@@ -145,7 +145,7 @@ retry:
 	submit->valid = true;
 
 	for (i = 0; i < submit->nr_bos; i++) {
-		struct msm_gem_object *msm_obj = submit->bos[i].obj;
+		struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
 		uint32_t iova;
 
 		if (slow_locked == i)
@@ -154,7 +154,7 @@ retry:
 		contended = i;
 
 		if (!(submit->bos[i].flags & BO_LOCKED)) {
-			ret = ww_mutex_lock_interruptible(&msm_obj->resv->lock,
+			ret = ww_mutex_lock_interruptible(&vivante_obj->resv->lock,
 					&submit->ticket);
 			if (ret)
 				goto fail;
@@ -163,7 +163,7 @@ retry:
 
 
 		/* if locking succeeded, pin bo: */
-		ret = msm_gem_get_iova_locked(&msm_obj->base,
+		ret = msm_gem_get_iova_locked(&vivante_obj->base,
 				submit->gpu->id, &iova);
 
 		/* this would break the logic in the fail path.. there is no
@@ -198,9 +198,9 @@ fail:
 		submit_unlock_unpin_bo(submit, slow_locked);
 
 	if (ret == -EDEADLK) {
-		struct msm_gem_object *msm_obj = submit->bos[contended].obj;
+		struct vivante_gem_object *vivante_obj = submit->bos[contended].obj;
 		/* we lost out in a seqno race, lock and retry.. */
-		ret = ww_mutex_lock_slow_interruptible(&msm_obj->resv->lock,
+		ret = ww_mutex_lock_slow_interruptible(&vivante_obj->resv->lock,
 				&submit->ticket);
 		if (!ret) {
 			submit->bos[contended].flags |= BO_LOCKED;
@@ -213,7 +213,7 @@ fail:
 }
 
 static int submit_bo(struct msm_gem_submit *submit, uint32_t idx,
-		struct msm_gem_object **obj, uint32_t *iova, bool *valid)
+		struct vivante_gem_object **obj, uint32_t *iova, bool *valid)
 {
 	if (idx >= submit->nr_bos) {
 		DRM_ERROR("invalid buffer index: %u (out of %u)\n",
@@ -232,7 +232,7 @@ static int submit_bo(struct msm_gem_submit *submit, uint32_t idx,
 }
 
 /* process the reloc's and patch up the cmdstream as needed: */
-static int submit_reloc(struct msm_gem_submit *submit, struct msm_gem_object *obj,
+static int submit_reloc(struct msm_gem_submit *submit, struct vivante_gem_object *obj,
 		uint32_t offset, uint32_t nr_relocs, uint64_t relocs)
 {
 	uint32_t i, last_offset = 0;
@@ -308,10 +308,10 @@ static void submit_cleanup(struct msm_gem_submit *submit, bool fail)
 	unsigned i;
 
 	for (i = 0; i < submit->nr_bos; i++) {
-		struct msm_gem_object *msm_obj = submit->bos[i].obj;
+		struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
 		submit_unlock_unpin_bo(submit, i);
-		list_del_init(&msm_obj->submit_entry);
-		drm_gem_object_unreference(&msm_obj->base);
+		list_del_init(&vivante_obj->submit_entry);
+		drm_gem_object_unreference(&vivante_obj->base);
 	}
 
 	ww_acquire_fini(&submit->ticket);
@@ -359,7 +359,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 		struct drm_msm_gem_submit_cmd submit_cmd;
 		void __user *userptr =
 			to_user_ptr(args->cmds + (i * sizeof(submit_cmd)));
-		struct msm_gem_object *msm_obj;
+		struct vivante_gem_object *vivante_obj;
 		uint32_t iova;
 
 		ret = copy_from_user(&submit_cmd, userptr, sizeof(submit_cmd));
@@ -369,7 +369,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 		}
 
 		ret = submit_bo(submit, submit_cmd.submit_idx,
-				&msm_obj, &iova, NULL);
+				&vivante_obj, &iova, NULL);
 		if (ret)
 			goto out;
 
@@ -381,7 +381,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 		}
 
 		if ((submit_cmd.size + submit_cmd.submit_offset) >=
-				msm_obj->base.size) {
+				vivante_obj->base.size) {
 			DRM_ERROR("invalid cmdstream size: %u\n", submit_cmd.size);
 			ret = -EINVAL;
 			goto out;
@@ -394,7 +394,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 		if (submit->valid)
 			continue;
 
-		ret = submit_reloc(submit, msm_obj, submit_cmd.submit_offset,
+		ret = submit_reloc(submit, vivante_obj, submit_cmd.submit_offset,
 				submit_cmd.nr_relocs, submit_cmd.relocs);
 		if (ret)
 			goto out;

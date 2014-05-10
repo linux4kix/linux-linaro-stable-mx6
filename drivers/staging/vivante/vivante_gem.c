@@ -27,9 +27,9 @@
 /* called with dev->struct_mutex held */
 static struct page **get_pages(struct drm_gem_object *obj)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 
-	if (!msm_obj->pages) {
+	if (!vivante_obj->pages) {
 		struct drm_device *dev = obj->dev;
 		struct page **p;
 		int npages = obj->size >> PAGE_SHIFT;
@@ -42,42 +42,42 @@ static struct page **get_pages(struct drm_gem_object *obj)
 			return p;
 		}
 
-		msm_obj->sgt = drm_prime_pages_to_sg(p, npages);
-		if (IS_ERR(msm_obj->sgt)) {
+		vivante_obj->sgt = drm_prime_pages_to_sg(p, npages);
+		if (IS_ERR(vivante_obj->sgt)) {
 			dev_err(dev->dev, "failed to allocate sgt\n");
-			return ERR_CAST(msm_obj->sgt);
+			return ERR_CAST(vivante_obj->sgt);
 		}
 
-		msm_obj->pages = p;
+		vivante_obj->pages = p;
 
 		/* For non-cached buffers, ensure the new pages are clean
 		 * because display controller, GPU, etc. are not coherent:
 		 */
-		if (msm_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
-			dma_map_sg(dev->dev, msm_obj->sgt->sgl,
-					msm_obj->sgt->nents, DMA_BIDIRECTIONAL);
+		if (vivante_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
+			dma_map_sg(dev->dev, vivante_obj->sgt->sgl,
+					vivante_obj->sgt->nents, DMA_BIDIRECTIONAL);
 	}
 
-	return msm_obj->pages;
+	return vivante_obj->pages;
 }
 
 static void put_pages(struct drm_gem_object *obj)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 
-	if (msm_obj->pages) {
+	if (vivante_obj->pages) {
 		/* For non-cached buffers, ensure the new pages are clean
 		 * because display controller, GPU, etc. are not coherent:
 		 */
-		if (msm_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
-			dma_unmap_sg(obj->dev->dev, msm_obj->sgt->sgl,
-					msm_obj->sgt->nents, DMA_BIDIRECTIONAL);
-		sg_free_table(msm_obj->sgt);
-		kfree(msm_obj->sgt);
+		if (vivante_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
+			dma_unmap_sg(obj->dev->dev, vivante_obj->sgt->sgl,
+					vivante_obj->sgt->nents, DMA_BIDIRECTIONAL);
+		sg_free_table(vivante_obj->sgt);
+		kfree(vivante_obj->sgt);
 
-		drm_gem_put_pages(obj, msm_obj->pages, true, false);
+		drm_gem_put_pages(obj, vivante_obj->pages, true, false);
 
-		msm_obj->pages = NULL;
+		vivante_obj->pages = NULL;
 	}
 }
 
@@ -99,14 +99,14 @@ void msm_gem_put_pages(struct drm_gem_object *obj)
 int msm_gem_mmap_obj(struct drm_gem_object *obj,
 		struct vm_area_struct *vma)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 
 	vma->vm_flags &= ~VM_PFNMAP;
 	vma->vm_flags |= VM_MIXEDMAP;
 
-	if (msm_obj->flags & MSM_BO_WC) {
+	if (vivante_obj->flags & MSM_BO_WC) {
 		vma->vm_page_prot = pgprot_writecombine(vm_get_page_prot(vma->vm_flags));
-	} else if (msm_obj->flags & MSM_BO_UNCACHED) {
+	} else if (vivante_obj->flags & MSM_BO_UNCACHED) {
 		vma->vm_page_prot = pgprot_noncached(vm_get_page_prot(vma->vm_flags));
 	} else {
 		/*
@@ -231,10 +231,10 @@ uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj)
 int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 		uint32_t *iova)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret = 0;
 
-	if (!msm_obj->domain[id].iova) {
+	if (!vivante_obj->domain[id].iova) {
 		struct vivante_drm_private *priv = obj->dev->dev_private;
 		struct vivante_iommu *mmu = priv->mmus[id];
 		struct page **pages = get_pages(obj);
@@ -244,27 +244,27 @@ int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 			return PTR_ERR(pages);
 
 		offset = (uint32_t)mmap_offset(obj);
-		ret = vivante_iommu_map(mmu, offset, msm_obj->sgt,
+		ret = vivante_iommu_map(mmu, offset, vivante_obj->sgt,
 				obj->size, IOMMU_READ | IOMMU_WRITE);
-		msm_obj->domain[id].iova = offset;
+		vivante_obj->domain[id].iova = offset;
 	}
 
 	if (!ret)
-		*iova = msm_obj->domain[id].iova;
+		*iova = vivante_obj->domain[id].iova;
 
 	return ret;
 }
 
 int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret;
 
 	/* this is safe right now because we don't unmap until the
 	 * bo is deleted:
 	 */
-	if (msm_obj->domain[id].iova) {
-		*iova = msm_obj->domain[id].iova;
+	if (vivante_obj->domain[id].iova) {
+		*iova = vivante_obj->domain[id].iova;
 		return 0;
 	}
 
@@ -316,16 +316,16 @@ fail:
 
 void *msm_gem_vaddr_locked(struct drm_gem_object *obj)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	WARN_ON(!mutex_is_locked(&obj->dev->struct_mutex));
-	if (!msm_obj->vaddr) {
+	if (!vivante_obj->vaddr) {
 		struct page **pages = get_pages(obj);
 		if (IS_ERR(pages))
 			return ERR_CAST(pages);
-		msm_obj->vaddr = vmap(pages, obj->size >> PAGE_SHIFT,
+		vivante_obj->vaddr = vmap(pages, obj->size >> PAGE_SHIFT,
 				VM_MAP, pgprot_writecombine(PAGE_KERNEL));
 	}
-	return msm_obj->vaddr;
+	return vivante_obj->vaddr;
 }
 
 void *msm_gem_vaddr(struct drm_gem_object *obj)
@@ -345,14 +345,14 @@ int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
 {
 	struct drm_device *dev = obj->dev;
 	struct vivante_drm_private *priv = dev->dev_private;
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret = 0;
 
 	mutex_lock(&dev->struct_mutex);
 	if (!list_empty(&cb->work.entry)) {
 		ret = -EINVAL;
-	} else if (is_active(msm_obj)) {
-		cb->fence = max(msm_obj->read_fence, msm_obj->write_fence);
+	} else if (is_active(vivante_obj)) {
+		cb->fence = max(vivante_obj->read_fence, vivante_obj->write_fence);
 		list_add_tail(&cb->work.entry, &priv->fence_cbs);
 	} else {
 		queue_work(priv->wq, &cb->work);
@@ -365,45 +365,45 @@ int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
 void msm_gem_move_to_active(struct drm_gem_object *obj,
 		struct vivante_gpu *gpu, bool write, uint32_t fence)
 {
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
-	msm_obj->gpu = gpu;
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	vivante_obj->gpu = gpu;
 	if (write)
-		msm_obj->write_fence = fence;
+		vivante_obj->write_fence = fence;
 	else
-		msm_obj->read_fence = fence;
-	list_del_init(&msm_obj->mm_list);
-	list_add_tail(&msm_obj->mm_list, &gpu->active_list);
+		vivante_obj->read_fence = fence;
+	list_del_init(&vivante_obj->mm_list);
+	list_add_tail(&vivante_obj->mm_list, &gpu->active_list);
 }
 
 void msm_gem_move_to_inactive(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 	struct vivante_drm_private *priv = dev->dev_private;
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 
-	msm_obj->gpu = NULL;
-	msm_obj->read_fence = 0;
-	msm_obj->write_fence = 0;
-	list_del_init(&msm_obj->mm_list);
-	list_add_tail(&msm_obj->mm_list, &priv->inactive_list);
+	vivante_obj->gpu = NULL;
+	vivante_obj->read_fence = 0;
+	vivante_obj->write_fence = 0;
+	list_del_init(&vivante_obj->mm_list);
+	list_add_tail(&vivante_obj->mm_list, &priv->inactive_list);
 }
 
 int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout)
 {
 	struct drm_device *dev = obj->dev;
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret = 0;
 
-	if (is_active(msm_obj)) {
+	if (is_active(vivante_obj)) {
 		uint32_t fence = 0;
 
 		if (op & MSM_PREP_READ)
-			fence = msm_obj->write_fence;
+			fence = vivante_obj->write_fence;
 		if (op & MSM_PREP_WRITE)
-			fence = max(fence, msm_obj->read_fence);
+			fence = max(fence, vivante_obj->read_fence);
 		if (op & MSM_PREP_NOSYNC)
 			timeout = NULL;
 
@@ -425,25 +425,25 @@ int msm_gem_cpu_fini(struct drm_gem_object *obj)
 void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m)
 {
 	struct drm_device *dev = obj->dev;
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	uint64_t off = drm_vma_node_start(&obj->vma_node);
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 	seq_printf(m, "%08x: %c(r=%u,w=%u) %2d (%2d) %08llx %p %d\n",
-			msm_obj->flags, is_active(msm_obj) ? 'A' : 'I',
-			msm_obj->read_fence, msm_obj->write_fence,
+			vivante_obj->flags, is_active(vivante_obj) ? 'A' : 'I',
+			vivante_obj->read_fence, vivante_obj->write_fence,
 			obj->name, obj->refcount.refcount.counter,
-			off, msm_obj->vaddr, obj->size);
+			off, vivante_obj->vaddr, obj->size);
 }
 
 void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 {
-	struct msm_gem_object *msm_obj;
+	struct vivante_gem_object *vivante_obj;
 	int count = 0;
 	size_t size = 0;
 
-	list_for_each_entry(msm_obj, list, mm_list) {
-		struct drm_gem_object *obj = &msm_obj->base;
+	list_for_each_entry(vivante_obj, list, mm_list) {
+		struct drm_gem_object *obj = &vivante_obj->base;
 		seq_printf(m, "   ");
 		msm_gem_describe(obj, m);
 		count++;
@@ -458,48 +458,48 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 	struct vivante_drm_private *priv = obj->dev->dev_private;
-	struct msm_gem_object *msm_obj = to_msm_bo(obj);
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int id;
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 
 	/* object should not be on active list: */
-	WARN_ON(is_active(msm_obj));
+	WARN_ON(is_active(vivante_obj));
 
-	list_del(&msm_obj->mm_list);
+	list_del(&vivante_obj->mm_list);
 
-	for (id = 0; id < ARRAY_SIZE(msm_obj->domain); id++) {
+	for (id = 0; id < ARRAY_SIZE(vivante_obj->domain); id++) {
 		struct vivante_iommu *mmu = priv->mmus[id];
-		if (mmu && msm_obj->domain[id].iova) {
+		if (mmu && vivante_obj->domain[id].iova) {
 			uint32_t offset = (uint32_t)mmap_offset(obj);
-			vivante_iommu_unmap(mmu, offset, msm_obj->sgt, obj->size);
+			vivante_iommu_unmap(mmu, offset, vivante_obj->sgt, obj->size);
 		}
 	}
 
 	drm_gem_free_mmap_offset(obj);
 
 	if (obj->import_attach) {
-		if (msm_obj->vaddr)
-			dma_buf_vunmap(obj->import_attach->dmabuf, msm_obj->vaddr);
+		if (vivante_obj->vaddr)
+			dma_buf_vunmap(obj->import_attach->dmabuf, vivante_obj->vaddr);
 
 		/* Don't drop the pages for imported dmabuf, as they are not
 		 * ours, just free the array we allocated:
 		 */
-		if (msm_obj->pages)
-			drm_free_large(msm_obj->pages);
+		if (vivante_obj->pages)
+			drm_free_large(vivante_obj->pages);
 
 	} else {
-		if (msm_obj->vaddr)
-			vunmap(msm_obj->vaddr);
+		if (vivante_obj->vaddr)
+			vunmap(vivante_obj->vaddr);
 		put_pages(obj);
 	}
 
-	if (msm_obj->resv == &msm_obj->_resv)
-		reservation_object_fini(msm_obj->resv);
+	if (vivante_obj->resv == &vivante_obj->_resv)
+		reservation_object_fini(vivante_obj->resv);
 
 	drm_gem_object_release(obj);
 
-	kfree(msm_obj);
+	kfree(vivante_obj);
 }
 
 /* convenience method to construct a GEM buffer object, and userspace handle */
@@ -533,7 +533,7 @@ static int msm_gem_new_impl(struct drm_device *dev,
 		struct drm_gem_object **obj)
 {
 	struct vivante_drm_private *priv = dev->dev_private;
-	struct msm_gem_object *msm_obj;
+	struct vivante_gem_object *vivante_obj;
 	unsigned sz;
 
 	switch (flags & MSM_BO_CACHE_MASK) {
@@ -547,21 +547,21 @@ static int msm_gem_new_impl(struct drm_device *dev,
 		return -EINVAL;
 	}
 
-	sz = sizeof(*msm_obj);
+	sz = sizeof(*vivante_obj);
 
-	msm_obj = kzalloc(sz, GFP_KERNEL);
-	if (!msm_obj)
+	vivante_obj = kzalloc(sz, GFP_KERNEL);
+	if (!vivante_obj)
 		return -ENOMEM;
 
-	msm_obj->flags = flags;
+	vivante_obj->flags = flags;
 
-	msm_obj->resv = &msm_obj->_resv;
-	reservation_object_init(msm_obj->resv);
+	vivante_obj->resv = &vivante_obj->_resv;
+	reservation_object_init(vivante_obj->resv);
 
-	INIT_LIST_HEAD(&msm_obj->submit_entry);
-	list_add_tail(&msm_obj->mm_list, &priv->inactive_list);
+	INIT_LIST_HEAD(&vivante_obj->submit_entry);
+	list_add_tail(&vivante_obj->mm_list, &priv->inactive_list);
 
-	*obj = &msm_obj->base;
+	*obj = &vivante_obj->base;
 
 	return 0;
 }
@@ -596,7 +596,7 @@ fail:
 struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 		uint32_t size, struct sg_table *sgt)
 {
-	struct msm_gem_object *msm_obj;
+	struct vivante_gem_object *vivante_obj;
 	struct drm_gem_object *obj;
 	int ret, npages;
 
@@ -610,15 +610,15 @@ struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 
 	npages = size / PAGE_SIZE;
 
-	msm_obj = to_msm_bo(obj);
-	msm_obj->sgt = sgt;
-	msm_obj->pages = drm_malloc_ab(npages, sizeof(struct page *));
-	if (!msm_obj->pages) {
+	vivante_obj = to_vivante_bo(obj);
+	vivante_obj->sgt = sgt;
+	vivante_obj->pages = drm_malloc_ab(npages, sizeof(struct page *));
+	if (!vivante_obj->pages) {
 		ret = -ENOMEM;
 		goto fail;
 	}
 
-	ret = drm_prime_sg_to_page_addr_arrays(sgt, msm_obj->pages, NULL, npages);
+	ret = drm_prime_sg_to_page_addr_arrays(sgt, vivante_obj->pages, NULL, npages);
 	if (ret)
 		goto fail;
 
