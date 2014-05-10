@@ -24,6 +24,42 @@
 #include "vivante_gpu.h"
 #include "vivante_mmu.h"
 
+static dma_addr_t physaddr(struct drm_gem_object *obj)
+{
+	/* TODO */
+	return 0;
+}
+
+/* allocate pages from GPU memory area */
+static struct page **get_pages_gpu(struct drm_gem_object *obj,
+		int npages)
+{
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct vivante_drm_private *priv = obj->dev->dev_private;
+	dma_addr_t paddr;
+	struct page **p;
+	int ret, i;
+
+	p = drm_malloc_ab(npages, sizeof(struct page *));
+	if (!p)
+		return ERR_PTR(-ENOMEM);
+
+	ret = drm_mm_insert_node(&priv->mm, vivante_obj->vram_node,
+			npages, 0, DRM_MM_SEARCH_DEFAULT);
+	if (ret) {
+		drm_free_large(p);
+		return ERR_PTR(ret);
+	}
+
+	paddr = physaddr(obj);
+	for (i = 0; i < npages; i++) {
+		p[i] = phys_to_page(paddr);
+		paddr += PAGE_SIZE;
+	}
+
+	return p;
+}
+
 /* called with dev->struct_mutex held */
 static struct page **get_pages(struct drm_gem_object *obj)
 {
@@ -34,7 +70,7 @@ static struct page **get_pages(struct drm_gem_object *obj)
 		struct page **p;
 		int npages = obj->size >> PAGE_SHIFT;
 
-		p = drm_gem_get_pages(obj, 0);
+		p = get_pages_gpu(obj, npages);
 
 		if (IS_ERR(p)) {
 			dev_err(dev->dev, "could not get pages: %ld\n",
@@ -75,7 +111,7 @@ static void put_pages(struct drm_gem_object *obj)
 		sg_free_table(vivante_obj->sgt);
 		kfree(vivante_obj->sgt);
 
-		drm_gem_put_pages(obj, vivante_obj->pages, true, false);
+		drm_mm_remove_node(vivante_obj->vram_node);
 
 		vivante_obj->pages = NULL;
 	}
@@ -548,6 +584,7 @@ static int msm_gem_new_impl(struct drm_device *dev,
 	}
 
 	sz = sizeof(*vivante_obj);
+	sz += sizeof(struct drm_mm_node);
 
 	vivante_obj = kzalloc(sz, GFP_KERNEL);
 	if (!vivante_obj)
