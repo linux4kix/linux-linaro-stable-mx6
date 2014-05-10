@@ -85,13 +85,14 @@ static struct page **get_pages(struct drm_gem_object *obj)
 		}
 
 		vivante_obj->pages = p;
-
+#if 0 /* TODO: I think this is not needed in our case - correct? */
 		/* For non-cached buffers, ensure the new pages are clean
 		 * because display controller, GPU, etc. are not coherent:
 		 */
 		if (vivante_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
 			dma_map_sg(dev->dev, vivante_obj->sgt->sgl,
 					vivante_obj->sgt->nents, DMA_BIDIRECTIONAL);
+#endif
 	}
 
 	return vivante_obj->pages;
