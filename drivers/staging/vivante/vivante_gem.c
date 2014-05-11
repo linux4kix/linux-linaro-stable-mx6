@@ -274,7 +274,7 @@ int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
 	return ret;
 }
 
-void vivante_gem_put_iova(struct drm_gem_object *obj, int id)
+void vivante_gem_put_iova(struct drm_gem_object *obj)
 {
 	// XXX TODO ..
 	// NOTE: probably don't need a _locked() version.. we wouldn't

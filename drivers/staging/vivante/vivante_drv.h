@@ -114,7 +114,7 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova);
 struct page **msm_gem_get_pages(struct drm_gem_object *obj);
 void msm_gem_put_pages(struct drm_gem_object *obj);
-void vivante_gem_put_iova(struct drm_gem_object *obj, int id);
+void vivante_gem_put_iova(struct drm_gem_object *obj);
 int msm_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
 		struct drm_mode_create_dumb *args);
 int msm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,

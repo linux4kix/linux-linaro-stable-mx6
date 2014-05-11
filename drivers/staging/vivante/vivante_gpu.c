@@ -541,7 +541,7 @@ static void retire_worker(struct work_struct *work)
 				(obj->write_fence <= fence)) {
 			/* move to inactive: */
 			msm_gem_move_to_inactive(&obj->base);
-            vivante_gem_put_iova(&obj->base, gpu->id);
+            vivante_gem_put_iova(&obj->base);
 			drm_gem_object_unreference(&obj->base);
 		} else {
 			break;
@@ -695,7 +695,7 @@ void msm_gpu_cleanup(struct vivante_gpu *gpu)
 
 	if (gpu->rb) {
 		if (gpu->rb_iova)
-            vivante_gem_put_iova(gpu->rb->bo, gpu->id);
+            vivante_gem_put_iova(gpu->rb->bo);
 		vivante_ringbuffer_destroy(gpu->rb);
 	}
 
