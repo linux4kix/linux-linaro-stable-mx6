@@ -81,7 +81,7 @@ static void put_pages(struct drm_gem_object *obj)
 	}
 }
 
-struct page **msm_gem_get_pages(struct drm_gem_object *obj)
+struct page **vivante_gem_get_pages(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 	struct page **p;
