@@ -20,7 +20,7 @@
 #include "vivante_drv.h"
 #include "vivante_gpu.h"
 
-void msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu)
+void vivante_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu)
 {
     struct vivante_drm_private *priv = dev->dev_private;
     priv->mmu = mmu;

@@ -248,7 +248,7 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 		ret = -ENOMEM;
 		goto fail;
 	}
-    msm_register_mmu(gpu->dev, gpu->mmu);
+    vivante_register_mmu(gpu->dev, gpu->mmu);
 
 	/* Create ringbuffer: */
 	gpu->rb = vivante_ringbuffer_new(gpu, PAGE_SIZE);

@@ -94,7 +94,7 @@ void __msm_fence_worker(struct work_struct *work);
 		(_cb)->func = _func;                         \
 	} while (0)
 
-void msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
+void vivante_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
 
 int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout);
