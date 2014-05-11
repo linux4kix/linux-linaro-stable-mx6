@@ -125,7 +125,7 @@ static void submit_unlock_unpin_bo(struct msm_gem_submit *submit, int i)
 	struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
 
 	if (submit->bos[i].flags & BO_PINNED)
-		msm_gem_put_iova(&vivante_obj->base, submit->gpu->id);
+        vivante_gem_put_iova(&vivante_obj->base, submit->gpu->id);
 
 	if (submit->bos[i].flags & BO_LOCKED)
 		ww_mutex_unlock(&vivante_obj->resv->lock);
@@ -163,7 +163,7 @@ retry:
 
 
 		/* if locking succeeded, pin bo: */
-		ret = msm_gem_get_iova_locked(&vivante_obj->base,
+        ret = vivante_gem_get_iova_locked(&vivante_obj->base,
 				submit->gpu->id, &iova);
 
 		/* this would break the logic in the fail path.. there is no

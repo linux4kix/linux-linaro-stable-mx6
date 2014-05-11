@@ -109,12 +109,12 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
 int msm_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
 uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj);
-int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
+int vivante_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 		uint32_t *iova);
 int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova);
 struct page **msm_gem_get_pages(struct drm_gem_object *obj);
 void msm_gem_put_pages(struct drm_gem_object *obj);
-void msm_gem_put_iova(struct drm_gem_object *obj, int id);
+void vivante_gem_put_iova(struct drm_gem_object *obj, int id);
 int msm_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
 		struct drm_mode_create_dumb *args);
 int msm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,

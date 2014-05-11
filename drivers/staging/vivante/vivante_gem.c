@@ -228,7 +228,7 @@ uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj)
  * That means when I do eventually need to add support for unpinning
  * the refcnt counter needs to be atomic_t.
  */
-int msm_gem_get_iova_locked(struct drm_gem_object *obj, int id,
+int vivante_gem_get_iova_locked(struct drm_gem_object *obj, int id,
 		uint32_t *iova)
 {
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
@@ -269,12 +269,12 @@ int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
 	}
 
 	mutex_lock(&obj->dev->struct_mutex);
-	ret = msm_gem_get_iova_locked(obj, id, iova);
+    ret = vivante_gem_get_iova_locked(obj, id, iova);
 	mutex_unlock(&obj->dev->struct_mutex);
 	return ret;
 }
 
-void msm_gem_put_iova(struct drm_gem_object *obj, int id)
+void vivante_gem_put_iova(struct drm_gem_object *obj, int id)
 {
 	// XXX TODO ..
 	// NOTE: probably don't need a _locked() version.. we wouldn't

@@ -259,7 +259,7 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 		goto fail;
 	}
 
-	ret = msm_gem_get_iova_locked(gpu->rb->bo, gpu->id, &gpu->rb_iova);
+    ret = vivante_gem_get_iova_locked(gpu->rb->bo, gpu->id, &gpu->rb_iova);
 	if (ret) {
 		gpu->rb_iova = 0;
 		dev_err(gpu->dev->dev, "could not map ringbuffer: %d\n", ret);
@@ -541,7 +541,7 @@ static void retire_worker(struct work_struct *work)
 				(obj->write_fence <= fence)) {
 			/* move to inactive: */
 			msm_gem_move_to_inactive(&obj->base);
-			msm_gem_put_iova(&obj->base, gpu->id);
+            vivante_gem_put_iova(&obj->base, gpu->id);
 			drm_gem_object_unreference(&obj->base);
 		} else {
 			break;
@@ -586,7 +586,7 @@ int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 
 			/* ring takes a reference to the bo and iova: */
 			drm_gem_object_reference(&msm_obj->base);
-			msm_gem_get_iova_locked(&msm_obj->base,
+            vivante_gem_get_iova_locked(&msm_obj->base,
 					submit->gpu->id, &iova);
 		}
 
@@ -695,7 +695,7 @@ void msm_gpu_cleanup(struct vivante_gpu *gpu)
 
 	if (gpu->rb) {
 		if (gpu->rb_iova)
-			msm_gem_put_iova(gpu->rb->bo, gpu->id);
+            vivante_gem_put_iova(gpu->rb->bo, gpu->id);
 		vivante_ringbuffer_destroy(gpu->rb);
 	}
 
