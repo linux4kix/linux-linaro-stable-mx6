@@ -236,7 +236,7 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 
     if (!vivante_obj->iova) {
 		struct vivante_drm_private *priv = obj->dev->dev_private;
-        struct vivante_iommu *mmu = priv->mmu;
+		struct vivante_iommu *mmu = priv->mmu;
 		struct page **pages = get_pages(obj);
 		uint32_t offset;
 
