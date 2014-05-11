@@ -459,7 +459,7 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 	struct drm_device *dev = obj->dev;
 	struct vivante_drm_private *priv = obj->dev->dev_private;
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
-	int id;
+	struct vivante_iommu *mmu = priv->mmu;
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 
@@ -468,12 +468,9 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 
 	list_del(&vivante_obj->mm_list);
 
-	for (id = 0; id < ARRAY_SIZE(vivante_obj->domain); id++) {
-		struct vivante_iommu *mmu = priv->mmus[id];
-		if (mmu && vivante_obj->domain[id].iova) {
-			uint32_t offset = (uint32_t)mmap_offset(obj);
-			vivante_iommu_unmap(mmu, offset, vivante_obj->sgt, obj->size);
-		}
+	if (mmu && vivante_obj->iova) {
+		uint32_t offset = (uint32_t)mmap_offset(obj);
+		vivante_iommu_unmap(mmu, offset, vivante_obj->sgt, obj->size);
 	}
 
 	drm_gem_free_mmap_offset(obj);

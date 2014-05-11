@@ -48,11 +48,7 @@ struct vivante_gem_object {
 	struct page **pages;
 	struct sg_table *sgt;
 	void *vaddr;
-
-	struct {
-		// XXX
-		uint32_t iova;
-	} domain[NUM_DOMAINS];
+	uint32_t iova;
 
 	/* normally (resv == &_resv) except for imported bo's */
 	struct reservation_object *resv;
