@@ -163,8 +163,7 @@ retry:
 
 
 		/* if locking succeeded, pin bo: */
-        ret = vivante_gem_get_iova_locked(&vivante_obj->base,
-				submit->gpu->id, &iova);
+        ret = vivante_gem_get_iova_locked(&vivante_obj->base, &iova);
 
 		/* this would break the logic in the fail path.. there is no
 		 * reason for this to happen, but just to be on the safe side

@@ -46,8 +46,6 @@ static inline struct device *msm_iommu_get_ctx(const char *ctx_name)
 struct vivante_gpu;
 struct msm_mmu;
 
-#define NUM_DOMAINS 2    /* one for KMS, then one per gpu core (?) */
-
 struct vivante_file_private {
 	/* currently we don't do anything useful with this.. but when
 	 * per-context address spaces are supported we'd keep track of
@@ -72,8 +70,7 @@ struct vivante_drm_private {
 	struct list_head fence_cbs;
 
 	/* registered MMUs: */
-	unsigned int num_mmus;
-	struct vivante_iommu *mmus[NUM_DOMAINS];
+    struct vivante_iommu *mmu;
 
 	/* memory manager for GPU address area */
 	struct drm_mm mm;
@@ -97,7 +94,7 @@ void __msm_fence_worker(struct work_struct *work);
 		(_cb)->func = _func;                         \
 	} while (0)
 
-int msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
+void msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
 
 int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout);
@@ -109,7 +106,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
 int msm_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
 uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj);
-int vivante_gem_get_iova_locked(struct drm_gem_object *obj, int id,
+int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 		uint32_t *iova);
 int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova);
 struct page **msm_gem_get_pages(struct drm_gem_object *obj);

@@ -20,17 +20,10 @@
 #include "vivante_drv.h"
 #include "vivante_gpu.h"
 
-int msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu)
+void msm_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	int idx = priv->num_mmus++;
-
-	if (WARN_ON(idx >= ARRAY_SIZE(priv->mmus)))
-		return -EINVAL;
-
-	priv->mmus[idx] = mmu;
-
-	return idx;
+    struct vivante_drm_private *priv = dev->dev_private;
+    priv->mmu = mmu;
 }
 
 #ifdef CONFIG_DRM_VIVANTE_REGISTER_LOGGING
