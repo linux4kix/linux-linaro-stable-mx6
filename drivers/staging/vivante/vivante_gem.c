@@ -24,42 +24,6 @@
 #include "vivante_gpu.h"
 #include "vivante_mmu.h"
 
-static dma_addr_t physaddr(struct drm_gem_object *obj)
-{
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
-	return (((dma_addr_t)vivante_obj->vram_node->start) << PAGE_SHIFT) + 0x80000000;
-}
-
-/* allocate pages from GPU memory area */
-static struct page **get_pages_gpu(struct drm_gem_object *obj,
-		int npages)
-{
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
-	struct vivante_drm_private *priv = obj->dev->dev_private;
-	dma_addr_t paddr;
-	struct page **p;
-	int ret, i;
-
-	p = drm_malloc_ab(npages, sizeof(struct page *));
-	if (!p)
-		return ERR_PTR(-ENOMEM);
-
-	ret = drm_mm_insert_node(&priv->mm, vivante_obj->vram_node,
-			npages, 0, DRM_MM_SEARCH_DEFAULT);
-	if (ret) {
-		drm_free_large(p);
-		return ERR_PTR(ret);
-	}
-
-	paddr = physaddr(obj);
-	for (i = 0; i < npages; i++) {
-		p[i] = phys_to_page(paddr);
-		paddr += PAGE_SIZE;
-	}
-
-	return p;
-}
-
 /* called with dev->struct_mutex held */
 static struct page **get_pages(struct drm_gem_object *obj)
 {
@@ -70,7 +34,7 @@ static struct page **get_pages(struct drm_gem_object *obj)
 		struct page **p;
 		int npages = obj->size >> PAGE_SHIFT;
 
-		p = get_pages_gpu(obj, npages);
+		p = drm_gem_get_pages(obj, 0);
 
 		if (IS_ERR(p)) {
 			dev_err(dev->dev, "could not get pages: %ld\n",
@@ -85,14 +49,13 @@ static struct page **get_pages(struct drm_gem_object *obj)
 		}
 
 		vivante_obj->pages = p;
-#if 0 /* TODO: I think this is not needed in our case - correct? */
+
 		/* For non-cached buffers, ensure the new pages are clean
 		 * because display controller, GPU, etc. are not coherent:
 		 */
 		if (vivante_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
 			dma_map_sg(dev->dev, vivante_obj->sgt->sgl,
 					vivante_obj->sgt->nents, DMA_BIDIRECTIONAL);
-#endif
 	}
 
 	return vivante_obj->pages;
@@ -112,7 +75,7 @@ static void put_pages(struct drm_gem_object *obj)
 		sg_free_table(vivante_obj->sgt);
 		kfree(vivante_obj->sgt);
 
-		drm_mm_remove_node(vivante_obj->vram_node);
+		drm_gem_put_pages(obj, vivante_obj->pages, true, false);
 
 		vivante_obj->pages = NULL;
 	}
