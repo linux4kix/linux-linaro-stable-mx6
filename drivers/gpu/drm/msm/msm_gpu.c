@@ -152,7 +152,7 @@ static int disable_axi(struct msm_gpu *gpu)
 	return 0;
 }
 
-int msm_gpu_pm_resume(struct msm_gpu *gpu)
+int vivante_gpu_pm_resume(struct msm_gpu *gpu)
 {
 	int ret;
 
@@ -173,7 +173,7 @@ int msm_gpu_pm_resume(struct msm_gpu *gpu)
 	return 0;
 }
 
-int msm_gpu_pm_suspend(struct msm_gpu *gpu)
+int vivante_gpu_pm_suspend(struct msm_gpu *gpu)
 {
 	int ret;
 

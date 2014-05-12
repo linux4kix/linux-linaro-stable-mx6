@@ -58,7 +58,7 @@ static inline void CMD_LINK(struct vivante_ringbuffer *rb, u16 prefetch, u32 add
  * Driver functions:
  */
 
-int vivante_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *value)
+int vivante_gpu_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *value)
 {
 	switch (param) {
 	case VIVANTE_PARAM_GPU_MODEL:
@@ -272,7 +272,7 @@ fail:
 	return ret;
 }
 
-irqreturn_t vivante_hw_irq(struct vivante_gpu *gpu)
+irqreturn_t vivante_gpu_irq(struct vivante_gpu *gpu)
 {
 	irqreturn_t ret = IRQ_NONE;
 	u32 irq = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
@@ -291,11 +291,7 @@ irqreturn_t vivante_hw_irq(struct vivante_gpu *gpu)
 }
 
 static const struct vivante_gpu_funcs funcs = {
-	.get_param = vivante_get_param,
 	.hw_init = vivante_hw_init,
-	.pm_suspend = msm_gpu_pm_suspend,
-	.pm_resume = msm_gpu_pm_resume,
-	.irq = vivante_hw_irq,
 };
 
 struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
@@ -420,7 +416,7 @@ static int disable_axi(struct vivante_gpu *gpu)
 	return 0;
 }
 
-int msm_gpu_pm_resume(struct vivante_gpu *gpu)
+int vivante_gpu_pm_resume(struct vivante_gpu *gpu)
 {
 	int ret;
 
@@ -441,7 +437,7 @@ int msm_gpu_pm_resume(struct vivante_gpu *gpu)
 	return 0;
 }
 
-int msm_gpu_pm_suspend(struct vivante_gpu *gpu)
+int vivante_gpu_pm_suspend(struct vivante_gpu *gpu)
 {
 	int ret;
 
@@ -607,7 +603,7 @@ int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 static irqreturn_t irq_handler(int irq, void *data)
 {
 	struct vivante_gpu *gpu = data;
-	return gpu->funcs->irq(gpu);
+	return vivante_gpu_irq(gpu);
 }
 
 static const char *clk_names[] = {

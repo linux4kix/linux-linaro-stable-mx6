@@ -41,15 +41,11 @@ struct msm_gem_submit;
  *    + z180_gpu
  */
 struct vivante_gpu_funcs {
-	int (*get_param)(struct vivante_gpu *gpu, uint32_t param, uint64_t *value);
 	int (*hw_init)(struct vivante_gpu *gpu);
-	int (*pm_suspend)(struct vivante_gpu *gpu);
-	int (*pm_resume)(struct vivante_gpu *gpu);
 	int (*submit)(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 			struct vivante_file_private *ctx);
 	void (*flush)(struct vivante_gpu *gpu);
 	void (*idle)(struct vivante_gpu *gpu);
-	irqreturn_t (*irq)(struct vivante_gpu *irq);
 	uint32_t (*last_fence)(struct vivante_gpu *gpu);
 	void (*recover)(struct vivante_gpu *gpu);
 	void (*destroy)(struct vivante_gpu *gpu);
@@ -159,11 +155,13 @@ static inline u32 gpu_read(struct vivante_gpu *gpu, u32 reg)
 	return vivante_readl(gpu->mmio + reg);
 }
 
+int vivante_gpu_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *value);
+
 struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
 		const char *ioname, const char *irqname);
 
-int msm_gpu_pm_suspend(struct vivante_gpu *gpu);
-int msm_gpu_pm_resume(struct vivante_gpu *gpu);
+int vivante_gpu_pm_suspend(struct vivante_gpu *gpu);
+int vivante_gpu_pm_resume(struct vivante_gpu *gpu);
 
 void msm_gpu_retire(struct vivante_gpu *gpu);
 int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,

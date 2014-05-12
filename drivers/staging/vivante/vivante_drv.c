@@ -96,7 +96,7 @@ static int vivante_unload(struct drm_device *dev)
 		struct vivante_gpu *gpu = priv->gpu[i];
 		if (gpu) {
 			mutex_lock(&dev->struct_mutex);
-			gpu->funcs->pm_suspend(gpu);
+			vivante_gpu_pm_suspend(gpu);
 			gpu->funcs->destroy(gpu);
 			mutex_unlock(&dev->struct_mutex);
 		}
@@ -127,7 +127,7 @@ static void load_gpu(struct drm_device *dev)
 		struct vivante_gpu *g = gpu[i];
 		if (g) {
 			int ret;
-			g->funcs->pm_resume(g);
+			vivante_gpu_pm_resume(g);
 			ret = g->funcs->hw_init(g);
 			if (ret) {
 				dev_err(dev->dev, "%s hw init failed: %d\n", g->name, ret);
@@ -401,7 +401,7 @@ static int vivante_ioctl_get_param(struct drm_device *dev, void *data,
 	if (!gpu)
 		return -ENXIO;
 
-	return gpu->funcs->get_param(gpu, args->param, &args->value);
+	return vivante_gpu_get_param(gpu, args->param, &args->value);
 }
 
 static int vivante_ioctl_gem_new(struct drm_device *dev, void *data,
