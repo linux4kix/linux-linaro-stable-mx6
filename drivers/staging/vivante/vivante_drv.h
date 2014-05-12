@@ -44,7 +44,7 @@ static inline struct device *msm_iommu_get_ctx(const char *ctx_name)
 #include <drm/vivante_drm.h>
 
 struct vivante_gpu;
-struct msm_mmu;
+struct vivante_mmu;
 
 struct vivante_file_private {
 	/* currently we don't do anything useful with this.. but when
@@ -74,10 +74,6 @@ struct vivante_drm_private {
 
 	/* memory manager for GPU address area */
 	struct drm_mm mm;
-};
-
-struct msm_format {
-	uint32_t pixel_format;
 };
 
 /* callback from wq once fence has passed: */
@@ -134,9 +130,9 @@ int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout);
 int msm_gem_cpu_fini(struct drm_gem_object *obj);
 void msm_gem_free_object(struct drm_gem_object *obj);
-int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
+int vivante_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 		uint32_t size, uint32_t flags, uint32_t *handle);
-struct drm_gem_object *msm_gem_new(struct drm_device *dev,
+struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
 		uint32_t size, uint32_t flags);
 struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 		uint32_t size, struct sg_table *sgt);

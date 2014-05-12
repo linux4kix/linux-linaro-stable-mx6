@@ -500,7 +500,7 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 }
 
 /* convenience method to construct a GEM buffer object, and userspace handle */
-int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
+int vivante_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 		uint32_t size, uint32_t flags, uint32_t *handle)
 {
 	struct drm_gem_object *obj;
@@ -510,7 +510,7 @@ int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 	if (ret)
 		return ret;
 
-	obj = msm_gem_new(dev, size, flags);
+	obj = vivante_gem_new(dev, size, flags);
 
 	mutex_unlock(&dev->struct_mutex);
 
@@ -525,7 +525,7 @@ int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 	return ret;
 }
 
-static int msm_gem_new_impl(struct drm_device *dev,
+static int vivante_gem_new_impl(struct drm_device *dev,
 		uint32_t size, uint32_t flags,
 		struct drm_gem_object **obj)
 {
@@ -565,7 +565,7 @@ static int msm_gem_new_impl(struct drm_device *dev,
 	return 0;
 }
 
-struct drm_gem_object *msm_gem_new(struct drm_device *dev,
+struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
 		uint32_t size, uint32_t flags)
 {
 	struct drm_gem_object *obj = NULL;
@@ -575,7 +575,7 @@ struct drm_gem_object *msm_gem_new(struct drm_device *dev,
 
 	size = PAGE_ALIGN(size);
 
-	ret = msm_gem_new_impl(dev, size, flags, &obj);
+	ret = vivante_gem_new_impl(dev, size, flags, &obj);
 	if (ret)
 		goto fail;
 
@@ -601,7 +601,7 @@ struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 
 	size = PAGE_ALIGN(size);
 
-	ret = msm_gem_new_impl(dev, size, MSM_BO_WC, &obj);
+	ret = vivante_gem_new_impl(dev, size, MSM_BO_WC, &obj);
 	if (ret)
 		goto fail;
 

@@ -173,7 +173,7 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	return 0;
 }
 
-static int msm_open(struct drm_device *dev, struct drm_file *file)
+static int vivante_open(struct drm_device *dev, struct drm_file *file)
 {
 	struct vivante_file_private *ctx;
 
@@ -186,7 +186,7 @@ static int msm_open(struct drm_device *dev, struct drm_file *file)
 	return 0;
 }
 
-static void msm_preclose(struct drm_device *dev, struct drm_file *file)
+static void vivante_preclose(struct drm_device *dev, struct drm_file *file)
 {
 	struct vivante_drm_private *priv = dev->dev_private;
 	struct vivante_file_private *ctx = file->driver_priv;
@@ -404,11 +404,11 @@ static int vivante_ioctl_get_param(struct drm_device *dev, void *data,
 	return gpu->funcs->get_param(gpu, args->param, &args->value);
 }
 
-static int msm_ioctl_gem_new(struct drm_device *dev, void *data,
+static int vivante_ioctl_gem_new(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_msm_gem_new *args = data;
-	return msm_gem_new_handle(dev, file, args->size,
+	struct drm_vivante_gem_new *args = data;
+	return vivante_gem_new_handle(dev, file, args->size,
 			args->flags, &args->handle);
 }
 
@@ -478,8 +478,8 @@ static int msm_ioctl_wait_fence(struct drm_device *dev, void *data,
 	return msm_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
 }
 static const struct drm_ioctl_desc vivante_ioctls[] = {
-	DRM_IOCTL_DEF_DRV(MSM_GET_PARAM,    vivante_ioctl_get_param,    DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(MSM_GEM_NEW,      msm_ioctl_gem_new,      DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(DRM_VIVANTE_GET_PARAM, vivante_ioctl_get_param,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(MSM_VIVANTE_NEW,       vivante_ioctl_gem_new,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_INFO,     msm_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_PREP, msm_ioctl_gem_cpu_prep, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_FINI, msm_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
@@ -514,8 +514,8 @@ static struct drm_driver vivante_driver = {
 				DRIVER_RENDER,
 	.load               = vivante_load,
 	.unload             = vivante_unload,
-	.open               = msm_open,
-	.preclose           = msm_preclose,
+	.open               = vivante_open,
+	.preclose           = vivante_preclose,
 	.gem_free_object    = msm_gem_free_object,
 	.gem_vm_ops         = &vm_ops,
 	.dumb_create        = msm_gem_dumb_create,

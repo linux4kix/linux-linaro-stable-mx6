@@ -61,9 +61,9 @@ struct vivante_gem_object {
 };
 #define to_vivante_bo(x) container_of(x, struct vivante_gem_object, base)
 
-static inline bool is_active(struct vivante_gem_object *msm_obj)
+static inline bool is_active(struct vivante_gem_object *vivante_obj)
 {
-	return msm_obj->gpu != NULL;
+	return vivante_obj->gpu != NULL;
 }
 
 #define MAX_CMDS 4

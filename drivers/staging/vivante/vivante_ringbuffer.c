@@ -32,7 +32,7 @@ struct vivante_ringbuffer *vivante_ringbuffer_new(struct vivante_gpu *gpu, int s
 	}
 
 	ring->gpu = gpu;
-	ring->bo = msm_gem_new(gpu->dev, size, MSM_BO_WC);
+	ring->bo = vivante_gem_new(gpu->dev, size, MSM_BO_WC);
 	if (IS_ERR(ring->bo)) {
 		ret = PTR_ERR(ring->bo);
 		ring->bo = NULL;

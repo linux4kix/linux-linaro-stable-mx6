@@ -76,7 +76,7 @@ struct drm_vivante_param {
 #define MSM_BO_WC            0x00020000
 #define MSM_BO_UNCACHED      0x00040000
 
-struct drm_msm_gem_new {
+struct drm_vivante_gem_new {
 	uint64_t size;           /* in */
 	uint32_t flags;          /* in, mask of MSM_BO_x */
 	uint32_t handle;         /* out */
@@ -191,11 +191,11 @@ struct drm_msm_wait_fence {
 	struct drm_msm_timespec timeout;   /* in */
 };
 
-#define DRM_MSM_GET_PARAM              0x00
+#define DRM_VIVANTE_GET_PARAM          0x00
 /* placeholder:
 #define DRM_MSM_SET_PARAM              0x01
  */
-#define DRM_MSM_GEM_NEW                0x02
+#define DRM_VIVANTE_GEM_NEW            0x02
 #define DRM_MSM_GEM_INFO               0x03
 #define DRM_MSM_GEM_CPU_PREP           0x04
 #define DRM_MSM_GEM_CPU_FINI           0x05
