@@ -478,8 +478,8 @@ static int msm_ioctl_wait_fence(struct drm_device *dev, void *data,
 	return msm_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
 }
 static const struct drm_ioctl_desc vivante_ioctls[] = {
-	DRM_IOCTL_DEF_DRV(DRM_VIVANTE_GET_PARAM, vivante_ioctl_get_param,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(MSM_VIVANTE_NEW,       vivante_ioctl_gem_new,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VIVANTE_GET_PARAM, vivante_ioctl_get_param,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_NEW,   vivante_ioctl_gem_new,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_INFO,     msm_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_PREP, msm_ioctl_gem_cpu_prep, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_FINI, msm_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),

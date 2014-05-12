@@ -203,8 +203,8 @@ struct drm_msm_wait_fence {
 #define DRM_MSM_WAIT_FENCE             0x07
 #define DRM_MSM_NUM_IOCTLS             0x08
 
-#define DRM_IOCTL_MSM_GET_PARAM        DRM_IOWR(DRM_COMMAND_BASE + DRM_MSM_GET_PARAM, struct drm_vivante_param)
-#define DRM_IOCTL_MSM_GEM_NEW          DRM_IOWR(DRM_COMMAND_BASE + DRM_MSM_GEM_NEW, struct drm_msm_gem_new)
+#define DRM_IOCTL_VIVANTE_GET_PARAM        DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GET_PARAM, struct drm_vivante_param)
+#define DRM_IOCTL_VIVANTE_GEM_NEW          DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_NEW, struct drm_vivante_gem_new)
 #define DRM_IOCTL_MSM_GEM_INFO         DRM_IOWR(DRM_COMMAND_BASE + DRM_MSM_GEM_INFO, struct drm_msm_gem_info)
 #define DRM_IOCTL_MSM_GEM_CPU_PREP     DRM_IOW (DRM_COMMAND_BASE + DRM_MSM_GEM_CPU_PREP, struct drm_msm_gem_cpu_prep)
 #define DRM_IOCTL_MSM_GEM_CPU_FINI     DRM_IOW (DRM_COMMAND_BASE + DRM_MSM_GEM_CPU_FINI, struct drm_msm_gem_cpu_fini)
