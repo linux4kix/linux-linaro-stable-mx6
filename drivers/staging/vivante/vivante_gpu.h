@@ -49,10 +49,6 @@ struct vivante_gpu_funcs {
 	uint32_t (*last_fence)(struct vivante_gpu *gpu);
 	void (*recover)(struct vivante_gpu *gpu);
 	void (*destroy)(struct vivante_gpu *gpu);
-#ifdef CONFIG_DEBUG_FS
-	/* show GPU status in debugfs: */
-	void (*show)(struct vivante_gpu *gpu, struct seq_file *m);
-#endif
 };
 
 struct vivante_chip_identity
@@ -162,6 +158,10 @@ struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
 
 int vivante_gpu_pm_suspend(struct vivante_gpu *gpu);
 int vivante_gpu_pm_resume(struct vivante_gpu *gpu);
+
+#ifdef CONFIG_DEBUG_FS
+void vivante_gpu_show(struct vivante_gpu *gpu, struct seq_file *m);
+#endif
 
 void msm_gpu_retire(struct vivante_gpu *gpu);
 int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,

@@ -214,7 +214,7 @@ static int vivante_gpu_show(struct drm_device *dev, struct seq_file *m)
 		gpu = priv->gpu[i];
 		if (gpu) {
 			seq_printf(m, "%s Status:\n", gpu->name);
-			gpu->funcs->show(gpu, m);
+			vivante_gpu_show(gpu, m);
 		}
 	}
 

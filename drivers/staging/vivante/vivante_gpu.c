@@ -290,6 +290,13 @@ irqreturn_t vivante_gpu_irq(struct vivante_gpu *gpu)
 	return ret;
 }
 
+#ifdef CONFIG_DEBUG_FS
+void vivante_gpu_show(struct vivante_gpu *gpu, struct seq_file *m)
+{
+	/* TODO */
+}
+#endif
+
 static const struct vivante_gpu_funcs funcs = {
 	.hw_init = vivante_hw_init,
 };
