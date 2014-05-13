@@ -159,7 +159,7 @@ int vivante_gpu_pm_suspend(struct vivante_gpu *gpu);
 int vivante_gpu_pm_resume(struct vivante_gpu *gpu);
 
 #ifdef CONFIG_DEBUG_FS
-void vivante_gpu_show(struct vivante_gpu *gpu, struct seq_file *m);
+void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m);
 #endif
 
 void msm_gpu_retire(struct vivante_gpu *gpu);

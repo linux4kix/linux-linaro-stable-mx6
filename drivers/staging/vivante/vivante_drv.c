@@ -97,7 +97,7 @@ static int vivante_unload(struct drm_device *dev)
 		if (gpu) {
 			mutex_lock(&dev->struct_mutex);
 			vivante_gpu_pm_suspend(gpu);
-			gpu->funcs->destroy(gpu);
+			vivante_gpu_destroy(gpu);
 			mutex_unlock(&dev->struct_mutex);
 		}
 	}
@@ -214,7 +214,7 @@ static int vivante_gpu_show(struct drm_device *dev, struct seq_file *m)
 		gpu = priv->gpu[i];
 		if (gpu) {
 			seq_printf(m, "%s Status:\n", gpu->name);
-			vivante_gpu_show(gpu, m);
+			vivante_gpu_debugfs(gpu, m);
 		}
 	}
 

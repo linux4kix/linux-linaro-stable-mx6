@@ -291,7 +291,7 @@ irqreturn_t vivante_gpu_irq(struct vivante_gpu *gpu)
 }
 
 #ifdef CONFIG_DEBUG_FS
-void vivante_gpu_show(struct vivante_gpu *gpu, struct seq_file *m)
+void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 {
 	/* TODO */
 }
