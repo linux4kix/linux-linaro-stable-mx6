@@ -34,8 +34,7 @@ struct vivante_iommu_domain_pgtable {
 	dma_addr_t handle;
 };
 
-struct vivante_iommu_domain
-{
+struct vivante_iommu_domain {
 	struct vivante_iommu_domain_pgtable pgtable;
 	spinlock_t map_lock;
 };

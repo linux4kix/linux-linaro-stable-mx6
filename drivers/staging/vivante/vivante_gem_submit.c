@@ -125,7 +125,7 @@ static void submit_unlock_unpin_bo(struct msm_gem_submit *submit, int i)
 	struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
 
 	if (submit->bos[i].flags & BO_PINNED)
-        vivante_gem_put_iova(&vivante_obj->base);
+		vivante_gem_put_iova(&vivante_obj->base);
 
 	if (submit->bos[i].flags & BO_LOCKED)
 		ww_mutex_unlock(&vivante_obj->resv->lock);
@@ -163,7 +163,7 @@ retry:
 
 
 		/* if locking succeeded, pin bo: */
-        ret = vivante_gem_get_iova_locked(&vivante_obj->base, &iova);
+		ret = vivante_gem_get_iova_locked(&vivante_obj->base, &iova);
 
 		/* this would break the logic in the fail path.. there is no
 		 * reason for this to happen, but just to be on the safe side

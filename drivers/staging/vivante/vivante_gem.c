@@ -234,7 +234,7 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret = 0;
 
-    if (!vivante_obj->iova) {
+	if (!vivante_obj->iova) {
 		struct vivante_drm_private *priv = obj->dev->dev_private;
 		struct vivante_iommu *mmu = priv->mmu;
 		struct page **pages = get_pages(obj);
@@ -246,11 +246,11 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 		offset = (uint32_t)mmap_offset(obj);
 		ret = vivante_iommu_map(mmu, offset, vivante_obj->sgt,
 				obj->size, IOMMU_READ | IOMMU_WRITE);
-        vivante_obj->iova = offset;
+		vivante_obj->iova = offset;
 	}
 
 	if (!ret)
-        *iova = vivante_obj->iova;
+		*iova = vivante_obj->iova;
 
 	return ret;
 }
@@ -263,13 +263,13 @@ int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
 	/* this is safe right now because we don't unmap until the
 	 * bo is deleted:
 	 */
-    if (vivante_obj->iova) {
-        *iova = vivante_obj->iova;
+	if (vivante_obj->iova) {
+		*iova = vivante_obj->iova;
 		return 0;
 	}
 
 	mutex_lock(&obj->dev->struct_mutex);
-    ret = vivante_gem_get_iova_locked(obj, iova);
+	ret = vivante_gem_get_iova_locked(obj, iova);
 	mutex_unlock(&obj->dev->struct_mutex);
 	return ret;
 }

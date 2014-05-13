@@ -70,7 +70,7 @@ struct vivante_drm_private {
 	struct list_head fence_cbs;
 
 	/* registered MMUs: */
-    struct vivante_iommu *mmu;
+	struct vivante_iommu *mmu;
 
 	/* memory manager for GPU address area */
 	struct drm_mm mm;

@@ -22,8 +22,8 @@
 
 void vivante_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu)
 {
-    struct vivante_drm_private *priv = dev->dev_private;
-    priv->mmu = mmu;
+	struct vivante_drm_private *priv = dev->dev_private;
+	priv->mmu = mmu;
 }
 
 #ifdef CONFIG_DRM_VIVANTE_REGISTER_LOGGING

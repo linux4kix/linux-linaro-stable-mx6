@@ -200,8 +200,7 @@ static void vivante_hw_reset(struct vivante_gpu *gpu)
 		idle = gpu_read(gpu, VIVS_HI_IDLE_STATE);
 
 		/* try reseting again if FE it not idle */
-		if ((idle & VIVS_HI_IDLE_STATE_FE) == 0)
-		{
+		if ((idle & VIVS_HI_IDLE_STATE_FE) == 0) {
 			dev_dbg(gpu->dev->dev, "%s: FE is not idle\n", gpu->name);
 			continue;
 		}
@@ -211,8 +210,7 @@ static void vivante_hw_reset(struct vivante_gpu *gpu)
 
 		/* is the GPU idle? */
 		if (((control & VIVS_HI_CLOCK_CONTROL_IDLE_3D) == 0)
-		|| ((control & VIVS_HI_CLOCK_CONTROL_IDLE_2D) == 0))
-		{
+		|| ((control & VIVS_HI_CLOCK_CONTROL_IDLE_2D) == 0)) {
 			dev_dbg(gpu->dev->dev, "%s: GPU is not idle\n", gpu->name);
 			continue;
 		}
@@ -248,7 +246,7 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 		ret = -ENOMEM;
 		goto fail;
 	}
-    vivante_register_mmu(gpu->dev, gpu->mmu);
+	vivante_register_mmu(gpu->dev, gpu->mmu);
 
 	/* Create ringbuffer: */
 	gpu->rb = vivante_ringbuffer_new(gpu, PAGE_SIZE);
@@ -259,7 +257,7 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 		goto fail;
 	}
 
-    ret = vivante_gem_get_iova_locked(gpu->rb->bo, &gpu->rb_iova);
+	ret = vivante_gem_get_iova_locked(gpu->rb->bo, &gpu->rb_iova);
 	if (ret) {
 		gpu->rb_iova = 0;
 		dev_err(gpu->dev->dev, "could not map ringbuffer: %d\n", ret);
@@ -269,24 +267,6 @@ int vivante_hw_init(struct vivante_gpu *gpu)
 	return 0;
 
 fail:
-	return ret;
-}
-
-irqreturn_t vivante_gpu_irq(struct vivante_gpu *gpu)
-{
-	irqreturn_t ret = IRQ_NONE;
-	u32 irq = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
-
-	if (irq != 0)
-	{
-		if (irq & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
-			dev_err(gpu->dev->dev, "AXI bus error\n");
-
-		/* TODO: handle irq */
-		dev_info(gpu->dev->dev, "irq 0x%08x\n", irq);
-		ret = IRQ_HANDLED;
-	}
-
 	return ret;
 }
 
@@ -308,9 +288,8 @@ struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
 	struct vivante_gpu *gpu;
 
 	gpu = kzalloc(sizeof(*gpu), GFP_KERNEL);
-	if (!gpu) {
+	if (!gpu)
 		return NULL;
-	}
 
 	ret = msm_gpu_init(dev, gpu, &funcs, name, ioname, irqname);
 	if (ret < 0) {
@@ -544,7 +523,7 @@ static void retire_worker(struct work_struct *work)
 				(obj->write_fence <= fence)) {
 			/* move to inactive: */
 			msm_gem_move_to_inactive(&obj->base);
-            vivante_gem_put_iova(&obj->base);
+			vivante_gem_put_iova(&obj->base);
 			drm_gem_object_unreference(&obj->base);
 		} else {
 			break;
@@ -589,7 +568,7 @@ int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 
 			/* ring takes a reference to the bo and iova: */
 			drm_gem_object_reference(&msm_obj->base);
-            vivante_gem_get_iova_locked(&msm_obj->base, &iova);
+			vivante_gem_get_iova_locked(&msm_obj->base, &iova);
 		}
 
 		if (submit->bos[i].flags & MSM_SUBMIT_BO_READ)
@@ -610,7 +589,20 @@ int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 static irqreturn_t irq_handler(int irq, void *data)
 {
 	struct vivante_gpu *gpu = data;
-	return vivante_gpu_irq(gpu);
+	irqreturn_t ret = IRQ_NONE;
+
+	u32 ack = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
+
+	if (ack != 0) {
+		if (ack & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
+			dev_err(gpu->dev->dev, "AXI bus error\n");
+
+		/* TODO: handle irq */
+		dev_info(gpu->dev->dev, "irq 0x%08x\n", ack);
+		ret = IRQ_HANDLED;
+	}
+
+	return ret;
 }
 
 static const char *clk_names[] = {
@@ -697,7 +689,7 @@ void vivante_gpu_destroy(struct vivante_gpu *gpu)
 
 	if (gpu->rb) {
 		if (gpu->rb_iova)
-            vivante_gem_put_iova(gpu->rb->bo);
+			vivante_gem_put_iova(gpu->rb->bo);
 		vivante_ringbuffer_destroy(gpu->rb);
 	}
 
