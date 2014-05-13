@@ -48,7 +48,6 @@ struct vivante_gpu_funcs {
 	void (*idle)(struct vivante_gpu *gpu);
 	uint32_t (*last_fence)(struct vivante_gpu *gpu);
 	void (*recover)(struct vivante_gpu *gpu);
-	void (*destroy)(struct vivante_gpu *gpu);
 };
 
 struct vivante_chip_identity
@@ -170,6 +169,6 @@ int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 int msm_gpu_init(struct drm_device *drm, struct vivante_gpu *gpu,
 		const struct vivante_gpu_funcs *funcs, const char *name,
 		const char *ioname, const char *irqname);
-void msm_gpu_cleanup(struct vivante_gpu *gpu);
+void vivante_gpu_destroy(struct vivante_gpu *gpu);
 
 #endif /* __VIVANTE_GPU_H__ */

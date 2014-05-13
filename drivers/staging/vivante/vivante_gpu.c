@@ -689,7 +689,7 @@ fail:
 	return ret;
 }
 
-void msm_gpu_cleanup(struct vivante_gpu *gpu)
+void vivante_gpu_destroy(struct vivante_gpu *gpu)
 {
 	DBG("%s", gpu->name);
 
@@ -703,4 +703,7 @@ void msm_gpu_cleanup(struct vivante_gpu *gpu)
 
 	if (gpu->mmu)
 		vivante_iommu_destroy(gpu->mmu);
+
+	kfree(gpu);
+	gpu = NULL;
 }

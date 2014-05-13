@@ -131,7 +131,7 @@ static void load_gpu(struct drm_device *dev)
 			ret = g->funcs->hw_init(g);
 			if (ret) {
 				dev_err(dev->dev, "%s hw init failed: %d\n", g->name, ret);
-				g->funcs->destroy(g);
+				vivante_gpu_destroy(g);
 				g = NULL;
 			}
 		}
