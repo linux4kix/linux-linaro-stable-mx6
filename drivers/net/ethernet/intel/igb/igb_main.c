@@ -2385,6 +2385,11 @@ static int igb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (hw->mac.ops.read_mac_addr(hw))
 		dev_err(&pdev->dev, "NVM Read Error\n");
 
+	if (!is_valid_ether_addr(hw->mac.addr)) {
+		dev_info(&pdev->dev, "Random MAC Address\n");
+		random_ether_addr(hw->mac.addr);
+	}
+
 	memcpy(netdev->dev_addr, hw->mac.addr, netdev->addr_len);
 
 	if (!is_valid_ether_addr(netdev->dev_addr)) {
