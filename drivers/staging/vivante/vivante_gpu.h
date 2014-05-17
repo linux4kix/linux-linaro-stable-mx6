@@ -125,7 +125,6 @@ struct vivante_gpu {
 	int irq;
 
 	struct vivante_iommu *mmu;
-	int id;
 
 	/* memory manager for GPU address area */
 	struct drm_mm mm;
