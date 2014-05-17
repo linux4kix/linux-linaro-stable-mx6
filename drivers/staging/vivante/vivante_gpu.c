@@ -675,6 +675,9 @@ int msm_gpu_init(struct drm_device *drm,struct vivante_gpu *gpu,
 	if (IS_ERR(gpu->gpu_cx))
 		gpu->gpu_cx = NULL;
 
+	/* TODO: figure out max mapped size */
+	drm_mm_init(&gpu->mm, 0x80000000, SZ_1G);
+
 	return 0;
 
 fail:
@@ -695,6 +698,8 @@ void vivante_gpu_destroy(struct vivante_gpu *gpu)
 
 	if (gpu->mmu)
 		vivante_iommu_destroy(gpu->mmu);
+
+	drm_mm_takedown(&gpu->mm);
 
 	kfree(gpu);
 	gpu = NULL;

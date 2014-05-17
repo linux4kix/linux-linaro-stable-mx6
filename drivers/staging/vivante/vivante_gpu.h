@@ -127,6 +127,9 @@ struct vivante_gpu {
 	struct vivante_iommu *mmu;
 	int id;
 
+	/* memory manager for GPU address area */
+	struct drm_mm mm;
+
 	/* Power Control: */
 	struct regulator *gpu_reg, *gpu_cx;
 	struct clk *grp_clks[6];

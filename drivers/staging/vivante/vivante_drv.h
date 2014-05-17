@@ -71,9 +71,6 @@ struct vivante_drm_private {
 
 	/* registered MMUs: */
 	struct vivante_iommu *mmu;
-
-	/* memory manager for GPU address area */
-	struct drm_mm mm;
 };
 
 /* callback from wq once fence has passed: */
