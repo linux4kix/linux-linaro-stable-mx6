@@ -15,6 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/component.h>
+#include <linux/of_device.h>
 #include "vivante_gpu.h"
 #include "vivante_gem.h"
 #include "vivante_mmu.h"
@@ -219,7 +221,7 @@ static void vivante_hw_reset(struct vivante_gpu *gpu)
 	}
 }
 
-int vivante_hw_init(struct vivante_gpu *gpu)
+int vivante_gpu_init(struct vivante_gpu *gpu)
 {
 	struct iommu_domain *iommu;
 	int ret;
@@ -277,36 +279,13 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 }
 #endif
 
-static const struct vivante_gpu_funcs funcs = {
-	.hw_init = vivante_hw_init,
-};
-
-struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
-		const char *ioname, const char *irqname)
-{
-	int ret;
-	struct vivante_gpu *gpu;
-
-	gpu = kzalloc(sizeof(*gpu), GFP_KERNEL);
-	if (!gpu)
-		return NULL;
-
-	ret = msm_gpu_init(dev, gpu, &funcs, name, ioname, irqname);
-	if (ret < 0) {
-		dev_err(dev->dev, "%s init failed: %d\n", __func__, ret);
-		kfree(gpu);
-		gpu = NULL;
-	}
-
-	return gpu;
-}
-
 /*
  * Power Management:
  */
 
 static int enable_pwrrail(struct vivante_gpu *gpu)
 {
+#if 0
 	struct drm_device *dev = gpu->dev;
 	int ret = 0;
 
@@ -325,80 +304,54 @@ static int enable_pwrrail(struct vivante_gpu *gpu)
 			return ret;
 		}
 	}
-
+#endif
 	return 0;
 }
 
 static int disable_pwrrail(struct vivante_gpu *gpu)
 {
+#if 0
 	if (gpu->gpu_cx)
 		regulator_disable(gpu->gpu_cx);
 	if (gpu->gpu_reg)
 		regulator_disable(gpu->gpu_reg);
+#endif
 	return 0;
 }
 
 static int enable_clk(struct vivante_gpu *gpu)
 {
-	struct clk *rate_clk = NULL;
-	int i;
-
-	/* NOTE: kgsl_pwrctrl_clk() ignores grp_clks[0].. */
-	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--) {
-		if (gpu->grp_clks[i]) {
-			clk_prepare(gpu->grp_clks[i]);
-			rate_clk = gpu->grp_clks[i];
-		}
-	}
-#if 0
-	if (rate_clk && gpu->fast_rate)
-		clk_set_rate(rate_clk, gpu->fast_rate);
-#endif
-	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--)
-		if (gpu->grp_clks[i])
-			clk_enable(gpu->grp_clks[i]);
+	if (gpu->clk_core)
+		clk_prepare_enable(gpu->clk_core);
+	if (gpu->clk_shader)
+		clk_prepare_enable(gpu->clk_shader);
 
 	return 0;
 }
 
 static int disable_clk(struct vivante_gpu *gpu)
 {
-	struct clk *rate_clk = NULL;
-	int i;
-
-	/* NOTE: kgsl_pwrctrl_clk() ignores grp_clks[0].. */
-	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--) {
-		if (gpu->grp_clks[i]) {
-			clk_disable(gpu->grp_clks[i]);
-			rate_clk = gpu->grp_clks[i];
-		}
-	}
-#if 0
-	if (rate_clk && gpu->slow_rate)
-		clk_set_rate(rate_clk, gpu->slow_rate);
-#endif
-	for (i = ARRAY_SIZE(gpu->grp_clks) - 1; i > 0; i--)
-		if (gpu->grp_clks[i])
-			clk_unprepare(gpu->grp_clks[i]);
+	if (gpu->clk_core)
+		clk_disable_unprepare(gpu->clk_core);
+	if (gpu->clk_shader)
+		clk_disable_unprepare(gpu->clk_shader);
 
 	return 0;
 }
 
 static int enable_axi(struct vivante_gpu *gpu)
 {
-#if 0
-	if (gpu->ebi1_clk)
-		clk_prepare_enable(gpu->ebi1_clk);
-#endif
+	if (gpu->clk_bus)
+		clk_prepare_enable(gpu->clk_bus);
+
 	return 0;
 }
 
 static int disable_axi(struct vivante_gpu *gpu)
 {
-#if 0
-	if (gpu->ebi1_clk)
-		clk_disable_unprepare(gpu->ebi1_clk);
-#endif
+	if (gpu->clk_bus)
+		clk_disable_unprepare(gpu->clk_bus);
+
 	return 0;
 }
 
@@ -447,7 +400,6 @@ int vivante_gpu_pm_suspend(struct vivante_gpu *gpu)
 /*
  * Hangcheck detection for locked gpu:
  */
-
 static void recover_worker(struct work_struct *work)
 {
 	struct vivante_gpu *gpu = container_of(work, struct vivante_gpu, recover_work);
@@ -585,7 +537,6 @@ int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 /*
  * Init/Cleanup:
  */
-
 static irqreturn_t irq_handler(int irq, void *data)
 {
 	struct vivante_gpu *gpu = data;
@@ -605,20 +556,27 @@ static irqreturn_t irq_handler(int irq, void *data)
 	return ret;
 }
 
-static const char *clk_names[] = {
-		"gpu3d_core", "gpu3d_shader", "gpu3d_axi", "gpu2d_core", "gpu2d_axi", "openvg_axi",
-};
-
-int msm_gpu_init(struct drm_device *drm,struct vivante_gpu *gpu,
-		const struct vivante_gpu_funcs *funcs, 	const char *name,
-		const char *ioname, const char *irqname)
+static int vivante_gpu_bind(struct device *dev, struct device *master,
+	void *data)
 {
-	struct platform_device *pdev = drm->platformdev;
-	int i, ret;
+	struct drm_device *drm = data;
+	struct vivante_drm_private *priv = drm->dev_private;
+	struct vivante_gpu *gpu = dev_get_drvdata(dev);
+	int idx = gpu->pipe;
+
+	dev_info(dev, "pre gpu[idx]: 0x%08x\n", (u32)priv->gpu[idx]);
+
+	if (priv->gpu[idx] == 0) {
+		dev_info(dev, "adding core @idx %d\n", idx);
+		priv->gpu[idx] = gpu;
+	} else {
+		dev_err(dev, "failed to add core @idx %d\n", idx);
+		goto fail;
+	}
+
+	dev_info(dev, "post gpu[idx]: 0x%08x\n", (u32)priv->gpu[idx]);
 
 	gpu->dev = drm;
-	gpu->funcs = funcs;
-	gpu->name = name;
 
 	INIT_LIST_HEAD(&gpu->active_list);
 	INIT_WORK(&gpu->retire_work, retire_worker);
@@ -626,66 +584,16 @@ int msm_gpu_init(struct drm_device *drm,struct vivante_gpu *gpu,
 
 	setup_timer(&gpu->hangcheck_timer, hangcheck_handler,
 			(unsigned long)gpu);
-
-	BUG_ON(ARRAY_SIZE(clk_names) != ARRAY_SIZE(gpu->grp_clks));
-
-	/* Map registers: */
-	gpu->mmio = vivante_ioremap(pdev, ioname, name);
-	if (IS_ERR(gpu->mmio)) {
-		ret = PTR_ERR(gpu->mmio);
-		goto fail;
-	}
-
-	/* Get Interrupt: */
-	gpu->irq = platform_get_irq_byname(pdev, irqname);
-	if (gpu->irq < 0) {
-		ret = gpu->irq;
-		dev_err(drm->dev, "failed to get irq: %d\n", ret);
-		goto fail;
-	}
-
-	ret = devm_request_irq(&pdev->dev, gpu->irq, irq_handler,
-			IRQF_TRIGGER_HIGH, gpu->name, gpu);
-	if (ret) {
-		dev_err(drm->dev, "failed to request IRQ%u: %d\n", gpu->irq, ret);
-		goto fail;
-	}
-
-	/* Acquire clocks: */
-	for (i = 0; i < ARRAY_SIZE(clk_names); i++) {
-		gpu->grp_clks[i] = devm_clk_get(&pdev->dev, clk_names[i]);
-		DBG("grp_clks[%s]: %p", clk_names[i], gpu->grp_clks[i]);
-		if (IS_ERR(gpu->grp_clks[i]))
-			gpu->grp_clks[i] = NULL;
-	}
-#if 0
-	gpu->ebi1_clk = devm_clk_get(&pdev->dev, "bus_clk");
-	DBG("ebi1_clk: %p", gpu->ebi1_clk);
-	if (IS_ERR(gpu->ebi1_clk))
-		gpu->ebi1_clk = NULL;
-#endif
-	/* Acquire regulators: */
-	gpu->gpu_reg = devm_regulator_get(&pdev->dev, "vdd");
-	DBG("gpu_reg: %p", gpu->gpu_reg);
-	if (IS_ERR(gpu->gpu_reg))
-		gpu->gpu_reg = NULL;
-
-	gpu->gpu_cx = devm_regulator_get(&pdev->dev, "vddcx");
-	DBG("gpu_cx: %p", gpu->gpu_cx);
-	if (IS_ERR(gpu->gpu_cx))
-		gpu->gpu_cx = NULL;
-
-	/* TODO: figure out max mapped size */
-	drm_mm_init(&gpu->mm, 0x80000000, SZ_1G);
-
 	return 0;
-
 fail:
-	return ret;
+	return -1;
 }
 
-void vivante_gpu_destroy(struct vivante_gpu *gpu)
+static void vivante_gpu_unbind(struct device *dev, struct device *master,
+	void *data)
 {
+	struct vivante_gpu *gpu = dev_get_drvdata(dev);
+
 	DBG("%s", gpu->name);
 
 	WARN_ON(!list_empty(&gpu->active_list));
@@ -700,7 +608,113 @@ void vivante_gpu_destroy(struct vivante_gpu *gpu)
 		vivante_iommu_destroy(gpu->mmu);
 
 	drm_mm_takedown(&gpu->mm);
-
-	kfree(gpu);
-	gpu = NULL;
 }
+
+static const struct component_ops gpu_ops = {
+	.bind = vivante_gpu_bind,
+	.unbind = vivante_gpu_unbind,
+};
+
+static const struct of_device_id vivante_gpu_match[] = {
+	{
+		.compatible = "vivante,vivante-gpu-2d",
+		.data = (void *)VIVANTE_PIPE_2D
+	},
+	{
+		.compatible = "vivante,vivante-gpu-3d",
+		.data = (void *)VIVANTE_PIPE_3D
+	},
+	{
+		.compatible = "vivante,vivante-gpu-vg",
+		.data = (void *)VIVANTE_PIPE_VG
+	},
+	{ }
+};
+
+static int vivante_gpu_platform_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *match;
+	struct device *dev = &pdev->dev;
+	struct vivante_gpu *gpu;
+	int err = 0;
+
+	gpu = devm_kzalloc(dev, sizeof(*gpu), GFP_KERNEL);
+	if (!gpu)
+		return -ENOMEM;
+
+	match = of_match_device(vivante_gpu_match, &pdev->dev);
+	if (!match)
+		return -EINVAL;
+
+	gpu->name = pdev->name;
+
+	/* Map registers: */
+	gpu->mmio = vivante_ioremap(pdev, NULL, gpu->name);
+	if (IS_ERR(gpu->mmio))
+		return PTR_ERR(gpu->mmio);
+
+	/* Get Interrupt: */
+	gpu->irq = platform_get_irq(pdev, 0);
+	if (gpu->irq < 0) {
+		err = gpu->irq;
+		dev_err(dev, "failed to get irq: %d\n", err);
+		goto fail;
+	}
+
+	err = devm_request_irq(&pdev->dev, gpu->irq, irq_handler,
+			IRQF_TRIGGER_HIGH, gpu->name, gpu);
+	if (err) {
+		dev_err(dev, "failed to request IRQ%u: %d\n", gpu->irq, err);
+		goto fail;
+	}
+
+	/* Get Clocks: */
+	gpu->clk_bus = devm_clk_get(&pdev->dev, "bus");
+	DBG("clk_bus: %p", gpu->clk_bus);
+	if (IS_ERR(gpu->clk_bus))
+		gpu->clk_bus = NULL;
+
+	gpu->clk_core = devm_clk_get(&pdev->dev, "core");
+	DBG("clk_core: %p", gpu->clk_core);
+	if (IS_ERR(gpu->clk_core))
+		gpu->clk_core = NULL;
+
+	gpu->clk_shader = devm_clk_get(&pdev->dev, "shader");
+	DBG("clk_shader: %p", gpu->clk_shader);
+	if (IS_ERR(gpu->clk_shader))
+		gpu->clk_shader = NULL;
+
+	gpu->pipe = (int)match->data;
+
+	/* TODO: figure out max mapped size */
+	drm_mm_init(&gpu->mm, 0x80000000, SZ_1G);
+
+	dev_set_drvdata(dev, gpu);
+
+	err = component_add(&pdev->dev, &gpu_ops);
+	if (err < 0) {
+		dev_err(&pdev->dev, "failed to register component: %d\n", err);
+		goto fail;
+	}
+
+	return 0;
+
+fail:
+	return err;
+}
+
+static int vivante_gpu_platform_remove(struct platform_device *pdev)
+{
+	component_del(&pdev->dev, &gpu_ops);
+	return 0;
+}
+
+struct platform_driver vivante_gpu_driver = {
+	.driver = {
+		.name = "vivante-gpu",
+		.owner = THIS_MODULE,
+		.of_match_table = vivante_gpu_match,
+	},
+	.probe = vivante_gpu_platform_probe,
+	.remove = vivante_gpu_platform_remove,
+};

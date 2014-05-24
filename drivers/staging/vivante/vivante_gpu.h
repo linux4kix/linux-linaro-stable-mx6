@@ -41,7 +41,6 @@ struct msm_gem_submit;
  *    + z180_gpu
  */
 struct vivante_gpu_funcs {
-	int (*hw_init)(struct vivante_gpu *gpu);
 	int (*submit)(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 			struct vivante_file_private *ctx);
 	void (*flush)(struct vivante_gpu *gpu);
@@ -109,6 +108,7 @@ struct vivante_gpu {
 	struct drm_device *dev;
 	const struct vivante_gpu_funcs *funcs;
 	struct vivante_chip_identity identity;
+	int pipe;
 
 	struct vivante_ringbuffer *rb;
 	uint32_t rb_iova;
@@ -130,9 +130,14 @@ struct vivante_gpu {
 	struct drm_mm mm;
 
 	/* Power Control: */
+#if 0
 	struct regulator *gpu_reg, *gpu_cx;
 	struct clk *grp_clks[6];
 	uint32_t fast_rate, slow_rate, bus_freq;
+#endif
+	struct clk *clk_bus;
+	struct clk *clk_core;
+	struct clk *clk_shader;
 
 	/* Hang Detction: */
 #define DRM_MSM_HANGCHECK_PERIOD 500 /* in ms */
@@ -154,9 +159,7 @@ static inline u32 gpu_read(struct vivante_gpu *gpu, u32 reg)
 
 int vivante_gpu_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *value);
 
-struct vivante_gpu *vivante_gpu_init(struct drm_device *dev,const char *name,
-		const char *ioname, const char *irqname);
-
+int vivante_gpu_init(struct vivante_gpu *gpu);
 int vivante_gpu_pm_suspend(struct vivante_gpu *gpu);
 int vivante_gpu_pm_resume(struct vivante_gpu *gpu);
 
@@ -168,9 +171,6 @@ void msm_gpu_retire(struct vivante_gpu *gpu);
 int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 		struct vivante_file_private *ctx);
 
-int msm_gpu_init(struct drm_device *drm, struct vivante_gpu *gpu,
-		const struct vivante_gpu_funcs *funcs, const char *name,
-		const char *ioname, const char *irqname);
-void vivante_gpu_destroy(struct vivante_gpu *gpu);
+extern struct platform_driver vivante_gpu_driver;
 
 #endif /* __VIVANTE_GPU_H__ */

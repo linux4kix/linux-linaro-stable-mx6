@@ -16,6 +16,8 @@
  */
 
 #include <linux/sizes.h>
+#include <linux/component.h>
+#include <linux/of_platform.h>
 
 #include "vivante_drv.h"
 #include "vivante_gpu.h"
@@ -87,20 +89,13 @@ u32 vivante_readl(const void __iomem *addr)
 static int vivante_unload(struct drm_device *dev)
 {
 	struct vivante_drm_private *priv = dev->dev_private;
-	unsigned int i;
 
 	flush_workqueue(priv->wq);
 	destroy_workqueue(priv->wq);
 
-	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		struct vivante_gpu *gpu = priv->gpu[i];
-		if (gpu) {
-			mutex_lock(&dev->struct_mutex);
-			vivante_gpu_pm_suspend(gpu);
-			vivante_gpu_destroy(gpu);
-			mutex_unlock(&dev->struct_mutex);
-		}
-	}
+	mutex_lock(&dev->struct_mutex);
+	component_unbind_all(dev->dev, dev);
+	mutex_unlock(&dev->struct_mutex);
 
 	dev->dev_private = NULL;
 
@@ -109,43 +104,35 @@ static int vivante_unload(struct drm_device *dev)
 	return 0;
 }
 
+
 static void load_gpu(struct drm_device *dev)
 {
 	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_gpu *gpu[VIVANTE_MAX_PIPES];
 	unsigned int i;
 
 	mutex_lock(&dev->struct_mutex);
 
-	gpu[VIVANTE_PIPE_2D] = vivante_gpu_init(dev, "vivante_gpu_2d", "iobase-2d", "irq-2d");
-	gpu[VIVANTE_PIPE_3D] = NULL; //vivante_gpu_init(dev, "vivante_gpu_3d", "iobase-3d", "irq-3d");
-	gpu[VIVANTE_PIPE_VG] = NULL; //vivante_gpu_init(dev, "vivante_gpu_vg", "iobase-vg", "irq-vg");
-
 	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		struct vivante_gpu *g = gpu[i];
+		struct vivante_gpu *g = priv->gpu[i];
 		if (g) {
 			int ret;
 			vivante_gpu_pm_resume(g);
-			ret = g->funcs->hw_init(g);
+			ret = vivante_gpu_init(g);
 			if (ret) {
 				dev_err(dev->dev, "%s hw init failed: %d\n", g->name, ret);
-				vivante_gpu_destroy(g);
-				g = NULL;
+				priv->gpu[i] = NULL;
 			}
 		}
 	}
 
 	mutex_unlock(&dev->struct_mutex);
-
-	priv->gpu[VIVANTE_PIPE_2D] = gpu[VIVANTE_PIPE_2D];
-	priv->gpu[VIVANTE_PIPE_3D] = gpu[VIVANTE_PIPE_3D];
-	priv->gpu[VIVANTE_PIPE_VG] = gpu[VIVANTE_PIPE_VG];
 }
 
 static int vivante_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
 	struct vivante_drm_private *priv;
+	int err;
 
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
 	if (!priv) {
@@ -162,6 +149,10 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	INIT_LIST_HEAD(&priv->fence_cbs);
 
 	platform_set_drvdata(pdev, dev);
+
+	err = component_bind_all(dev->dev, dev);
+	if (err < 0)
+		return err;
 
 	load_gpu(dev);
 
@@ -502,7 +493,7 @@ static const struct file_operations fops = {
 	.mmap               = msm_gem_mmap,
 };
 
-static struct drm_driver vivante_driver = {
+static struct drm_driver vivante_drm_driver = {
 	.driver_features    = DRIVER_HAVE_IRQ |
 				DRIVER_GEM |
 				DRIVER_PRIME |
@@ -544,21 +535,67 @@ static struct drm_driver vivante_driver = {
  * Platform driver:
  */
 
+static int vivante_compare(struct device *dev, void *data)
+{
+	struct device_node *np = data;
+
+	return dev->of_node == np;
+}
+
+static int vivante_add_components(struct device *master, struct master *m)
+{
+	struct device_node *np	= master->of_node;
+	struct device_node *child_np;
+
+	child_np = of_get_next_available_child(np, NULL);
+
+	while (child_np) {
+		DRM_INFO("add child %s\n", child_np->name);
+		component_master_add_child(m, vivante_compare, child_np);
+		of_node_put(child_np);
+		child_np = of_get_next_available_child(np, child_np);
+	}
+
+	return 0;
+}
+
+static int vivante_bind(struct device *dev)
+{
+	return drm_platform_init(&vivante_drm_driver, to_platform_device(dev));
+}
+
+static void vivante_unbind(struct device *dev)
+{
+	drm_put_dev(dev_get_drvdata(dev));
+}
+
+static const struct component_master_ops vivante_master_ops = {
+	.add_components = vivante_add_components,
+	.bind = vivante_bind,
+	.unbind = vivante_unbind,
+};
+
 static int vivante_pdev_probe(struct platform_device *pdev)
 {
-	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
-	return drm_platform_init(&vivante_driver, pdev);
+	struct device *dev = &pdev->dev;
+	struct device_node *node = dev->of_node;
+
+	of_platform_populate(node, NULL, NULL, dev);
+
+	dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
+
+	return component_master_add(&pdev->dev, &vivante_master_ops);
 }
 
 static int vivante_pdev_remove(struct platform_device *pdev)
 {
-	drm_put_dev(platform_get_drvdata(pdev));
+	component_master_del(&pdev->dev, &vivante_master_ops);
 
 	return 0;
 }
 
 static const struct of_device_id dt_match[] = {
-	{ .compatible = "vivante" },
+	{ .compatible = "vivante,gccore" },
 	{}
 };
 MODULE_DEVICE_TABLE(of, dt_match);
@@ -573,7 +610,29 @@ static struct platform_driver vivante_platform_driver = {
 	},
 };
 
-module_platform_driver(vivante_platform_driver);
+static int __init vivante_init(void)
+{
+	int ret;
+
+	ret = platform_driver_register(&vivante_gpu_driver);
+	if (ret != 0)
+		return ret;
+
+	ret = platform_driver_register(&vivante_platform_driver);
+	if (ret != 0) {
+		platform_driver_unregister(&vivante_gpu_driver);
+	}
+
+	return ret;
+}
+module_init(vivante_init);
+
+static void __exit vivante_exit(void)
+{
+	platform_driver_unregister(&vivante_gpu_driver);
+	platform_driver_unregister(&vivante_platform_driver);
+}
+module_exit(vivante_exit);
 
 MODULE_AUTHOR("Rob Clark <robdclark@gmail.com");
 MODULE_DESCRIPTION("Vivante DRM Driver");
