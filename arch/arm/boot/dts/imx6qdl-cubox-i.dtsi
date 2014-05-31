@@ -244,6 +244,9 @@
 				MX6QDL_PAD_SD2_DAT3__SD2_DATA3 0x130f9
 			>;
 		};
+		pinctrl_cubox_i_usbotg: cubox-i-usbotg {
+			fsl,pins = <MX6QDL_PAD_GPIO_1__USB_OTG_ID 0x13059>;
+		};
 	};
 };
 
@@ -257,6 +260,8 @@
 };
 
 &usbotg {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_cubox_i_usbotg>;
 	vbus-supply = <&reg_usbotg_vbus>;
 	status = "okay";
 };
