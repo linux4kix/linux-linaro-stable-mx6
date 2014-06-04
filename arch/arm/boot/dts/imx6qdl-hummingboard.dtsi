@@ -204,7 +204,7 @@
 		};
 
 		pinctrl_hummingboard_spdif: hummingboard-spdif {
-			fsl,pins = <MX6QDL_PAD_GPIO_17__SPDIF_OUT 0x1b0b0>;
+			fsl,pins = <MX6QDL_PAD_GPIO_17__SPDIF_OUT 0x91>;
 		};
 
 		pinctrl_hummingboard_sd_reg_en: hummingboard-sd-reg-en {
