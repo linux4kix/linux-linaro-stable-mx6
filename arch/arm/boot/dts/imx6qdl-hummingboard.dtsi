@@ -281,7 +281,25 @@
 };
 
 &usbotg {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hummingboard_usbotg>;
 	vbus-supply = <&reg_usbotg_vbus>;
+	status = "okay";
+};
+
+&uart4 {
+	status = "okay";
+};
+
+&usdhc1 {
+	status = "disabled";
+};
+
+&uart4 {
+	status = "okay";
+};
+
+&usdhc1 {
 	status = "okay";
 };
 
