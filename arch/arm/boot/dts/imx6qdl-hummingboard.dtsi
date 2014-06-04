@@ -4,16 +4,10 @@
  * The code contained herein is licensed under the GNU General Public
  * License version 2.
  */
-/dts-v1/;
-
-#include "imx6dl.dtsi"
 #include "imx6qdl-microsom.dtsi"
 #include "imx6qdl-microsom-ar8035.dtsi"
 
 / {
-	model = "SolidRun HummingBoard DL/Solo";
-	compatible = "solidrun,hummingboard", "fsl,imx6dl";
-
         aliases {
                 mxcfb0 = &mxcfb1;
         };
