@@ -198,11 +198,11 @@
 		};
 
 		pinctrl_cubox_i_usbh1_vbus: cubox-i-usbh1-vbus {
-			fsl,pins = <MX6QDL_PAD_GPIO_0__GPIO1_IO00 0x4001b0b0>;
+			fsl,pins = <MX6QDL_PAD_GPIO_0__GPIO1_IO00 0x1b0b0>;
 		};
 
 		pinctrl_cubox_i_usbotg_vbus: cubox-i-usbotg-vbus {
-			fsl,pins = <MX6QDL_PAD_EIM_D22__GPIO3_IO22 0x4001b0b0>;
+			fsl,pins = <MX6QDL_PAD_EIM_D22__GPIO3_IO22 0x1b0b0>;
 		};
 
 		pinctrl_cubox_i_usdhc2_aux: cubox-i-usdhc2-aux {
