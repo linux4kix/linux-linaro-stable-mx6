@@ -317,7 +317,7 @@ static void submit_cleanup(struct msm_gem_submit *submit, bool fail)
 	kfree(submit);
 }
 
-int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
+int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
 	struct vivante_drm_private *priv = dev->dev_private;
@@ -401,7 +401,7 @@ int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
 
 	submit->nr_cmds = i;
 
-	ret = msm_gpu_submit(gpu, submit, ctx);
+	ret = vivante_gpu_submit(gpu, submit, ctx);
 
 	args->fence = submit->fence;
 
