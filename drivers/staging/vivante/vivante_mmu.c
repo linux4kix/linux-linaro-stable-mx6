@@ -25,26 +25,6 @@ static int vivante_fault_handler(struct iommu_domain *iommu, struct device *dev,
 	return 0;
 }
 
-int vivante_iommu_attach(struct vivante_iommu *iommu, const char **names, int cnt)
-{
-	struct drm_device *dev = iommu->dev;
-	int i, ret;
-
-	for (i = 0; i < cnt; i++) {
-		struct device *msm_iommu_get_ctx(const char *ctx_name);
-		struct device *ctx = msm_iommu_get_ctx(names[i]);
-		if (IS_ERR_OR_NULL(ctx))
-			continue;
-		ret = iommu_attach_device(iommu->domain, ctx);
-		if (ret) {
-			dev_warn(dev->dev, "could not attach iommu to %s", names[i]);
-			return ret;
-		}
-	}
-
-	return 0;
-}
-
 int vivante_iommu_map(struct vivante_iommu *iommu, uint32_t iova,
 		struct sg_table *sgt, unsigned len, int prot)
 {
