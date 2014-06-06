@@ -525,7 +525,7 @@ static void hdmi_dma_init_iec_header(void)
 	iec_header.U = 0;
 
 	iec_header.B.consumer = 0;		/* Consumer use */
-	iec_header.B.linear_pcm = 0;		/* linear pcm audio */
+	iec_header.B.non_pcm = 0;		/* linear pcm audio */
 	iec_header.B.copyright = 1;		/* no copyright */
 	iec_header.B.pre_emphasis = 0;		/* 2 channels without pre-emphasis */
 	iec_header.B.mode = 0;			/* Mode 0 */

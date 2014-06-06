@@ -50,7 +50,7 @@ union hdmi_audio_header_t {
 	uint64_t  U;
 	struct {
 		unsigned consumer:1;
-		unsigned linear_pcm:1;
+		unsigned non_pcm:1;
 		unsigned copyright:1;
 		unsigned pre_emphasis:3;
 		unsigned mode:2;
