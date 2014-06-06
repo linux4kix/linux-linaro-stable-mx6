@@ -223,7 +223,6 @@ static void vivante_hw_reset(struct vivante_gpu *gpu)
 
 int vivante_gpu_init(struct vivante_gpu *gpu)
 {
-	struct iommu_domain *iommu;
 	int ret;
 
 	vivante_hw_identify(gpu);
@@ -240,11 +239,8 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	 * and have separate page tables per context.  For now, to keep things
 	 * simple and to get something working, just use a single address space:
 	 */
-	iommu = vivante_iommu_domain_alloc(gpu);
-	if (iommu) {
-		dev_info(gpu->dev->dev, "%s: using IOMMU\n", gpu->name);
-		gpu->mmu = vivante_iommu_new(gpu->dev, iommu);
-	} else {
+	gpu->mmu = vivante_iommu_domain_alloc(gpu);
+	if (!gpu->mmu)
 		ret = -ENOMEM;
 		goto fail;
 	}
