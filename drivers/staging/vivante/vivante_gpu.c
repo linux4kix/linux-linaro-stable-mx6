@@ -275,7 +275,7 @@ fail:
 #ifdef CONFIG_DEBUG_FS
 void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 {
-	/* TODO */
+	seq_printf(m, "\trb_iova: 0x08%x\n", gpu->rb_iova);
 }
 #endif
 

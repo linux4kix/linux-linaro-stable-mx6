@@ -86,7 +86,7 @@ int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout);
 void msm_update_fence(struct drm_device *dev, uint32_t fence);
 
-int msm_ioctl_gem_submit(struct drm_device *dev, void *data,
+int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		struct drm_file *file);
 
 int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
