@@ -166,7 +166,7 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m);
 #endif
 
 void msm_gpu_retire(struct vivante_gpu *gpu);
-int msm_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
+int vivante_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
 		struct vivante_file_private *ctx);
 
 extern struct platform_driver vivante_gpu_driver;
