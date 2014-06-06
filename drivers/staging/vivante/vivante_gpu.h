@@ -132,8 +132,6 @@ struct vivante_gpu {
 	/* Power Control: */
 #if 0
 	struct regulator *gpu_reg, *gpu_cx;
-	struct clk *grp_clks[6];
-	uint32_t fast_rate, slow_rate, bus_freq;
 #endif
 	struct clk *clk_bus;
 	struct clk *clk_core;
