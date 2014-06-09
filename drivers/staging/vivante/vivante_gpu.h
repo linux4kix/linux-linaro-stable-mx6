@@ -24,7 +24,7 @@
 #include "vivante_drv.h"
 #include "vivante_ringbuffer.h"
 
-struct msm_gem_submit;
+struct vivante_gem_submit;
 
 /* So far, with hardware that I've seen to date, we can have:
  *  + zero, one, or two z180 2d cores
@@ -41,7 +41,7 @@ struct msm_gem_submit;
  *    + z180_gpu
  */
 struct vivante_gpu_funcs {
-	int (*submit)(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
+	int (*submit)(struct vivante_gpu *gpu, struct vivante_gem_submit *submit,
 			struct vivante_file_private *ctx);
 	void (*flush)(struct vivante_gpu *gpu);
 	void (*idle)(struct vivante_gpu *gpu);
@@ -166,7 +166,7 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m);
 #endif
 
 void msm_gpu_retire(struct vivante_gpu *gpu);
-int vivante_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
+int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submit,
 		struct vivante_file_private *ctx);
 
 extern struct platform_driver vivante_gpu_driver;

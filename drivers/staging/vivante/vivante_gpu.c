@@ -489,7 +489,7 @@ void msm_gpu_retire(struct vivante_gpu *gpu)
 }
 
 /* add bo's to gpu's ring, and kick gpu: */
-int vivante_gpu_submit(struct vivante_gpu *gpu, struct msm_gem_submit *submit,
+int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submit,
 		struct vivante_file_private *ctx)
 {
 	struct drm_device *dev = gpu->dev;
