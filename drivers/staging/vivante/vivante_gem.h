@@ -73,7 +73,7 @@ static inline bool is_active(struct vivante_gem_object *vivante_obj)
  * make it easier to unwind when things go wrong, etc).  This only
  * lasts for the duration of the submit-ioctl.
  */
-struct msm_gem_submit {
+struct vivante_gem_submit {
 	struct drm_device *dev;
 	struct vivante_gpu *gpu;
 	struct list_head bo_list;

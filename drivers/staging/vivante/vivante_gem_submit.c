@@ -34,10 +34,10 @@ static inline void __user *to_user_ptr(u64 address)
 	return (void __user *)(uintptr_t)address;
 }
 
-static struct msm_gem_submit *submit_create(struct drm_device *dev,
+static struct vivante_gem_submit *submit_create(struct drm_device *dev,
 		struct vivante_gpu *gpu, int nr)
 {
-	struct msm_gem_submit *submit;
+	struct vivante_gem_submit *submit;
 	int sz = sizeof(*submit) + (nr * sizeof(submit->bos[0]));
 
 	submit = kmalloc(sz, GFP_TEMPORARY | __GFP_NOWARN | __GFP_NORETRY);
@@ -56,7 +56,7 @@ static struct msm_gem_submit *submit_create(struct drm_device *dev,
 	return submit;
 }
 
-static int submit_lookup_objects(struct msm_gem_submit *submit,
+static int submit_lookup_objects(struct vivante_gem_submit *submit,
 		struct drm_msm_gem_submit *args, struct drm_file *file)
 {
 	unsigned i;
@@ -65,7 +65,7 @@ static int submit_lookup_objects(struct msm_gem_submit *submit,
 	spin_lock(&file->table_lock);
 
 	for (i = 0; i < args->nr_bos; i++) {
-		struct drm_msm_gem_submit_bo submit_bo;
+		struct drm_vivante_gem_submit_bo submit_bo;
 		struct drm_gem_object *obj;
 		struct vivante_gem_object *vivante_obj;
 		void __user *userptr =
@@ -120,7 +120,7 @@ out_unlock:
 	return ret;
 }
 
-static void submit_unlock_unpin_bo(struct msm_gem_submit *submit, int i)
+static void submit_unlock_unpin_bo(struct vivante_gem_submit *submit, int i)
 {
 	struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
 
@@ -137,7 +137,7 @@ static void submit_unlock_unpin_bo(struct msm_gem_submit *submit, int i)
 }
 
 /* This is where we make sure all the bo's are reserved and pin'd: */
-static int submit_validate_objects(struct msm_gem_submit *submit)
+static int submit_validate_objects(struct vivante_gem_submit *submit)
 {
 	int contended, slow_locked = -1, i, ret = 0;
 
@@ -211,7 +211,7 @@ fail:
 	return ret;
 }
 
-static int submit_bo(struct msm_gem_submit *submit, uint32_t idx,
+static int submit_bo(struct vivante_gem_submit *submit, uint32_t idx,
 		struct vivante_gem_object **obj, uint32_t *iova, bool *valid)
 {
 	if (idx >= submit->nr_bos) {
@@ -231,7 +231,7 @@ static int submit_bo(struct msm_gem_submit *submit, uint32_t idx,
 }
 
 /* process the reloc's and patch up the cmdstream as needed: */
-static int submit_reloc(struct msm_gem_submit *submit, struct vivante_gem_object *obj,
+static int submit_reloc(struct vivante_gem_submit *submit, struct vivante_gem_object *obj,
 		uint32_t offset, uint32_t nr_relocs, uint64_t relocs)
 {
 	uint32_t i, last_offset = 0;
@@ -302,7 +302,7 @@ static int submit_reloc(struct msm_gem_submit *submit, struct vivante_gem_object
 	return 0;
 }
 
-static void submit_cleanup(struct msm_gem_submit *submit, bool fail)
+static void submit_cleanup(struct vivante_gem_submit *submit, bool fail)
 {
 	unsigned i;
 
@@ -321,9 +321,9 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
 	struct vivante_drm_private *priv = dev->dev_private;
-	struct drm_msm_gem_submit *args = data;
+	struct drm_vivante_gem_submit *args = data;
 	struct vivante_file_private *ctx = file->driver_priv;
-	struct msm_gem_submit *submit;
+	struct vivante_gem_submit *submit;
 	struct vivante_gpu *gpu;
 	unsigned i;
 	int ret;

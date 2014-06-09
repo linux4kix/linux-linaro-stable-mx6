@@ -159,7 +159,7 @@ struct drm_msm_gem_submit_cmd {
  */
 #define MSM_SUBMIT_BO_READ             0x0001
 #define MSM_SUBMIT_BO_WRITE            0x0002
-struct drm_msm_gem_submit_bo {
+struct drm_vivante_gem_submit_bo {
 	uint32_t flags;          /* in, mask of MSM_SUBMIT_BO_x */
 	uint32_t handle;         /* in, GEM handle */
 	uint64_t presumed;       /* in/out, presumed buffer address */
@@ -169,7 +169,7 @@ struct drm_msm_gem_submit_bo {
  * one or more cmdstream buffers.  This allows for conditional execution
  * (context-restore), and IB buffers needed for per tile/bin draw cmds.
  */
-struct drm_msm_gem_submit {
+struct drm_vivante_gem_submit {
 	uint32_t pipe;           /* in, MSM_PIPE_x */
 	uint32_t fence;          /* out */
 	uint32_t nr_bos;         /* in, number of submit_bo's */
