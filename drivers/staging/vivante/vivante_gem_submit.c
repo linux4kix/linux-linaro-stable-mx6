@@ -57,7 +57,7 @@ static struct vivante_gem_submit *submit_create(struct drm_device *dev,
 }
 
 static int submit_lookup_objects(struct vivante_gem_submit *submit,
-		struct drm_msm_gem_submit *args, struct drm_file *file)
+		struct drm_vivante_gem_submit *args, struct drm_file *file)
 {
 	unsigned i;
 	int ret = 0;
