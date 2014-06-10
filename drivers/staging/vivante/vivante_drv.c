@@ -15,7 +15,6 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <linux/sizes.h>
 #include <linux/component.h>
 #include <linux/of_platform.h>
 

@@ -29,7 +29,7 @@
 #include <linux/list.h>
 #include <linux/iommu.h>
 #include <linux/types.h>
-#include <asm/sizes.h>
+#include <linux/sizes.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
