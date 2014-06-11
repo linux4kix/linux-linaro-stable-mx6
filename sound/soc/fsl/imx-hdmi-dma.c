@@ -525,7 +525,7 @@ static void hdmi_dma_init_iec_header(void)
 	iec_header.U = 0;
 
 	iec_header.B.consumer = 0;		/* Consumer use */
-	iec_header.B.linear_pcm = 0;		/* linear pcm audio */
+	iec_header.B.non_pcm = 0;		/* linear pcm audio */
 	iec_header.B.copyright = 1;		/* no copyright */
 	iec_header.B.pre_emphasis = 0;		/* 2 channels without pre-emphasis */
 	iec_header.B.mode = 0;			/* Mode 0 */
@@ -785,6 +785,15 @@ static void hdmi_dma_trigger_init(struct snd_pcm_substream *substream,
 				struct hdmi_dma_priv *priv)
 {
 	unsigned long status;
+	bool hbr;
+
+	/*
+	 * Set HBR mode (>192kHz IEC-61937 HD audio bitstreaming).
+	 * This is done this late because userspace may alter the AESx
+	 * parameters until the stream is finally prepared.
+	 */
+	hbr = (iec_header.B.non_pcm && priv->channels == 8);
+	hdmi_audio_writeb(AHB_DMA_CONF0, HBR, !!hbr);
 
 	priv->frame_idx = 0;
 
