@@ -509,7 +509,15 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 
 	gpu->submitted_fence = submit->fence;
 
-	ret = gpu->funcs->submit(gpu, submit, ctx);
+	/*
+	 * TODO
+	 *
+	 * - kick gpu
+	 * - flush
+	 */
+
+	ret = 0;
+
 	priv->lastctx = ctx;
 
 	for (i = 0; i < submit->nr_bos; i++) {

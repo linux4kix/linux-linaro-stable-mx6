@@ -41,8 +41,6 @@ struct vivante_gem_submit;
  *    + z180_gpu
  */
 struct vivante_gpu_funcs {
-	int (*submit)(struct vivante_gpu *gpu, struct vivante_gem_submit *submit,
-			struct vivante_file_private *ctx);
 	void (*flush)(struct vivante_gpu *gpu);
 	void (*idle)(struct vivante_gpu *gpu);
 	uint32_t (*last_fence)(struct vivante_gpu *gpu);
