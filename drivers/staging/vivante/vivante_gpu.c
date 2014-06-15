@@ -413,7 +413,7 @@ static void recover_worker(struct work_struct *work)
 	dev_err(dev->dev, "%s: hangcheck recover!\n", gpu->name);
 
 	mutex_lock(&dev->struct_mutex);
-	gpu->funcs->recover(gpu);
+	/* TODO gpu->funcs->recover(gpu); */
 	mutex_unlock(&dev->struct_mutex);
 
 	msm_gpu_retire(gpu);
@@ -431,7 +431,7 @@ static void hangcheck_handler(unsigned long data)
 	struct vivante_gpu *gpu = (struct vivante_gpu *)data;
 	struct drm_device *dev = gpu->dev;
 	struct vivante_drm_private *priv = dev->dev_private;
-	uint32_t fence = gpu->funcs->last_fence(gpu);
+	uint32_t fence = 0; /* TODO: gpu->funcs->last_fence(gpu); */
 
 	if (fence != gpu->hangcheck_fence) {
 		/* some progress has been made.. ya! */
