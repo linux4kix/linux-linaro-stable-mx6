@@ -362,7 +362,7 @@ int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
 	return ret;
 }
 
-void msm_gem_move_to_active(struct drm_gem_object *obj,
+void vivante_gem_move_to_active(struct drm_gem_object *obj,
 		struct vivante_gpu *gpu, bool write, uint32_t fence)
 {
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
@@ -375,7 +375,7 @@ void msm_gem_move_to_active(struct drm_gem_object *obj,
 	list_add_tail(&vivante_obj->mm_list, &gpu->active_list);
 }
 
-void msm_gem_move_to_inactive(struct drm_gem_object *obj)
+void vivante_gem_move_to_inactive(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 	struct vivante_drm_private *priv = dev->dev_private;

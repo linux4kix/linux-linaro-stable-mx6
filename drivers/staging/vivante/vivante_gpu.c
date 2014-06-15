@@ -479,7 +479,7 @@ static void retire_worker(struct work_struct *work)
 		if ((obj->read_fence <= fence) &&
 				(obj->write_fence <= fence)) {
 			/* move to inactive: */
-			msm_gem_move_to_inactive(&obj->base);
+			vivante_gem_move_to_inactive(&obj->base);
 			vivante_gem_put_iova(&obj->base);
 			drm_gem_object_unreference(&obj->base);
 		} else {
@@ -521,26 +521,26 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	priv->lastctx = ctx;
 
 	for (i = 0; i < submit->nr_bos; i++) {
-		struct vivante_gem_object *msm_obj = submit->bos[i].obj;
+		struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
 
 		/* can't happen yet.. but when we add 2d support we'll have
 		 * to deal w/ cross-ring synchronization:
 		 */
-		WARN_ON(is_active(msm_obj) && (msm_obj->gpu != gpu));
+		WARN_ON(is_active(vivante_obj) && (vivante_obj->gpu != gpu));
 
-		if (!is_active(msm_obj)) {
+		if (!is_active(vivante_obj)) {
 			uint32_t iova;
 
 			/* ring takes a reference to the bo and iova: */
-			drm_gem_object_reference(&msm_obj->base);
-			vivante_gem_get_iova_locked(&msm_obj->base, &iova);
+			drm_gem_object_reference(&vivante_obj->base);
+			vivante_gem_get_iova_locked(&vivante_obj->base, &iova);
 		}
 
 		if (submit->bos[i].flags & MSM_SUBMIT_BO_READ)
-			msm_gem_move_to_active(&msm_obj->base, gpu, false, submit->fence);
+			vivante_gem_move_to_active(&vivante_obj->base, gpu, false, submit->fence);
 
 		if (submit->bos[i].flags & MSM_SUBMIT_BO_WRITE)
-			msm_gem_move_to_active(&msm_obj->base, gpu, true, submit->fence);
+			vivante_gem_move_to_active(&vivante_obj->base, gpu, true, submit->fence);
 	}
 	hangcheck_timer_reset(gpu);
 
