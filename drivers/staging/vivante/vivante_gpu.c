@@ -464,7 +464,7 @@ static void retire_worker(struct work_struct *work)
 {
 	struct vivante_gpu *gpu = container_of(work, struct vivante_gpu, retire_work);
 	struct drm_device *dev = gpu->dev;
-	uint32_t fence = gpu->funcs->last_fence(gpu);
+	uint32_t fence = 0; /* TODO: gpu->funcs->last_fence(gpu); */
 
 	msm_update_fence(gpu->dev, fence);
 

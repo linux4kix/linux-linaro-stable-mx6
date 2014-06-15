@@ -26,27 +26,6 @@
 
 struct vivante_gem_submit;
 
-/* So far, with hardware that I've seen to date, we can have:
- *  + zero, one, or two z180 2d cores
- *  + a3xx or a2xx 3d core, which share a common CP (the firmware
- *    for the CP seems to implement some different PM4 packet types
- *    but the basics of cmdstream submission are the same)
- *
- * Which means that the eventual complete "class" hierarchy, once
- * support for all past and present hw is in place, becomes:
- *  + msm_gpu
- *    + adreno_gpu
- *      + a3xx_gpu
- *      + a2xx_gpu
- *    + z180_gpu
- */
-struct vivante_gpu_funcs {
-	void (*flush)(struct vivante_gpu *gpu);
-	void (*idle)(struct vivante_gpu *gpu);
-	uint32_t (*last_fence)(struct vivante_gpu *gpu);
-	void (*recover)(struct vivante_gpu *gpu);
-};
-
 struct vivante_chip_identity
 {
 	/* Chip model. */
@@ -104,7 +83,6 @@ struct vivante_chip_identity
 struct vivante_gpu {
 	const char *name;
 	struct drm_device *dev;
-	const struct vivante_gpu_funcs *funcs;
 	struct vivante_chip_identity identity;
 	int pipe;
 
