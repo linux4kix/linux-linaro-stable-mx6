@@ -416,7 +416,7 @@ static void recover_worker(struct work_struct *work)
 	/* TODO gpu->funcs->recover(gpu); */
 	mutex_unlock(&dev->struct_mutex);
 
-	msm_gpu_retire(gpu);
+	vivante_gpu_retire(gpu);
 }
 
 static void hangcheck_timer_reset(struct vivante_gpu *gpu)
@@ -491,7 +491,7 @@ static void retire_worker(struct work_struct *work)
 }
 
 /* call from irq handler to schedule work to retire bo's */
-void msm_gpu_retire(struct vivante_gpu *gpu)
+void vivante_gpu_retire(struct vivante_gpu *gpu)
 {
 	struct vivante_drm_private *priv = gpu->dev->dev_private;
 	queue_work(priv->wq, &gpu->retire_work);

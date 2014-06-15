@@ -163,7 +163,7 @@ int vivante_gpu_pm_resume(struct vivante_gpu *gpu);
 void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m);
 #endif
 
-void msm_gpu_retire(struct vivante_gpu *gpu);
+void vivante_gpu_retire(struct vivante_gpu *gpu);
 int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submit,
 		struct vivante_file_private *ctx);
 
