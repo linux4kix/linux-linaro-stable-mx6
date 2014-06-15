@@ -81,7 +81,7 @@ int vivante_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova,
 
 		VERB("unmap[%d]: %08x(%x)", i, iova, bytes);
 
-		BUG_ON(!IS_ALIGNED(bytes, PAGE_SIZE));
+		BUG_ON(!PAGE_ALIGNED(bytes));
 
 		da += bytes;
 	}
