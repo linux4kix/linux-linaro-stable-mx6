@@ -54,10 +54,7 @@ struct vivante_gem_object {
 	struct reservation_object *resv;
 	struct reservation_object _resv;
 
-	/* For physically contiguous buffers.  Used when we don't have
-	 * an IOMMU.
-	 */
-	struct drm_mm_node *vram_node;
+	struct drm_mm_node *gpu_vram_node;
 };
 #define to_vivante_bo(x) container_of(x, struct vivante_gem_object, base)
 

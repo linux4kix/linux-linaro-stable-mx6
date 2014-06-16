@@ -239,14 +239,22 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 		struct vivante_iommu *mmu = priv->mmu;
 		struct page **pages = get_pages(obj);
 		uint32_t offset;
+		struct drm_mm_node *node = NULL;
 
 		if (IS_ERR(pages))
 			return PTR_ERR(pages);
 
-		offset = (uint32_t)mmap_offset(obj);
-		ret = vivante_iommu_map(mmu, offset, vivante_obj->sgt,
-				obj->size, IOMMU_READ | IOMMU_WRITE);
-		vivante_obj->iova = offset;
+		ret = drm_mm_insert_node(&vivante_obj->gpu->mm, node, obj->size, 0,
+				DRM_MM_SEARCH_DEFAULT);
+
+		if (!ret) {
+			offset = node->start;
+			vivante_obj->iova = offset;
+			vivante_obj->gpu_vram_node = node;
+
+			ret = vivante_iommu_map(mmu, offset, vivante_obj->sgt,
+					obj->size, IOMMU_READ | IOMMU_WRITE);
+		}
 	}
 
 	if (!ret)
@@ -469,8 +477,9 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 	list_del(&vivante_obj->mm_list);
 
 	if (mmu && vivante_obj->iova) {
-		uint32_t offset = (uint32_t)mmap_offset(obj);
+		uint32_t offset = vivante_obj->gpu_vram_node->start;
 		vivante_iommu_unmap(mmu, offset, vivante_obj->sgt, obj->size);
+		drm_mm_remove_node(vivante_obj->gpu_vram_node);
 	}
 
 	drm_gem_free_mmap_offset(obj);
@@ -551,7 +560,6 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 	if (!vivante_obj)
 		return -ENOMEM;
 
-	vivante_obj->vram_node = (void *)&vivante_obj[1];
 	vivante_obj->flags = flags;
 
 	vivante_obj->resv = &vivante_obj->_resv;
