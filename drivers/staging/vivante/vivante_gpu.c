@@ -21,6 +21,7 @@
 #include "vivante_gem.h"
 #include "vivante_mmu.h"
 #include "vivante_iommu.h"
+#include "state.xml.h"
 #include "state_hi.xml.h"
 #include "cmdstream.xml.h"
 
@@ -512,9 +513,16 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	/*
 	 * TODO
 	 *
-	 * - kick gpu
 	 * - flush
+	 * - data endian
+	 * - prefetch
+	 *
 	 */
+
+	/* enable command processor */
+	gpu_write(gpu, VIVS_HI_INTR_ENBL, ~0U);
+	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, gpu->rb_iova);
+	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE);
 
 	ret = 0;
 
@@ -561,8 +569,10 @@ static irqreturn_t irq_handler(int irq, void *data)
 		if (ack & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
 			dev_err(gpu->dev->dev, "AXI bus error\n");
 
-		/* TODO: handle irq */
+		/* handle irq */
 		dev_info(gpu->dev->dev, "irq 0x%08x\n", ack);
+		vivante_gpu_retire(gpu);
+
 		ret = IRQ_HANDLED;
 	}
 
