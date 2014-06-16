@@ -255,7 +255,7 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 	return ret;
 }
 
-int msm_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
+int vivante_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
 {
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret;
