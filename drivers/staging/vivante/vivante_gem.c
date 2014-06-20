@@ -228,7 +228,7 @@ uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj)
  * That means when I do eventually need to add support for unpinning
  * the refcnt counter needs to be atomic_t.
  */
-int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
+int vivante_gem_get_iova_locked(struct vivante_gpu * gpu, struct drm_gem_object *obj,
 		uint32_t *iova)
 {
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
@@ -244,7 +244,11 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 		if (IS_ERR(pages))
 			return PTR_ERR(pages);
 
-		ret = drm_mm_insert_node(&vivante_obj->gpu->mm, node, obj->size, 0,
+		node = kzalloc(sizeof(*node), GFP_KERNEL);
+		if (!node)
+			return -ENOMEM;
+
+		ret = drm_mm_insert_node(&gpu->mm, node, obj->size, 0,
 				DRM_MM_SEARCH_DEFAULT);
 
 		if (!ret) {
@@ -254,7 +258,8 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 
 			ret = vivante_iommu_map(mmu, offset, vivante_obj->sgt,
 					obj->size, IOMMU_READ | IOMMU_WRITE);
-		}
+		} else
+			kfree(node);
 	}
 
 	if (!ret)
@@ -263,7 +268,7 @@ int vivante_gem_get_iova_locked(struct drm_gem_object *obj,
 	return ret;
 }
 
-int vivante_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
+int vivante_gem_get_iova(struct vivante_gpu *gpu, struct drm_gem_object *obj, int id, uint32_t *iova)
 {
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret;
@@ -277,7 +282,7 @@ int vivante_gem_get_iova(struct drm_gem_object *obj, int id, uint32_t *iova)
 	}
 
 	mutex_lock(&obj->dev->struct_mutex);
-	ret = vivante_gem_get_iova_locked(obj, iova);
+	ret = vivante_gem_get_iova_locked(gpu, obj, iova);
 	mutex_unlock(&obj->dev->struct_mutex);
 	return ret;
 }
@@ -480,6 +485,7 @@ void msm_gem_free_object(struct drm_gem_object *obj)
 		uint32_t offset = vivante_obj->gpu_vram_node->start;
 		vivante_iommu_unmap(mmu, offset, vivante_obj->sgt, obj->size);
 		drm_mm_remove_node(vivante_obj->gpu_vram_node);
+		kfree(vivante_obj->gpu_vram_node);
 	}
 
 	drm_gem_free_mmap_offset(obj);
