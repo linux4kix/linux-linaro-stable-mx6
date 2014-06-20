@@ -560,7 +560,6 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 	}
 
 	sz = sizeof(*vivante_obj);
-	sz += sizeof(struct drm_mm_node);
 
 	vivante_obj = kzalloc(sz, GFP_KERNEL);
 	if (!vivante_obj)
