@@ -25,6 +25,7 @@
  * Command Buffer helper:
  */
 
+
 static inline void CMD_LOAD_STATE(struct vivante_ringbuffer *rb, u32 reg, u32 value)
 {
 	/* write a register via cmd stream */
@@ -66,7 +67,7 @@ void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
 	u32 flush;
 	u32 stall;
 
-	if (pipe == 0x1) /* 2d */
+	if (pipe == VIVANTE_PIPE_2D)
 		flush = VIVS_GL_FLUSH_CACHE_DEPTH | VIVS_GL_FLUSH_CACHE_COLOR;
 	else
 		flush = VIVS_GL_FLUSH_CACHE_TEXTURE;
@@ -79,6 +80,6 @@ void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
 
 	CMD_STALL(rb, SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
 
-	/* TODO: pipe2d = 0x1 pipe3d = 0x0 */
 	CMD_LOAD_STATE(rb, VIVS_GL_PIPE_SELECT, VIVS_GL_PIPE_SELECT_PIPE(pipe));
 }
+
