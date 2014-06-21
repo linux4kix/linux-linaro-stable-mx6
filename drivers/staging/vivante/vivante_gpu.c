@@ -21,6 +21,7 @@
 #include "vivante_gem.h"
 #include "vivante_mmu.h"
 #include "vivante_iommu.h"
+#include "common.xml.h"
 #include "state.xml.h"
 #include "state_hi.xml.h"
 #include "cmdstream.xml.h"
@@ -56,6 +57,34 @@ static inline void CMD_LINK(struct vivante_ringbuffer *rb, u16 prefetch, u32 add
 {
 	OUT_RING(rb, VIV_FE_LINK_HEADER_OP_LINK | VIV_FE_LINK_HEADER_PREFETCH(prefetch));
 	OUT_RING(rb, address);
+}
+
+static inline void CMD_STALL(struct vivante_ringbuffer *rb, u32 from, u32 to)
+{
+	OUT_RING(rb, VIV_FE_STALL_HEADER_OP_STALL);
+	OUT_RING(rb, VIV_FE_STALL_TOKEN_FROM(from) | VIV_FE_STALL_TOKEN_TO(to));
+}
+
+static inline void gpu_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
+{
+	u32 flush;
+	u32 stall;
+
+	if (pipe == 0x1) /* 2d */
+		flush = VIVS_GL_FLUSH_CACHE_DEPTH | VIVS_GL_FLUSH_CACHE_COLOR;
+	else
+		flush = VIVS_GL_FLUSH_CACHE_TEXTURE;
+
+	stall = VIVS_GL_SEMAPHORE_TOKEN_FROM(SYNC_RECIPIENT_FE) |
+			VIVS_GL_SEMAPHORE_TOKEN_TO(SYNC_RECIPIENT_PE);
+
+	CMD_LOAD_STATE(rb, VIVS_GL_FLUSH_CACHE, flush);
+	CMD_LOAD_STATE(rb, VIVS_GL_SEMAPHORE_TOKEN, stall);
+
+	CMD_STALL(rb, SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
+
+	/* TODO: pipe2d = 0x1 pipe3d = 0x0 */
+	CMD_LOAD_STATE(rb, VIVS_GL_PIPE_SELECT, VIVS_GL_PIPE_SELECT_PIPE(pipe));
 }
 
 /*
