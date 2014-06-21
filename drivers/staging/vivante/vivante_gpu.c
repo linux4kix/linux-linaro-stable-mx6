@@ -32,18 +32,18 @@
 static inline void CMD_LOAD_STATE(struct vivante_ringbuffer *rb, u32 offset, u32 value)
 {
 	/* write a register via cmd stream */
-	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER | VIV_FE_LOAD_STATE_HEADER_COUNT(1) | VIV_FE_LOAD_STATE_HEADER_OFFSET(offset));
+	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(1) | VIV_FE_LOAD_STATE_HEADER_OFFSET(offset));
 	OUT_RING(rb, value);
 }
 
 static inline void CMD_END(struct vivante_ringbuffer *rb)
 {
-	OUT_RING(rb, VIV_FE_END_HEADER);
+	OUT_RING(rb, VIV_FE_END_HEADER_OP_END);
 }
 
 static inline void CMD_NOP(struct vivante_ringbuffer *rb)
 {
-	OUT_RING(rb, VIV_FE_NOP_HEADER);
+	OUT_RING(rb, VIV_FE_NOP_HEADER_OP_NOP);
 }
 
 static inline void CMD_WAIT(struct vivante_ringbuffer *rb)
@@ -53,7 +53,7 @@ static inline void CMD_WAIT(struct vivante_ringbuffer *rb)
 
 static inline void CMD_LINK(struct vivante_ringbuffer *rb, u16 prefetch, u32 address)
 {
-	OUT_RING(rb, VIV_FE_LINK_HEADER | VIV_FE_LINK_HEADER_PREFETCH(prefetch));
+	OUT_RING(rb, VIV_FE_LINK_HEADER_OP_LINK | VIV_FE_LINK_HEADER_PREFETCH(prefetch));
 	OUT_RING(rb, address);
 }
 
