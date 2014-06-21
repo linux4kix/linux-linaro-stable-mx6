@@ -29,10 +29,11 @@
  * Command Buffer helper:
  */
 
-static inline void CMD_LOAD_STATE(struct vivante_ringbuffer *rb, u32 offset, u32 value)
+static inline void CMD_LOAD_STATE(struct vivante_ringbuffer *rb, u32 reg, u32 value)
 {
 	/* write a register via cmd stream */
-	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(1) | VIV_FE_LOAD_STATE_HEADER_OFFSET(offset));
+	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(1) |
+			VIV_FE_LOAD_STATE_HEADER_OFFSET(reg >> VIV_FE_LOAD_STATE_HEADER_OFFSET__SHR));
 	OUT_RING(rb, value);
 }
 
