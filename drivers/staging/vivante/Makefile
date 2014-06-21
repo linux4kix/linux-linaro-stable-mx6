@@ -11,6 +11,7 @@ vivante-y := \
 	vivante_gpu.o \
 	vivante_iommu.o \
 	vivante_mmu.o \
-	vivante_ringbuffer.o
+	vivante_ringbuffer.o \
+	vivante_command.o
 
 obj-$(CONFIG_DRM_VIVANTE)	+= vivante.o
