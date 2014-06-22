@@ -15,7 +15,7 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "vivante_ringbuffer.h"
+#include "vivante_gpu.h"
 
 #include "common.xml.h"
 #include "state.xml.h"
@@ -61,6 +61,13 @@ static inline void CMD_STALL(struct vivante_ringbuffer *rb, u32 from, u32 to)
 	OUT_RING(rb, VIV_FE_STALL_TOKEN_FROM(from) | VIV_FE_STALL_TOKEN_TO(to));
 }
 
+
+void vivante_cmd_init(struct vivante_gpu *gpu)
+{
+	/* initialize ringbuffer */
+	CMD_WAIT(gpu->rb);
+	CMD_LINK(gpu->rb, 8, gpu->rb_iova);
+}
 
 void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
 {

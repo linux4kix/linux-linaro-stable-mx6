@@ -241,6 +241,13 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 		goto fail;
 	}
 
+	/* Start command processor */
+	vivante_cmd_init(gpu);
+
+	gpu_write(gpu, VIVS_HI_INTR_ENBL, ~0U);
+	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, gpu->rb_iova);
+	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE | VIVS_FE_COMMAND_CONTROL_PREFETCH(1));
+
 	return 0;
 
 fail:
@@ -487,11 +494,6 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	 * - prefetch
 	 *
 	 */
-
-	/* enable command processor */
-	gpu_write(gpu, VIVS_HI_INTR_ENBL, ~0U);
-	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, gpu->rb_iova);
-	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE);
 
 	ret = 0;
 
