@@ -91,6 +91,7 @@ static int vivante_iommu_domain_init(struct iommu_domain *domain)
 		return ret;
 	}
 
+	spin_lock_init(&vivante_domain->map_lock);
 	domain->priv = vivante_domain;
 	return 0;
 }
