@@ -99,6 +99,15 @@
 	hdmi-controller = <&hdmi_audio>;
    };
 
+   sound-spdif {
+	compatible = "fsl,imx-audio-spdif",
+		"fsl,imx-sabreauto-spdif";
+	model = "imx-spdif";
+	spdif-controller = <&spdif>;
+	spdif-out;
+	spdif-in;
+   };
+
    mxcfb1: fb@0 {
 	compatible = "fsl,mxc_sdc_fb";
 	disp_dev = "hdmi";
@@ -153,7 +162,6 @@
             MX6QDL_PAD_ENET_REF_CLK__ENET_TX_CLK   0x1b0b0
             MX6QDL_PAD_ENET_MDIO__ENET_MDIO      0x1b0b0
             MX6QDL_PAD_ENET_MDC__ENET_MDC      0x1b0b0
-            MX6QDL_PAD_GPIO_16__ENET_REF_CLK   0x4001b0a8
          >;
       };
       
@@ -260,6 +268,15 @@
             MX6QDL_PAD_SD3_DAT3__SD3_DATA3 0x17059
          >;
       };
+
+      /* pins for spdif */
+      pinctrl_spdif: spdifgrp {
+	fsl,pins = <
+		MX6QDL_PAD_GPIO_16__SPDIF_IN  0x1b0b0
+		MX6QDL_PAD_GPIO_19__SPDIF_OUT 0x1b0b0
+	>;
+     };
+
    };
 };
 
@@ -434,5 +451,11 @@
 };
 
 &hdmi_audio {
+	status = "okay";
+};
+
+&spdif {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_spdif>;
 	status = "okay";
 };
