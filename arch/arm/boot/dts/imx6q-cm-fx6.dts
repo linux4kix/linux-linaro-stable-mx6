@@ -87,6 +87,16 @@
       };
    };
 
+   gpio-keys {
+	compatible = "gpio-keys";
+	power {
+		label = "Power Button";
+		gpios = <&gpio1 29 1>;
+		linux,code = <116>; /* KEY_POWER */
+		gpio-key,wakeup;
+	};
+   };
+
    aliases {
 	mxcfb0 = &mxcfb1;
 	mxcfb1 = &mxcfb2;
