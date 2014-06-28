@@ -245,8 +245,8 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	vivante_cmd_init(gpu);
 
 	gpu_write(gpu, VIVS_HI_INTR_ENBL, ~0U);
-	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, gpu->rb_iova);
-	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE | VIVS_FE_COMMAND_CONTROL_PREFETCH(1));
+	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, virt_to_phys(gpu->rb->start));
+	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE | VIVS_FE_COMMAND_CONTROL_PREFETCH(2));
 
 	return 0;
 
