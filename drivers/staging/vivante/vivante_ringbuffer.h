@@ -25,7 +25,7 @@ struct vivante_ringbuffer {
 	int size;
 	struct drm_gem_object *bo;
 	uint32_t *start, *end, *cur;
-	uint32_t written;
+	uint32_t written; /* 32 bit words */
 };
 
 struct vivante_ringbuffer *vivante_ringbuffer_new(struct vivante_gpu *gpu, int size);

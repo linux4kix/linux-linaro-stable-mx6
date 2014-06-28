@@ -194,7 +194,7 @@ static void vivante_hw_reset(struct vivante_gpu *gpu)
 int vivante_gpu_init(struct vivante_gpu *gpu)
 {
 	int ret;
-	u32 bytes;
+	u32 words; /* 32 bit words */
 	struct iommu_domain *iommu;
 
 	vivante_hw_identify(gpu);
@@ -243,11 +243,14 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	}
 
 	/* Start command processor */
-	bytes = vivante_cmd_init(gpu);
+	words = vivante_cmd_init(gpu);
+
+	/* convert number of 32 bit words to number of 64 bit words */
+	words = ALIGN(words, 2) / 2;
 
 	gpu_write(gpu, VIVS_HI_INTR_ENBL, ~0U);
 	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, virt_to_phys(gpu->rb->start));
-	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE | VIVS_FE_COMMAND_CONTROL_PREFETCH(bytes));
+	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE | VIVS_FE_COMMAND_CONTROL_PREFETCH(words));
 
 	return 0;
 

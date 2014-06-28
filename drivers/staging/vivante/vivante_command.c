@@ -87,8 +87,10 @@ u32 vivante_cmd_init(struct vivante_gpu *gpu)
 	/* initialize ringbuffer */
 	gpu->rb->written = 0;
 
+	vivante_cmd_select_pipe(gpu->rb, gpu->pipe);
+
 	CMD_WAIT(gpu->rb);
-	CMD_LINK(gpu->rb, 8, gpu->rb_iova);
+	CMD_LINK(gpu->rb, 1, gpu->rb_iova + ((gpu->rb->written - 1) * 4));
 
 	return gpu->rb->written;
 }
