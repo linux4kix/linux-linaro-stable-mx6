@@ -257,7 +257,36 @@ fail:
 #ifdef CONFIG_DEBUG_FS
 void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 {
+	u32 idle;
 	seq_printf(m, "\trb_iova: 0x08%x\n", gpu->rb_iova);
+
+	seq_printf(m, "\tidle: 0x08%x\n", idle);
+	if ((idle & VIVS_HI_IDLE_STATE_FE) == 0)
+		seq_printf(m, "\t FE is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_DE) == 0)
+		seq_printf(m, "\t DE is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_PE) == 0)
+		seq_printf(m, "\t PE is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_SH) == 0)
+		seq_printf(m, "\t SH is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_PA) == 0)
+		seq_printf(m, "\t PA is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_SE) == 0)
+		seq_printf(m, "\t SE is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_RA) == 0)
+		seq_printf(m, "\t RA is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_TX) == 0)
+		seq_printf(m, "\t TX is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_VG) == 0)
+		seq_printf(m, "\t VG is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_IM) == 0)
+		seq_printf(m, "\t IM is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_FP) == 0)
+		seq_printf(m, "\t FP is not idle\n");
+	if ((idle & VIVS_HI_IDLE_STATE_TS) == 0)
+		seq_printf(m, "\t TS is not idle\n");
+	if (idle & VIVS_HI_IDLE_STATE_AXI_LP)
+		seq_printf(m, "\t AXI low power mode\n");
 }
 #endif
 
