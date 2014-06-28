@@ -61,19 +61,7 @@ static inline void CMD_STALL(struct vivante_ringbuffer *rb, u32 from, u32 to)
 	OUT_RING(rb, VIV_FE_STALL_TOKEN_FROM(from) | VIV_FE_STALL_TOKEN_TO(to));
 }
 
-
-u32 vivante_cmd_init(struct vivante_gpu *gpu)
-{
-	/* initialize ringbuffer */
-	gpu->rb->written = 0;
-
-	CMD_WAIT(gpu->rb);
-	CMD_LINK(gpu->rb, 8, gpu->rb_iova);
-
-	return gpu->rb->written;
-}
-
-void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
+static void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
 {
 	u32 flush;
 	u32 stall;
@@ -94,3 +82,13 @@ void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
 	CMD_LOAD_STATE(rb, VIVS_GL_PIPE_SELECT, VIVS_GL_PIPE_SELECT_PIPE(pipe));
 }
 
+u32 vivante_cmd_init(struct vivante_gpu *gpu)
+{
+	/* initialize ringbuffer */
+	gpu->rb->written = 0;
+
+	CMD_WAIT(gpu->rb);
+	CMD_LINK(gpu->rb, 8, gpu->rb_iova);
+
+	return gpu->rb->written;
+}
