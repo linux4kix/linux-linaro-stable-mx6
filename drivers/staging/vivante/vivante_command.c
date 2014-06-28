@@ -62,11 +62,15 @@ static inline void CMD_STALL(struct vivante_ringbuffer *rb, u32 from, u32 to)
 }
 
 
-void vivante_cmd_init(struct vivante_gpu *gpu)
+u32 vivante_cmd_init(struct vivante_gpu *gpu)
 {
 	/* initialize ringbuffer */
+	gpu->rb->written = 0;
+
 	CMD_WAIT(gpu->rb);
 	CMD_LINK(gpu->rb, 8, gpu->rb_iova);
+
+	return gpu->rb->written;
 }
 
 void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
