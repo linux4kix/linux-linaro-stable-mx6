@@ -257,7 +257,7 @@ fail:
 #ifdef CONFIG_DEBUG_FS
 void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 {
-	u32 idle;
+	u32 idle = gpu_read(gpu, VIVS_HI_IDLE_STATE);
 	seq_printf(m, "\trb_iova: 0x08%x\n", gpu->rb_iova);
 
 	seq_printf(m, "\tidle: 0x08%x\n", idle);
