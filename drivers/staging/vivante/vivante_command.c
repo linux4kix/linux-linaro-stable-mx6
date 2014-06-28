@@ -34,6 +34,18 @@ static inline void CMD_LOAD_STATE(struct vivante_ringbuffer *rb, u32 reg, u32 va
 	OUT_RING(rb, value);
 }
 
+static inline void CMD_LOAD_STATES(struct vivante_ringbuffer *rb, u32 reg, u16 count, u32 *values)
+{
+	u16 i;
+
+	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(count) |
+			VIV_FE_LOAD_STATE_HEADER_OFFSET(reg >> VIV_FE_LOAD_STATE_HEADER_OFFSET__SHR));
+
+	for (i = 0; i < count; i++)
+		OUT_RING(rb, values[i]);
+}
+
+
 static inline void CMD_END(struct vivante_ringbuffer *rb)
 {
 	OUT_RING(rb, VIV_FE_END_HEADER_OP_END);
