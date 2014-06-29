@@ -261,9 +261,11 @@ fail:
 #ifdef CONFIG_DEBUG_FS
 void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 {
+	u32 axi = gpu_read(gpu, VIVS_HI_AXI_STATUS);
 	u32 idle = gpu_read(gpu, VIVS_HI_IDLE_STATE);
 	seq_printf(m, "\trb_iova: 0x08%x\n", gpu->rb_iova);
 
+	seq_printf(m, "\taxi: 0x08%x\n", axi);
 	seq_printf(m, "\tidle: 0x08%x\n", idle);
 	if ((idle & VIVS_HI_IDLE_STATE_FE) == 0)
 		seq_printf(m, "\t FE is not idle\n");
