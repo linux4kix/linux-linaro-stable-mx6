@@ -24,7 +24,7 @@
 
 #include <linux/types.h>
 
-#include <linux/sync.h>
+#include <../../../../../../staging/android/sync.h>
 
 #include <gc_hal.h>
 #include <gc_hal_base.h>
