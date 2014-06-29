@@ -21,6 +21,7 @@
 #include "vivante_gem.h"
 #include "vivante_mmu.h"
 #include "vivante_iommu.h"
+#include "common.xml.h"
 #include "state.xml.h"
 #include "state_hi.xml.h"
 #include "cmdstream.xml.h"
@@ -293,6 +294,17 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 		seq_printf(m, "\t TS is not idle\n");
 	if (idle & VIVS_HI_IDLE_STATE_AXI_LP)
 		seq_printf(m, "\t AXI low power mode\n");
+
+	if (gpu->identity.features & chipFeatures_DEBUG_MODE) {
+		u32 read0 = gpu_read(gpu, VIVS_MC_DEBUG_READ0);
+		u32 read1 = gpu_read(gpu, VIVS_MC_DEBUG_READ1);
+		u32 write = gpu_read(gpu, VIVS_MC_DEBUG_WRITE);
+
+		seq_printf(m, "\tMC\n");
+		seq_printf(m, "\t read0: 0x%08x\n", read0);
+		seq_printf(m, "\t read1: 0x%08x\n", read1);
+		seq_printf(m, "\t write: 0x%08x\n", write);
+	}
 }
 #endif
 
