@@ -262,8 +262,13 @@ fail:
 #ifdef CONFIG_DEBUG_FS
 void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 {
+	u32 dma_address = gpu_read(gpu, VIVS_FE_DMA_ADDRESS);
+	u32 dma_state = gpu_read(gpu, VIVS_FE_DMA_DEBUG_STATE);
+	u32 dma_lo = gpu_read(gpu, VIVS_FE_DMA_LOW);
+	u32 dma_hi = gpu_read(gpu, VIVS_FE_DMA_HIGH);
 	u32 axi = gpu_read(gpu, VIVS_HI_AXI_STATUS);
 	u32 idle = gpu_read(gpu, VIVS_HI_IDLE_STATE);
+
 	seq_printf(m, "\trb_iova: 0x08%x\n", gpu->rb_iova);
 
 	seq_printf(m, "\taxi: 0x08%x\n", axi);
@@ -305,6 +310,11 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 		seq_printf(m, "\t read1: 0x%08x\n", read1);
 		seq_printf(m, "\t write: 0x%08x\n", write);
 	}
+
+	seq_printf(m, "\tDMA\n");
+	seq_printf(m, "\t address: 0x%08x\n", dma_address);
+	seq_printf(m, "\t state: 0x%08x\n", dma_state);
+	seq_printf(m, "\t last fetch 64 bit word: 0x%08x-0x%08x\n", dma_hi, dma_lo);
 }
 #endif
 
