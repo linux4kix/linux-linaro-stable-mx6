@@ -351,6 +351,14 @@ void *msm_gem_vaddr(struct drm_gem_object *obj)
 	return ret;
 }
 
+dma_addr_t vivante_gem_paddr_locked(struct drm_gem_object *obj)
+{
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	WARN_ON(!mutex_is_locked(&obj->dev->struct_mutex));
+
+	return vivante_obj->paddr;
+}
+
 /* setup callback for when bo is no longer busy..
  * TODO probably want to differentiate read vs write..
  */
