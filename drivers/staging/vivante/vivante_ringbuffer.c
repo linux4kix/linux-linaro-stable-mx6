@@ -23,8 +23,6 @@ struct vivante_ringbuffer *vivante_ringbuffer_new(struct vivante_gpu *gpu, int s
 	struct vivante_ringbuffer *ring;
 	int ret;
 
-	size = ALIGN(size, 4);   /* size should be dword aligned */
-
 	ring = kzalloc(sizeof(*ring), GFP_KERNEL);
 	if (!ring) {
 		ret = -ENOMEM;
