@@ -23,7 +23,7 @@
  * Cmdstream submission:
  */
 
-#define BO_INVALID_FLAGS ~(MSM_SUBMIT_BO_READ | MSM_SUBMIT_BO_WRITE)
+#define BO_INVALID_FLAGS ~(ETNA_SUBMIT_BO_READ | ETNA_SUBMIT_BO_WRITE)
 /* make sure these don't conflict w/ MSM_SUBMIT_BO_x */
 #define BO_VALID    0x8000
 #define BO_LOCKED   0x4000
@@ -255,7 +255,7 @@ static int submit_reloc(struct vivante_gem_submit *submit, struct vivante_gem_ob
 	}
 
 	for (i = 0; i < nr_relocs; i++) {
-		struct drm_msm_gem_submit_reloc submit_reloc;
+		struct drm_vivante_gem_submit_reloc submit_reloc;
 		void __user *userptr =
 			to_user_ptr(relocs + (i * sizeof(submit_reloc)));
 		uint32_t iova, off;
@@ -355,7 +355,7 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		goto out;
 
 	for (i = 0; i < args->nr_cmds; i++) {
-		struct drm_msm_gem_submit_cmd submit_cmd;
+		struct drm_vivante_gem_submit_cmd submit_cmd;
 		void __user *userptr =
 			to_user_ptr(args->cmds + (i * sizeof(submit_cmd)));
 		struct vivante_gem_object *vivante_obj;

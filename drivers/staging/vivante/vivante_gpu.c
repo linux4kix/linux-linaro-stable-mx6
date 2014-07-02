@@ -572,10 +572,10 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 			vivante_gem_get_iova_locked(gpu, &vivante_obj->base, &iova);
 		}
 
-		if (submit->bos[i].flags & MSM_SUBMIT_BO_READ)
+		if (submit->bos[i].flags & ETNA_SUBMIT_BO_READ)
 			vivante_gem_move_to_active(&vivante_obj->base, gpu, false, submit->fence);
 
-		if (submit->bos[i].flags & MSM_SUBMIT_BO_WRITE)
+		if (submit->bos[i].flags & ETNA_SUBMIT_BO_WRITE)
 			vivante_gem_move_to_active(&vivante_obj->base, gpu, true, submit->fence);
 	}
 	hangcheck_timer_reset(gpu);
