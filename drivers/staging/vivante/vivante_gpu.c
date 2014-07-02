@@ -250,7 +250,7 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	words = ALIGN(words, 2) / 2;
 
 	gpu_write(gpu, VIVS_HI_INTR_ENBL, ~0U);
-	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, virt_to_phys(gpu->rb->start));
+	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, vivante_gem_paddr_locked(gpu->rb->bo));
 	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE | VIVS_FE_COMMAND_CONTROL_PREFETCH(words));
 
 	return 0;
