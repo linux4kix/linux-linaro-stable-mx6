@@ -236,13 +236,6 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 		goto fail;
 	}
 
-	ret = vivante_gem_get_iova_locked(gpu, gpu->rb->bo, &gpu->rb_iova);
-	if (ret) {
-		gpu->rb_iova = 0;
-		dev_err(gpu->dev->dev, "could not map ringbuffer: %d\n", ret);
-		goto fail;
-	}
-
 	/* Start command processor */
 	words = vivante_cmd_init(gpu);
 
@@ -268,8 +261,6 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 	u32 dma_hi = gpu_read(gpu, VIVS_FE_DMA_HIGH);
 	u32 axi = gpu_read(gpu, VIVS_HI_AXI_STATUS);
 	u32 idle = gpu_read(gpu, VIVS_HI_IDLE_STATE);
-
-	seq_printf(m, "\trb_iova: 0x08%x\n", gpu->rb_iova);
 
 	seq_printf(m, "\taxi: 0x08%x\n", axi);
 	seq_printf(m, "\tidle: 0x08%x\n", idle);
@@ -649,11 +640,8 @@ static void vivante_gpu_unbind(struct device *dev, struct device *master,
 
 	WARN_ON(!list_empty(&gpu->active_list));
 
-	if (gpu->rb) {
-		if (gpu->rb_iova)
-			vivante_gem_put_iova(gpu->rb->bo);
+	if (gpu->rb)
 		vivante_ringbuffer_destroy(gpu->rb);
-	}
 
 	if (gpu->mmu)
 		vivante_iommu_destroy(gpu->mmu);

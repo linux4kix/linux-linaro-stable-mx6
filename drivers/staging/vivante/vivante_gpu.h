@@ -87,7 +87,6 @@ struct vivante_gpu {
 	int pipe;
 
 	struct vivante_ringbuffer *rb;
-	uint32_t rb_iova;
 
 	/* list of GEM active objects: */
 	struct list_head active_list;
