@@ -574,7 +574,7 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 	if (!vivante_obj)
 		return -ENOMEM;
 
-	if (flags & ETNA_BO_DMA)
+	if (flags & ETNA_BO_CMDSTREAM)
 	{
 		vivante_obj->vaddr = dma_alloc_coherent(dev->dev, size,
 				&vivante_obj->paddr, GFP_KERNEL);
@@ -614,7 +614,7 @@ struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
 		goto fail;
 
 	ret = 0;
-	if (flags & ETNA_BO_DMA)
+	if (flags & ETNA_BO_CMDSTREAM)
 		drm_gem_private_object_init(dev, obj, size);
 	else
 		ret = drm_gem_object_init(dev, obj, size);

@@ -68,7 +68,7 @@ struct drm_vivante_param {
  * GEM buffers:
  */
 
-#define ETNA_BO_DMA          0x00000001
+#define ETNA_BO_CMDSTREAM    0x00000001
 #define MSM_BO_CACHE_MASK    0x000f0000
 /* cache modes */
 #define MSM_BO_CACHED        0x00010000
