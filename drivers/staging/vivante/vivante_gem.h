@@ -50,6 +50,9 @@ struct vivante_gem_object {
 	void *vaddr;
 	uint32_t iova;
 
+	/* for ETNA_BO_DMA */
+	dma_addr_t paddr;
+
 	/* normally (resv == &_resv) except for imported bo's */
 	struct reservation_object *resv;
 	struct reservation_object _resv;

@@ -566,6 +566,18 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 	if (!vivante_obj)
 		return -ENOMEM;
 
+	if (flags & ETNA_BO_DMA)
+	{
+		vivante_obj->vaddr = dma_alloc_coherent(dev->dev, size,
+				&vivante_obj->paddr, GFP_KERNEL);
+
+		if (!vivante_obj->vaddr)
+		{
+			kfree(vivante_obj);
+			return -ENOMEM;
+		}
+	}
+
 	vivante_obj->flags = flags;
 
 	vivante_obj->resv = &vivante_obj->_resv;
@@ -593,7 +605,12 @@ struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
 	if (ret)
 		goto fail;
 
-	ret = drm_gem_object_init(dev, obj, size);
+	ret = 0;
+	if (flags & ETNA_BO_DMA)
+		drm_gem_private_object_init(dev, obj, size);
+	else
+		ret = drm_gem_object_init(dev, obj, size);
+
 	if (ret)
 		goto fail;
 
