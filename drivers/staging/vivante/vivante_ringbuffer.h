@@ -25,6 +25,7 @@ struct vivante_ringbuffer {
 	int size;
 	struct drm_gem_object *bo;
 	uint32_t *start, *end, *cur;
+	uint32_t *ll; /* last LINK position */
 	uint32_t written; /* 32 bit words */
 };
 
