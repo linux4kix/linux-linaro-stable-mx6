@@ -103,6 +103,7 @@ u32 vivante_cmd_init(struct vivante_gpu *gpu)
 
 	CMD_WAIT(gpu->rb);
 	CMD_LINK(gpu->rb, 1, vivante_gem_paddr_locked(gpu->rb->bo) + ((gpu->rb->written - 1) * 4));
+	gpu->rb->ll = gpu->rb->cur - 1;
 
 	return gpu->rb->written;
 }
