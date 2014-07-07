@@ -1350,7 +1350,7 @@ static enum dma_status pxp_tx_status(struct dma_chan *chan,
 		txstate->used = chan->cookie;
 		txstate->residue = 0;
 	}
-	return DMA_SUCCESS;
+	return DMA_COMPLETE;
 }
 
 static int pxp_hw_init(struct pxps *pxp)
