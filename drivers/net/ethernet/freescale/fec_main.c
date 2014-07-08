@@ -1070,12 +1070,15 @@ static void fec_enet_work(struct work_struct *work)
 		container_of(work,
 			     struct fec_enet_private,
 			     delay_work.delay_work.work);
+	struct net_device *ndev = fep->netdev;
 
 	if (fep->delay_work.timeout) {
 		fep->delay_work.timeout = false;
 		rtnl_lock();
-		fec_restart(fep->netdev, fep->full_duplex);
-		netif_wake_queue(fep->netdev);
+		if (netif_device_present(ndev) || netif_running(ndev)) {
+			fec_restart(ndev, fep->full_duplex);
+			netif_wake_queue(ndev);
+		}
 		rtnl_unlock();
 	}
 
@@ -1509,7 +1512,14 @@ static void fec_enet_adjust_link(struct net_device *ndev)
 		return;
 	}
 
-	if (phy_dev->link) {
+	/*
+	 * If the netdev is down, or is going down, we're not interested
+	 * in link state events, so just mark our idea of the link as down
+	 * and ignore the event.
+	 */
+	if (!netif_running(ndev) || !netif_device_present(ndev)) {
+		fep->link = 0;
+	} else if (phy_dev->link) {
 		if (!fep->link) {
 			fep->link = phy_dev->link;
 			status_change = 1;
@@ -2195,6 +2205,7 @@ fec_enet_open(struct net_device *ndev)
 
 	pm_runtime_get_sync(&fep->pdev->dev);
 
+	fec_restart(ndev, fep->full_duplex);
 	napi_enable(&fep->napi);
 	phy_start(fep->phy_dev);
 	netif_start_queue(ndev);
@@ -2363,8 +2374,6 @@ static int fec_set_features(struct net_device *netdev,
 			fec_stop(netdev);
 			fec_restart(netdev, fep->phy_dev->duplex);
 			netif_wake_queue(netdev);
-		} else {
-			fec_restart(netdev, fep->phy_dev->duplex);
 		}
 	}
 
