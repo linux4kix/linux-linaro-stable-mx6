@@ -1073,8 +1073,10 @@ static void fec_enet_work(struct work_struct *work)
 
 	if (fep->delay_work.timeout) {
 		fep->delay_work.timeout = false;
+		rtnl_lock();
 		fec_restart(fep->netdev, fep->full_duplex);
 		netif_wake_queue(fep->netdev);
+		rtnl_unlock();
 	}
 
 	if (fep->delay_work.trig_tx) {
@@ -2693,11 +2695,14 @@ fec_suspend(struct device *dev)
 	struct net_device *ndev = dev_get_drvdata(dev);
 	struct fec_enet_private *fep = netdev_priv(ndev);
 
+	rtnl_lock();
 	if (netif_running(ndev)) {
 		phy_stop(fep->phy_dev);
 		fec_stop(ndev);
 		netif_device_detach(ndev);
 	}
+	rtnl_unlock();
+
 	fec_enet_clk_enable(ndev, false);
 	pinctrl_pm_select_sleep_state(&fep->pdev->dev);
 
@@ -2725,11 +2730,13 @@ fec_resume(struct device *dev)
 	if (ret)
 		goto failed_clk;
 
+	rtnl_lock();
 	if (netif_running(ndev)) {
 		fec_restart(ndev, fep->full_duplex);
 		netif_device_attach(ndev);
 		phy_start(fep->phy_dev);
 	}
+	rtnl_unlock();
 
 	return 0;
 
