@@ -44,7 +44,7 @@
  * restarting interrupted ioctls).  The following struct is logically the
  * same as 'struct timespec' but 32/64b ABI safe.
  */
-struct drm_msm_timespec {
+struct drm_vivante_timespec {
 	int64_t tv_sec;          /* seconds */
 	int64_t tv_nsec;         /* nanoseconds */
 };
@@ -94,7 +94,7 @@ struct drm_vivante_gem_info {
 struct drm_msm_gem_cpu_prep {
 	uint32_t handle;         /* in */
 	uint32_t op;             /* in, mask of MSM_PREP_x */
-	struct drm_msm_timespec timeout;   /* in */
+	struct drm_vivante_timespec timeout;   /* in */
 };
 
 struct drm_msm_gem_cpu_fini {
@@ -184,10 +184,10 @@ struct drm_vivante_gem_submit {
  * mainly just exists as a way to implement the gallium pipe_fence
  * APIs without requiring a dummy bo to synchronize on.
  */
-struct drm_msm_wait_fence {
+struct drm_vivante_wait_fence {
 	uint32_t fence;          /* in */
 	uint32_t pad;
-	struct drm_msm_timespec timeout;   /* in */
+	struct drm_vivante_timespec timeout;   /* in */
 };
 
 #define DRM_VIVANTE_GET_PARAM          0x00
@@ -199,8 +199,8 @@ struct drm_msm_wait_fence {
 #define DRM_MSM_GEM_CPU_PREP           0x04
 #define DRM_MSM_GEM_CPU_FINI           0x05
 #define DRM_VIVANTE_GEM_SUBMIT         0x06
-#define DRM_MSM_WAIT_FENCE             0x07
-#define DRM_MSM_NUM_IOCTLS             0x08
+#define DRM_VIVANTE_WAIT_FENCE         0x07
+#define DRM_VIVANTE_NUM_IOCTLS         0x08
 
 #define DRM_IOCTL_VIVANTE_GET_PARAM        DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GET_PARAM, struct drm_vivante_param)
 #define DRM_IOCTL_VIVANTE_GEM_NEW          DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_NEW, struct drm_vivante_gem_new)
@@ -208,6 +208,6 @@ struct drm_msm_wait_fence {
 #define DRM_IOCTL_MSM_GEM_CPU_PREP     DRM_IOW (DRM_COMMAND_BASE + DRM_MSM_GEM_CPU_PREP, struct drm_msm_gem_cpu_prep)
 #define DRM_IOCTL_MSM_GEM_CPU_FINI     DRM_IOW (DRM_COMMAND_BASE + DRM_MSM_GEM_CPU_FINI, struct drm_msm_gem_cpu_fini)
 #define DRM_IOCTL_VIVANTE_GEM_SUBMIT   DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_SUBMIT, struct drm_vivante_gem_submit)
-#define DRM_IOCTL_MSM_WAIT_FENCE       DRM_IOW (DRM_COMMAND_BASE + DRM_MSM_WAIT_FENCE, struct drm_msm_wait_fence)
+#define DRM_IOCTL_VIVANTE_WAIT_FENCE       DRM_IOW (DRM_COMMAND_BASE + DRM_VIVANTE_WAIT_FENCE, struct drm_vivante_wait_fence)
 
 #endif /* __VIVANTE_DRM_H__ */

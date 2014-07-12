@@ -429,7 +429,7 @@ int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		if (op & MSM_PREP_NOSYNC)
 			timeout = NULL;
 
-		ret = msm_wait_fence_interruptable(dev, fence, timeout);
+		ret = vivante_wait_fence_interruptable(dev, fence, timeout);
 	}
 
 	/* TODO cache maintenance */

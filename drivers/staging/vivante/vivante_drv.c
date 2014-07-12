@@ -283,7 +283,7 @@ static void vivante_debugfs_cleanup(struct drm_minor *minor)
 /*
  * Fences:
  */
-int msm_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
+int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 		struct timespec *timeout)
 {
 #if 0
@@ -456,12 +456,13 @@ static int vivante_ioctl_gem_info(struct drm_device *dev, void *data,
 	return ret;
 }
 
-static int msm_ioctl_wait_fence(struct drm_device *dev, void *data,
+static int vivante_ioctl_wait_fence(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_msm_wait_fence *args = data;
-	return msm_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
+	struct drm_vivante_wait_fence *args = data;
+	return vivante_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
 }
+
 static const struct drm_ioctl_desc vivante_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(VIVANTE_GET_PARAM, vivante_ioctl_get_param,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_NEW,   vivante_ioctl_gem_new,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
@@ -469,7 +470,7 @@ static const struct drm_ioctl_desc vivante_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_PREP, msm_ioctl_gem_cpu_prep, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_FINI, msm_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_SUBMIT,   vivante_ioctl_gem_submit,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(MSM_WAIT_FENCE,   msm_ioctl_wait_fence,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VIVANTE_WAIT_FENCE,   vivante_ioctl_wait_fence,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 };
 
 static const struct vm_operations_struct vm_ops = {
@@ -521,7 +522,7 @@ static struct drm_driver vivante_drm_driver = {
 	.debugfs_cleanup    = vivante_debugfs_cleanup,
 #endif
 	.ioctls             = vivante_ioctls,
-	.num_ioctls         = DRM_MSM_NUM_IOCTLS,
+	.num_ioctls         = DRM_VIVANTE_NUM_IOCTLS,
 	.fops               = &fops,
 	.name               = "vivante",
 	.desc               = "Vivante DRM",
