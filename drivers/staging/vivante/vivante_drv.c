@@ -333,7 +333,7 @@ int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
 }
 
 /* called from workqueue */
-void msm_update_fence(struct drm_device *dev, uint32_t fence)
+void vivante_update_fence(struct drm_device *dev, uint32_t fence)
 {
 #if 0
 	struct vivante_drm_private *priv = dev->dev_private;

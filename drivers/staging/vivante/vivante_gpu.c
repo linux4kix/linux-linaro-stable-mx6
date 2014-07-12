@@ -510,7 +510,7 @@ static void retire_worker(struct work_struct *work)
 		}
 	}
 
-	msm_update_fence(gpu->dev, fence);
+	vivante_update_fence(gpu->dev, fence);
 
 	mutex_unlock(&dev->struct_mutex);
 }
