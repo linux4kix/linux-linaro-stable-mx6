@@ -185,8 +185,8 @@ struct drm_vivante_gem_submit {
  * APIs without requiring a dummy bo to synchronize on.
  */
 struct drm_vivante_wait_fence {
+	uint32_t pipe;           /* in, MSM_PIPE_x */
 	uint32_t fence;          /* in */
-	uint32_t pad;
 	struct drm_vivante_timespec timeout;   /* in */
 };
 

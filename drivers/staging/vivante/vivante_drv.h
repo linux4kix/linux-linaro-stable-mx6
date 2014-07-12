@@ -82,8 +82,8 @@ void __msm_fence_worker(struct work_struct *work);
 
 void vivante_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
 
-int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
-		struct timespec *timeout);
+int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
+		uint32_t fence,	struct timespec *timeout);
 void msm_update_fence(struct drm_device *dev, uint32_t fence);
 
 int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,

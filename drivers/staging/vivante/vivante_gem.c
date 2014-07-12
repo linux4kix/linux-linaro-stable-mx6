@@ -415,10 +415,13 @@ void vivante_gem_move_to_inactive(struct drm_gem_object *obj)
 int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout)
 {
+/*
 	struct drm_device *dev = obj->dev;
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+*/
 	int ret = 0;
-
+	/* TODO */
+#if 0
 	if (is_active(vivante_obj)) {
 		uint32_t fence = 0;
 
@@ -433,7 +436,7 @@ int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 	}
 
 	/* TODO cache maintenance */
-
+#endif
 	return ret;
 }
 

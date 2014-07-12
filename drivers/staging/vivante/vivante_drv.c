@@ -283,23 +283,23 @@ static void vivante_debugfs_cleanup(struct drm_minor *minor)
 /*
  * Fences:
  */
-int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
-		struct timespec *timeout)
+int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
+		uint32_t fence, struct timespec *timeout)
 {
-#if 0
 	struct vivante_drm_private *priv = dev->dev_private;
+	struct vivante_gpu *gpu;
 	int ret;
-#endif
 
-	/* TODO */
-	return 0;
-#if 0
-	if (!priv->gpu)
-		return 0;
+	if (pipe > VIVANTE_PIPE_VG)
+		return -EINVAL;
 
-	if (fence > priv->gpu->submitted_fence) {
+	gpu = priv->gpu[pipe];
+	if (!gpu)
+		return -ENXIO;
+
+	if (fence > gpu->submitted_fence) {
 		DRM_ERROR("waiting on invalid fence: %u (of %u)\n",
-				fence, priv->gpu->submitted_fence);
+				fence, gpu->submitted_fence);
 		return -EINVAL;
 	}
 
@@ -330,7 +330,6 @@ int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t fence,
 	}
 
 	return ret;
-#endif
 }
 
 /* called from workqueue */
@@ -460,7 +459,7 @@ static int vivante_ioctl_wait_fence(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
 	struct drm_vivante_wait_fence *args = data;
-	return vivante_wait_fence_interruptable(dev, args->fence, &TS(args->timeout));
+	return vivante_wait_fence_interruptable(dev, args->pipe, args->fence, &TS(args->timeout));
 }
 
 static const struct drm_ioctl_desc vivante_ioctls[] = {
