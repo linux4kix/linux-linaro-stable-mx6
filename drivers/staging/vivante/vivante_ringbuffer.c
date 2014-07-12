@@ -40,7 +40,7 @@ struct vivante_ringbuffer *vivante_ringbuffer_new(struct vivante_gpu *gpu, int s
 	ring->start = vivante_gem_vaddr_locked(ring->bo);
 	ring->end   = ring->start + (size / 4);
 	ring->cur   = ring->start;
-	ring->last_link = NULL;
+	ring->ll    = NULL;
 
 	ring->size = size;
 
