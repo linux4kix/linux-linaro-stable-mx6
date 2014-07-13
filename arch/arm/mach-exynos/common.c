@@ -45,9 +45,6 @@
 #include "common.h"
 #include "regs-pmu.h"
 
-#define L2_AUX_VAL 0x7C470001
-#define L2_AUX_MASK 0xC200ffff
-
 static const char name_exynos4210[] = "EXYNOS4210";
 static const char name_exynos4212[] = "EXYNOS4212";
 static const char name_exynos4412[] = "EXYNOS4412";
@@ -400,7 +397,7 @@ static int __init exynos4_l2x0_cache_init(void)
 {
 	int ret;
 
-	ret = l2x0_of_init(L2_AUX_VAL, L2_AUX_MASK);
+	ret = l2x0_of_init(0x3c400001, 0xc20fffff);
 	if (ret)
 		return ret;
 
