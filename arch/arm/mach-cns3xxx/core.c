@@ -240,9 +240,9 @@ void __init cns3xxx_l2x0_init(void)
 	 *
 	 * 1 cycle of latency for setup, read and write accesses
 	 */
-	val = readl(base + L2X0_TAG_LATENCY_CTRL);
+	val = readl(base + L310_TAG_LATENCY_CTRL);
 	val &= 0xfffff888;
-	writel(val, base + L2X0_TAG_LATENCY_CTRL);
+	writel(val, base + L310_TAG_LATENCY_CTRL);
 
 	/*
 	 * Data RAM Control register
@@ -253,9 +253,9 @@ void __init cns3xxx_l2x0_init(void)
 	 *
 	 * 1 cycle of latency for setup, read and write accesses
 	 */
-	val = readl(base + L2X0_DATA_LATENCY_CTRL);
+	val = readl(base + L310_DATA_LATENCY_CTRL);
 	val &= 0xfffff888;
-	writel(val, base + L2X0_DATA_LATENCY_CTRL);
+	writel(val, base + L310_DATA_LATENCY_CTRL);
 
 	/* 32 KiB, 8-way, parity disable */
 	l2x0_init(base, 0x00540000, 0xfe000fff);
