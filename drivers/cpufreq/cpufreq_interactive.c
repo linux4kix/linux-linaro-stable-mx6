@@ -1154,8 +1154,10 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 		spin_lock_init(&tunables->above_hispeed_delay_lock);
 
 		policy->governor_data = tunables;
-		if (!have_governor_per_policy())
+		if (!have_governor_per_policy()) {
 			common_tunables = tunables;
+			WARN_ON(cpufreq_get_global_kobject());
+		}
 
 		rc = sysfs_create_group(get_governor_parent_kobj(policy),
 				get_sysfs_attr());
@@ -1177,14 +1179,18 @@ static int cpufreq_governor_interactive(struct cpufreq_policy *policy,
 
 	case CPUFREQ_GOV_POLICY_EXIT:
 		if (!--tunables->usage_count) {
+			sysfs_remove_group(get_governor_parent_kobj(policy),
+					get_sysfs_attr());
+
+                        if (!have_governor_per_policy())
+                                cpufreq_put_global_kobject();
+
 			if (policy->governor->initialized == 1) {
 				cpufreq_unregister_notifier(&cpufreq_notifier_block,
 						CPUFREQ_TRANSITION_NOTIFIER);
 				idle_notifier_unregister(&cpufreq_interactive_idle_nb);
 			}
 
-			sysfs_remove_group(get_governor_parent_kobj(policy),
-					get_sysfs_attr());
 			kfree(tunables);
 			common_tunables = NULL;
 		}
