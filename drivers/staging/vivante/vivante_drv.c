@@ -145,7 +145,6 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	init_waitqueue_head(&priv->fence_event);
 
 	INIT_LIST_HEAD(&priv->inactive_list);
-	INIT_LIST_HEAD(&priv->fence_cbs);
 
 	platform_set_drvdata(pdev, dev);
 
@@ -339,32 +338,11 @@ void vivante_update_fence(struct drm_device *dev, uint32_t fence)
 
 	mutex_lock(&dev->struct_mutex);
 	priv->completed_fence = max(fence, priv->completed_fence);
-
-	while (!list_empty(&priv->fence_cbs)) {
-		struct vivante_fence_cb *cb;
-
-		cb = list_first_entry(&priv->fence_cbs,
-				struct vivante_fence_cb, work.entry);
-
-		if (cb->fence > priv->completed_fence)
-			break;
-
-		list_del_init(&cb->work.entry);
-		queue_work(priv->wq, &cb->work);
-	}
-
 	mutex_unlock(&dev->struct_mutex);
 
 	wake_up_all(&priv->fence_event);
 }
 
-#if 0
-void __msm_fence_worker(struct work_struct *work)
-{
-	struct msm_fence_cb *cb = container_of(work, struct msm_fence_cb, work);
-	cb->func(cb);
-}
-#endif
 /*
  * DRM ioctls:
  */

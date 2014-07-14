@@ -359,31 +359,6 @@ dma_addr_t vivante_gem_paddr_locked(struct drm_gem_object *obj)
 	return vivante_obj->paddr;
 }
 
-/* setup callback for when bo is no longer busy..
- * TODO probably want to differentiate read vs write..
- */
-int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
-		struct vivante_fence_cb *cb)
-{
-	struct drm_device *dev = obj->dev;
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
-	int ret = 0;
-
-	mutex_lock(&dev->struct_mutex);
-	if (!list_empty(&cb->work.entry)) {
-		ret = -EINVAL;
-	} else if (is_active(vivante_obj)) {
-		cb->fence = max(vivante_obj->read_fence, vivante_obj->write_fence);
-		list_add_tail(&cb->work.entry, &priv->fence_cbs);
-	} else {
-		queue_work(priv->wq, &cb->work);
-	}
-	mutex_unlock(&dev->struct_mutex);
-
-	return ret;
-}
-
 void vivante_gem_move_to_active(struct drm_gem_object *obj,
 		struct vivante_gpu *gpu, bool write, uint32_t fence)
 {

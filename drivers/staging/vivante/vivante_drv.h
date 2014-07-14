@@ -59,26 +59,9 @@ struct vivante_drm_private {
 
 	struct workqueue_struct *wq;
 
-	/* callbacks deferred until bo is inactive: */
-	struct list_head fence_cbs;
-
 	/* registered MMUs: */
 	struct vivante_iommu *mmu;
 };
-
-/* callback from wq once fence has passed: */
-struct vivante_fence_cb {
-	struct work_struct work;
-	uint32_t fence;
-	void (*func)(struct vivante_fence_cb *cb);
-};
-
-void __msm_fence_worker(struct work_struct *work);
-
-#define INIT_FENCE_CB(_cb, _func)  do {                     \
-		INIT_WORK(&(_cb)->work, __msm_fence_worker); \
-		(_cb)->func = _func;                         \
-	} while (0)
 
 void vivante_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
 
@@ -112,8 +95,6 @@ void msm_gem_prime_unpin(struct drm_gem_object *obj);
 void *vivante_gem_vaddr_locked(struct drm_gem_object *obj);
 void *msm_gem_vaddr(struct drm_gem_object *obj);
 dma_addr_t vivante_gem_paddr_locked(struct drm_gem_object *obj);
-int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
-		struct vivante_fence_cb *cb);
 void vivante_gem_move_to_active(struct drm_gem_object *obj,
 		struct vivante_gpu *gpu, bool write, uint32_t fence);
 void vivante_gem_move_to_inactive(struct drm_gem_object *obj);
