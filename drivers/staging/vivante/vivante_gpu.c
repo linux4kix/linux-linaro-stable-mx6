@@ -564,8 +564,6 @@ static void retire_worker(struct work_struct *work)
 		}
 	}
 
-	vivante_update_fence(gpu->dev, fence);
-
 	mutex_unlock(&dev->struct_mutex);
 }
 
