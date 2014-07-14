@@ -88,6 +88,11 @@ struct vivante_gpu {
 
 	struct vivante_ringbuffer *rb;
 
+	/* event management: */
+	bool event_used[30];
+	struct completion event_free;
+	struct mutex event_mutex;
+
 	/* list of GEM active objects: */
 	struct list_head active_list;
 

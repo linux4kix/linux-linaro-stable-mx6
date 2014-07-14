@@ -194,7 +194,7 @@ static void vivante_hw_reset(struct vivante_gpu *gpu)
 
 int vivante_gpu_init(struct vivante_gpu *gpu)
 {
-	int ret;
+	int ret, i;
 	u32 words; /* 32 bit words */
 	struct iommu_domain *iommu;
 
@@ -234,6 +234,14 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 		gpu->rb = NULL;
 		dev_err(gpu->dev->dev, "could not create ringbuffer: %d\n", ret);
 		goto fail;
+	}
+
+	/* Setup event management */
+	mutex_init(&gpu->event_mutex);
+	init_completion(&gpu->event_free);
+	for (i = 0; i < ARRAY_SIZE(gpu->event_used); i++) {
+		gpu->event_used[i] = false;
+		complete(&gpu->event_free);
 	}
 
 	/* Start command processor */
@@ -479,6 +487,50 @@ static void hangcheck_handler(unsigned long data)
 
 	/* workaround for missing irq: */
 	queue_work(priv->wq, &gpu->retire_work);
+}
+
+/*
+ * event management:
+ */
+
+static unsigned int event_alloc(struct vivante_gpu *gpu)
+{
+	unsigned long ret;
+	unsigned int i, event = ~0U;
+
+	ret = wait_for_completion_timeout(&gpu->event_free, msecs_to_jiffies(10 * 10000));
+	if (ret != 0) {
+		dev_err(gpu->dev->dev, "wait_for_completion_timeout failed");
+	}
+
+	mutex_lock(&gpu->event_mutex);
+
+	/* find first free event */
+	for (i = 0; i < ARRAY_SIZE(gpu->event_used); i++) {
+		if (gpu->event_used[i] == false) {
+			gpu->event_used[i] = true;
+			event = i;
+		}
+	}
+
+	mutex_unlock(&gpu->event_mutex);
+
+	return event;
+}
+
+static void event_free(struct vivante_gpu *gpu, unsigned int event)
+{
+	mutex_lock(&gpu->event_mutex);
+
+	if (gpu->event_used[event] == false) {
+		dev_warn(gpu->dev->dev, "event %u is already marked as free", event);
+		mutex_unlock(&gpu->event_mutex);
+	} else {
+		gpu->event_used[event] = false;
+		mutex_unlock(&gpu->event_mutex);
+
+		complete(&gpu->event_free);
+	}
 }
 
 /*
