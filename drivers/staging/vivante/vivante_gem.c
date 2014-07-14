@@ -363,7 +363,7 @@ dma_addr_t vivante_gem_paddr_locked(struct drm_gem_object *obj)
  * TODO probably want to differentiate read vs write..
  */
 int msm_gem_queue_inactive_cb(struct drm_gem_object *obj,
-		struct msm_fence_cb *cb)
+		struct vivante_fence_cb *cb)
 {
 	struct drm_device *dev = obj->dev;
 	struct vivante_drm_private *priv = dev->dev_private;

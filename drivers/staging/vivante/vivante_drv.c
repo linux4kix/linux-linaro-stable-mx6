@@ -335,17 +335,16 @@ int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
 /* called from workqueue */
 void vivante_update_fence(struct drm_device *dev, uint32_t fence)
 {
-#if 0
 	struct vivante_drm_private *priv = dev->dev_private;
 
 	mutex_lock(&dev->struct_mutex);
 	priv->completed_fence = max(fence, priv->completed_fence);
 
 	while (!list_empty(&priv->fence_cbs)) {
-		struct msm_fence_cb *cb;
+		struct vivante_fence_cb *cb;
 
 		cb = list_first_entry(&priv->fence_cbs,
-				struct msm_fence_cb, work.entry);
+				struct vivante_fence_cb, work.entry);
 
 		if (cb->fence > priv->completed_fence)
 			break;
@@ -357,7 +356,6 @@ void vivante_update_fence(struct drm_device *dev, uint32_t fence)
 	mutex_unlock(&dev->struct_mutex);
 
 	wake_up_all(&priv->fence_event);
-#endif
 }
 
 #if 0

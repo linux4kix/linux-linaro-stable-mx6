@@ -543,6 +543,8 @@ static void retire_worker(struct work_struct *work)
 	struct drm_device *dev = gpu->dev;
 	uint32_t fence = 0; /* TODO: gpu->funcs->last_fence(gpu); */
 
+	vivante_update_fence(gpu->dev, fence);
+
 	mutex_lock(&dev->struct_mutex);
 
 	while (!list_empty(&gpu->active_list)) {
