@@ -18,7 +18,7 @@
  * Bug fixes and cleanup by Philippe De Muyter (phdm@macqel.be)
  * Copyright (c) 2004-2006 Macq Electronique SA.
  *
- * Copyright (C) 2010-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2010-2011 Freescale Semiconductor, Inc.
  */
 
 #include <linux/module.h>
@@ -62,8 +62,6 @@
 #include "fec.h"
 
 static void set_multicast_list(struct net_device *ndev);
-static void fec_reset_phy(struct platform_device *pdev);
-static void fec_free_reset_gpio(struct platform_device *pdev);
 
 #if defined(CONFIG_ARM)
 #define FEC_ALIGNMENT	0xf
@@ -2164,10 +2162,6 @@ fec_enet_open(struct net_device *ndev)
 	phy_start(fep->phy_dev);
 	netif_start_queue(ndev);
 	fep->opened = 1;
-
-	/* reset phy */
-	fec_reset_phy(fep->pdev);
-
 	return 0;
 }
 
@@ -2190,7 +2184,6 @@ fec_enet_close(struct net_device *ndev)
 	fec_enet_clk_enable(ndev, false);
 	pinctrl_pm_select_sleep_state(&fep->pdev->dev);
 	fec_enet_free_buffers(ndev);
-	fec_free_reset_gpio(fep->pdev);
 
 	return 0;
 }
@@ -2444,11 +2437,9 @@ static int fec_enet_init(struct net_device *ndev)
 #ifdef CONFIG_OF
 static void fec_reset_phy(struct platform_device *pdev)
 {
-	int err;
+	int err, phy_reset;
 	int msec = 1;
 	struct device_node *np = pdev->dev.of_node;
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
 
 	if (!np)
 		return;
@@ -2458,33 +2449,18 @@ static void fec_reset_phy(struct platform_device *pdev)
 	if (msec > 1000)
 		msec = 1;
 
-	fep->phy_reset_gpio = of_get_named_gpio(np, "phy-reset-gpios", 0);
-	if (!gpio_is_valid(fep->phy_reset_gpio))
+	phy_reset = of_get_named_gpio(np, "phy-reset-gpios", 0);
+	if (!gpio_is_valid(phy_reset))
 		return;
 
-	err = devm_gpio_request_one(&pdev->dev, fep->phy_reset_gpio,
+	err = devm_gpio_request_one(&pdev->dev, phy_reset,
 				    GPIOF_OUT_INIT_LOW, "phy-reset");
 	if (err) {
 		dev_err(&pdev->dev, "failed to get phy-reset-gpios: %d\n", err);
 		return;
 	}
 	msleep(msec);
-	gpio_set_value(fep->phy_reset_gpio, 1);
-}
-
-static void fec_free_reset_gpio(struct platform_device *pdev)
-{
-	struct net_device *ndev = platform_get_drvdata(pdev);
-	struct fec_enet_private *fep = netdev_priv(ndev);
-	struct device_node *np = pdev->dev.of_node;
-	if (!np)
-		return;
-
-	fep->phy_reset_gpio = of_get_named_gpio(np, "phy-reset-gpios", 0);
-	if (!gpio_is_valid(fep->phy_reset_gpio))
-		return;
-
-	devm_gpio_free(&pdev->dev, fep->phy_reset_gpio);
+	gpio_set_value(phy_reset, 1);
 }
 #else /* CONFIG_OF */
 static void fec_reset_phy(struct platform_device *pdev)
@@ -2492,13 +2468,6 @@ static void fec_reset_phy(struct platform_device *pdev)
 	/*
 	 * In case of platform probe, the reset has been done
 	 * by machine code.
-	 */
-}
-
-static void fec_free_reset_gpio(struct platform_device *pdev)
-{
-	/*
-	 * make pair as api "fec_reset_phy()"
 	 */
 }
 #endif /* CONFIG_OF */
@@ -2603,6 +2572,8 @@ fec_probe(struct platform_device *pdev)
 	} else {
 		fep->reg_phy = NULL;
 	}
+
+	fec_reset_phy(pdev);
 
 	if (fep->bufdesc_ex)
 		fec_ptp_init(pdev);
