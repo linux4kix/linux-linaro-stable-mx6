@@ -541,7 +541,7 @@ static void retire_worker(struct work_struct *work)
 {
 	struct vivante_gpu *gpu = container_of(work, struct vivante_gpu, retire_work);
 	struct drm_device *dev = gpu->dev;
-	uint32_t fence = 0; /* TODO: gpu->funcs->last_fence(gpu); */
+	uint32_t fence = gpu->retired_fence;
 
 	vivante_update_fence(gpu->dev, fence);
 
@@ -580,7 +580,8 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 {
 	struct drm_device *dev = gpu->dev;
 	struct vivante_drm_private *priv = dev->dev_private;
-	int i, ret;
+	int ret;
+	unsigned int event, i;
 
 	submit->fence = ++priv->next_fence;
 
@@ -594,6 +595,9 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	 * - prefetch
 	 *
 	 */
+
+	event = event_alloc(gpu);
+	gpu->event_to_fence[event] = submit->fence;
 
 	ret = 0;
 
@@ -634,14 +638,17 @@ static irqreturn_t irq_handler(int irq, void *data)
 	struct vivante_gpu *gpu = data;
 	irqreturn_t ret = IRQ_NONE;
 
-	u32 ack = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
+	u32 event = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
 
-	if (ack != 0) {
-		if (ack & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
+	if (event != 0) {
+		if (event & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
 			dev_err(gpu->dev->dev, "AXI bus error\n");
 
 		/* handle irq */
-		dev_info(gpu->dev->dev, "irq 0x%08x\n", ack);
+		dev_info(gpu->dev->dev, "event 0x%08x\n", event);
+
+		gpu->retired_fence = gpu->event_to_fence[event];
+		event_free(gpu, event);
 		vivante_gpu_retire(gpu);
 
 		ret = IRQ_HANDLED;

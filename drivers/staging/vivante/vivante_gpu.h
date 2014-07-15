@@ -90,6 +90,7 @@ struct vivante_gpu {
 
 	/* event management: */
 	bool event_used[30];
+	uint32_t event_to_fence[30];
 	struct completion event_free;
 	struct mutex event_mutex;
 
@@ -97,6 +98,7 @@ struct vivante_gpu {
 	struct list_head active_list;
 
 	uint32_t submitted_fence;
+	uint32_t retired_fence;
 
 	/* worker for handling active-list retiring: */
 	struct work_struct retire_work;
