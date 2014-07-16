@@ -10,7 +10,7 @@
 
 &hdmi_video {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hdmi_hdcp_1>;
+	pinctrl-0 = <&pinctrl_hdmi_hdcp>;
 	fsl,hdcp;
 };
 

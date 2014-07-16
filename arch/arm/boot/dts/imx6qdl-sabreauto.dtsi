@@ -175,6 +175,14 @@
 	pinctrl-0 = <&pinctrl_i2c2>;
 	status = "okay";
 
+	egalax_ts@04 {
+		compatible = "eeti,egalax_ts";
+		reg = <0x04>;
+		interrupt-parent = <&gpio2>;
+		interrupts = <28 2>;
+		wakeup-gpios = <&gpio2 28 0>;
+	};
+
 	pmic: pfuze100@08 {
 		compatible = "fsl,pfuze100";
 		reg = <0x08>;
@@ -273,21 +281,6 @@
 			};
 		};
 	};
-};
-
-&i2c2 {
-	clock-frequency = <100000>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_i2c2_3>;
-	status = "okay";
-
-	egalax_ts@04 {
-		compatible = "eeti,egalax_ts";
-		reg = <0x04>;
-		interrupt-parent = <&gpio2>;
-		interrupts = <28 2>;
-		wakeup-gpios = <&gpio2 28 0>;
-	};
 
 	codec: cs42888@048 {
 		compatible = "cirrus,cs42888";
@@ -308,7 +301,7 @@
 
 &i2c3 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_i2c3_4>;
+	pinctrl-0 = <&pinctrl_i2c3>;
 	pinctrl-assert-gpios = <&gpio5 4 GPIO_ACTIVE_HIGH>;
 	status = "okay";
 
@@ -347,6 +340,21 @@
 				MX6QDL_PAD_EIM_A24__GPIO5_IO04   0x80000000
 				MX6QDL_PAD_SD2_DAT0__GPIO1_IO15  0x80000000
 				MX6QDL_PAD_GPIO_18__SD3_VSELECT 0x17059
+			>;
+		};
+
+		pinctrl_esai1: esai1grp {
+			fsl,pins = <
+				MX6QDL_PAD_ENET_CRS_DV__ESAI_TX_CLK 0x1b030
+				MX6QDL_PAD_ENET_RXD1__ESAI_TX_FS    0x1b030
+				MX6QDL_PAD_ENET_TX_EN__ESAI_TX3_RX2 0x1b030
+				MX6QDL_PAD_GPIO_5__ESAI_TX2_RX3     0x1b030
+				MX6QDL_PAD_ENET_TXD0__ESAI_TX4_RX1  0x1b030
+				MX6QDL_PAD_ENET_MDC__ESAI_TX5_RX0   0x1b030
+				MX6QDL_PAD_GPIO_17__ESAI_TX0        0x1b030
+				MX6QDL_PAD_NANDF_CS3__ESAI_TX1      0x1b030
+				MX6QDL_PAD_ENET_MDIO__ESAI_RX_CLK   0x1b030
+				MX6QDL_PAD_GPIO_9__ESAI_RX_FS       0x1b030
 			>;
 		};
 
@@ -413,14 +421,27 @@
 			>;
 		};
 
-		pinctrl_i2c2: i2c2grp {
+		pinctrl_hdmi_cec_2: hdmicecgrp-2 {
 			fsl,pins = <
-				MX6QDL_PAD_EIM_EB2__I2C2_SCL	0x4001b8b1
-				MX6QDL_PAD_KEY_ROW3__I2C2_SDA	0x4001b8b1
+				MX6QDL_PAD_KEY_ROW2__HDMI_TX_CEC_LINE 0x1f8b0
 			>;
 		};
 
-		pinctrl_pwm3: pwm1grp {
+		pinctrl_i2c2: i2c2grp {
+			fsl,pins = <
+				MX6QDL_PAD_EIM_EB2__I2C2_SCL		0x4001b8b1
+				MX6QDL_PAD_KEY_ROW3__I2C2_SDA		0x4001b8b1
+			>;
+		};
+
+                pinctrl_i2c3: i2c3grp {
+                        fsl,pins = <
+                                MX6QDL_PAD_GPIO_3__I2C3_SCL             0x4001b8b1
+                                MX6QDL_PAD_GPIO_6__I2C3_SDA             0x4001b8b1
+                        >;
+                };
+
+		pinctrl_pwm1: pwm1grp {
 			fsl,pins = <
 				MX6QDL_PAD_SD4_DAT1__PWM3_OUT		0x1b0b1
 			>;
@@ -429,6 +450,15 @@
 		pinctrl_spdif: spdifgrp {
 			fsl,pins = <
 				MX6QDL_PAD_KEY_COL3__SPDIF_IN 0x1b0b0
+			>;
+		};
+
+		pinctrl_uart3: uart3grp {
+			fsl,pins = <
+				MX6QDL_PAD_SD4_CLK__UART3_RX_DATA 0x1b0b1
+				MX6QDL_PAD_SD4_CMD__UART3_TX_DATA 0x1b0b1
+				MX6QDL_PAD_EIM_D30__UART3_CTS_B   0x1b0b1
+				MX6QDL_PAD_EIM_EB3__UART3_RTS_B   0x1b0b1
 			>;
 		};
 
@@ -567,7 +597,7 @@
 
 &pwm3 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pwm3>;
+	pinctrl-0 = <&pinctrl_pwm1>;
 	status = "okay";
 };
 
@@ -579,7 +609,7 @@
 
 &uart3 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_uart3_1>;
+	pinctrl-0 = <&pinctrl_uart3>;
 	pinctrl-assert-gpios = <&max7310_b 4 GPIO_ACTIVE_HIGH>, /* CTS */
 			       <&max7310_c 3 GPIO_ACTIVE_HIGH>; /* RXD and TXD */
 	fsl,uart-has-rtscts;
@@ -631,15 +661,9 @@
 	status = "okay";
 };
 
-&pwm3 {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pwm3_1>;
-	status = "okay";
-};
-
 &esai {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_esai_2>;
+	pinctrl-0 = <&pinctrl_esai1>;
 	status = "okay";
 };
 
