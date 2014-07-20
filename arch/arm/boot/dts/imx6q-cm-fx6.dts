@@ -287,6 +287,16 @@
 	>;
      };
 
+	/* pins for uart2 */
+	pinctrl_uart2: uart2grp {
+		fsl,pins = <
+			MX6QDL_PAD_GPIO_7__UART2_TX_DATA 0x1b0b1
+			MX6QDL_PAD_GPIO_8__UART2_RX_DATA 0x1b0b1
+			MX6QDL_PAD_SD4_DAT5__UART2_RTS_B 0x1b0b1
+			MX6QDL_PAD_SD4_DAT6__UART2_CTS_B 0x1b0b1
+	>;
+	};
+
    };
 };
 
@@ -389,8 +399,8 @@
 /* rear serial console */
 &uart2 {
    pinctrl-names = "default";
-   pinctrl-0 = <&pinctrl_uart2_2>;
-   fsl,dte-mode;
+   pinctrl-0 = <&pinctrl_uart2>;
+   /* fsl,dte-mode; */
    fsl,uart-has-rtscts;
    dma-names = "rx", "tx";
    dmas = <&sdma 27 4 0>, <&sdma 28 4 0>;
