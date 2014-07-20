@@ -168,6 +168,15 @@
 	mxcfb1 = &mxcfb2;
    };
 
+	sound {
+		compatible = "fsl,imx6q-cm-fx6-wm8731",
+			  "fsl,imx-audio-wm8731";
+		model = "wm8731-audio";
+		ssi-controller = <&ssi2>;
+		audio-codec = <&codec>;
+		audio-routing = "LOUT", "ROUT", "LLINEIN", "RLINEIN";
+	};
+
    sound-hdmi {
 	compatible = "fsl,imx6q-audio-hdmi",
 		"fsl,imx-audio-hdmi";
@@ -487,6 +496,17 @@
       reg = <0x50>;
       pagesize = <16>;
    };
+
+	codec: wm8731@1a {
+		compatible = "wlf,wm8731";
+		reg = <0x1a>;
+		clocks = <&clks 173>, <&clks 158>;
+		clock-names = "pll4", "imx-ssi.1";
+		AVDD-supply = <&pu_dummy>;
+		HPVDD-supply = <&pu_dummy>;
+		DCVDD-supply = <&pu_dummy>;
+		DBVDD-supply = <&pu_dummy>;
+	};
 };
 
 /* eth1 */ 
@@ -554,6 +574,11 @@
    pinctrl-0 = <&pinctrl_usdhc3>;
    vmmc-supply = <&reg_3p3v>;
    status = "okay";
+};
+
+&ssi2 {
+	fsl,mode = "i2s-master";
+	status = "okay";
 };
 
 &mxcfb1 {
