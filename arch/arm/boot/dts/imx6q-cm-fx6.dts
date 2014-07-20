@@ -297,6 +297,13 @@
 	>;
 	};
 
+	/* pins for pcie */
+	pinctrl_pcie: pciegrp {
+		fsl,pins = <
+			MX6QDL_PAD_ENET_RXD1__GPIO1_IO26 0x80000000
+			MX6QDL_PAD_EIM_CS1__GPIO2_IO24 0x80000000
+	>;
+     };
    };
 };
 
@@ -387,7 +394,10 @@
 
 /* eth1 */ 
 &pcie {
+   pinctrl-names = "default";
+   pinctrl-0 = <&pinctrl_pcie>;
    reset-gpio = <&gpio1 26 0>;
+   power-on-gpio = <&gpio2 24 0>;
    status = "okay";
 };
 
