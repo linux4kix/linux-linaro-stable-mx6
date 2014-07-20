@@ -153,6 +153,26 @@
 };
 
 &iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
+
+	hog {
+		pinctrl_hog: hoggrp {
+			fsl,pins = <
+				/* SATA PWR */
+				MX6QDL_PAD_ENET_TX_EN__GPIO1_IO28 0x80000000
+				MX6QDL_PAD_EIM_A22__GPIO2_IO16 0x80000000
+				MX6QDL_PAD_EIM_D20__GPIO3_IO20 0x80000000
+				MX6QDL_PAD_EIM_A25__GPIO5_IO02 0x80000000
+				/* SATA CTRL */
+				MX6QDL_PAD_ENET_TXD0__GPIO1_IO30 0x80000000
+				MX6QDL_PAD_EIM_D29__GPIO3_IO29 0x80000000
+				MX6QDL_PAD_EIM_A23__GPIO6_IO06 0x80000000
+				MX6QDL_PAD_EIM_D23__GPIO3_IO23 0x80000000
+			>;
+		};
+	};
+
    imx6q-cm-fx6 {
        /* pins for eth0 */
       pinctrl_enet: enetgrp {
