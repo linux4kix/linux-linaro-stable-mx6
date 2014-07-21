@@ -31,6 +31,7 @@
 #include "imx-ssi.h"
 
 #define DAI_NAME_SIZE	32
+#define	WM8731_MCLK_FREQ	(24000000 / 2)
 
 struct imx_wm8731_data {
 	struct snd_soc_dai_link dai;
@@ -43,10 +44,8 @@ struct imx_wm8731_data {
 	struct clk *clock_root;
 	long sysclk;
 	long current_rate;
-	/* platfor data */
-	unsigned int ssi_num;
-	unsigned int src_port;
-	unsigned int ext_port;
+	/* apis */
+	int (*clock_enable)(int enable,struct imx_wm8731_data *data);
 };
 
 static int imx_wm8731_init(struct snd_soc_pcm_runtime *rtd);
@@ -63,7 +62,6 @@ static struct imx_priv card_priv;
 
 static struct snd_soc_ops imx_hifi_ops = {
 	.shutdown	= imx_hifi_shutdown,
-	.hw_params	= imx_hifi_hw_params_slv_mode,
 };
 
 /* imx card dapm widgets */
@@ -160,6 +158,78 @@ static int wm8731_slv_mode_clock_enable(int enable, struct imx_wm8731_data *data
 	return 0;
 }
 
+static int imx_hifi_startup_slv_mode(struct snd_pcm_substream *substream)
+{
+	/*
+	 * As SSI's sys clock rate depends on sampling rate,
+	 * the clock enabling code is moved to imx_hifi_hw_params().
+	 */
+	return 0;
+}
+
+static int wm8731_mst_mode_init(struct imx_wm8731_data *data)
+{
+	long rate;
+	struct clk *new_parent;
+	struct clk *ssi_clk;
+	struct i2c_client *codec_dev = data->codec_dev;
+
+	new_parent = devm_clk_get(&codec_dev->dev, "cko2");
+	if (IS_ERR(new_parent)) {
+		pr_err("Could not get \"cko2\" clock \n");
+		return PTR_ERR(new_parent);
+	}
+
+	ssi_clk = devm_clk_get(&codec_dev->dev, "cko");
+	if (IS_ERR(ssi_clk)) {
+		pr_err("Could not get \"cko\" clock \n");
+		return PTR_ERR(ssi_clk);
+	}
+
+	rate = clk_round_rate(new_parent, WM8731_MCLK_FREQ);
+	clk_set_rate(new_parent, rate);
+
+	clk_set_parent(ssi_clk, new_parent);
+
+	rate = clk_round_rate(ssi_clk, WM8731_MCLK_FREQ);
+	clk_set_rate(ssi_clk, rate);
+
+	pr_info("%s: \"CLKO\" rate = %ld (= %d)\n",
+		__func__, rate, WM8731_MCLK_FREQ);
+
+	data->pll = new_parent;
+	data->clock_root = ssi_clk;
+	data->sysclk = rate;
+
+	return 0;
+}
+
+static int wm8731_mst_mode_clock_enable(int enable, struct imx_wm8731_data *data)
+{
+	struct clk *clko = data->clock_root;
+
+	if (enable)
+		clk_enable(clko);
+	else
+		clk_disable(clko);
+
+	return 0;
+}
+
+static int imx_hifi_startup_mst_mode(struct snd_pcm_substream *substream)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+	struct snd_soc_card *card = codec_dai->codec->card;
+	struct imx_wm8731_data *data = snd_soc_card_get_drvdata(card);
+
+	if (!codec_dai->active)
+		data->clock_enable(1,data);
+
+	return 0;
+}
+
+
 static int imx_hifi_hw_params_slv_mode(struct snd_pcm_substream *substream,
 				       struct snd_pcm_hw_params *params)
 {
@@ -169,7 +239,7 @@ static int imx_hifi_hw_params_slv_mode(struct snd_pcm_substream *substream,
 	struct snd_soc_card *card = codec_dai->codec->card;
 	struct imx_wm8731_data *data = snd_soc_card_get_drvdata(card);
 	
-	u32 dai_format, pll_out;
+	u32 dai_format;
 	snd_pcm_format_t sample_format;
 	unsigned int channels;
 	unsigned int tx_mask, rx_mask;
@@ -282,6 +352,63 @@ static int imx_hifi_hw_params_slv_mode(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+static int imx_hifi_hw_params_mst_mode(struct snd_pcm_substream *substream,
+				       struct snd_pcm_hw_params *params)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+	struct snd_soc_card *card = codec_dai->codec->card;
+	struct imx_wm8731_data *data = snd_soc_card_get_drvdata(card);
+	u32 dai_format;
+	unsigned int channels;
+	unsigned int tx_mask, rx_mask;
+	unsigned int sampling_rate;
+	int ret;
+
+
+	sampling_rate = params_rate(params);
+	channels = params_channels(params);
+	pr_debug("%s:%s  sampling rate = %u  channels = %u \n", __FUNCTION__,
+		 (substream->stream == SNDRV_PCM_STREAM_PLAYBACK ? "Playback" : "Capture"),
+		 sampling_rate, channels);
+
+	/* set cpu DAI configuration */
+	dai_format = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_IF |
+		SND_SOC_DAIFMT_CBM_CFM;
+
+	ret = snd_soc_dai_set_fmt(cpu_dai, dai_format);
+	if (ret < 0)
+		return ret;
+
+	/* set i.MX active slot mask */
+	/* S[TR]CCR:DC */
+	tx_mask = ~((1 << channels) - 1);
+	rx_mask = tx_mask;
+	snd_soc_dai_set_tdm_slot(cpu_dai, tx_mask, rx_mask, 2, 32);
+
+	/* set codec DAI configuration */
+	dai_format = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
+		SND_SOC_DAIFMT_CBM_CFM;
+
+	ret = snd_soc_dai_set_fmt(codec_dai, dai_format);
+	if (ret < 0)
+		return ret;
+
+	ret = snd_soc_dai_set_sysclk(codec_dai,
+				     WM8731_SYSCLK_MCLK,
+				     data->sysclk,
+				     SND_SOC_CLOCK_IN);
+
+	if (ret < 0) {
+		pr_err("Failed to set codec master clock to %u: %d \n",
+		       data->sysclk, ret);
+		return ret;
+	}
+
+	return 0;
+}
+
 static void imx_hifi_shutdown(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -290,7 +417,7 @@ static void imx_hifi_shutdown(struct snd_pcm_substream *substream)
 	struct imx_wm8731_data *data = snd_soc_card_get_drvdata(card);
 	
 	if (!codec_dai->active)
-		wm8731_slv_mode_clock_enable(0,data);
+		data->clock_enable(0,data);
 	
 	return;
 }
@@ -376,6 +503,27 @@ static int imx_audmux_config_slv_mode(int _slave, int _master)
 	return 0;
 }
 
+static int imx_audmux_config_mst_mode(int _slave, int _master)
+{
+	unsigned int ptcr, pdcr;
+	int slave = _slave - 1;
+	int master = _master - 1;
+
+	ptcr = IMX_AUDMUX_V2_PTCR_SYN;
+	ptcr |= IMX_AUDMUX_V2_PTCR_TFSDIR |
+		IMX_AUDMUX_V2_PTCR_TFSEL(master) |
+		IMX_AUDMUX_V2_PTCR_TCLKDIR |
+		IMX_AUDMUX_V2_PTCR_TCSEL(master);
+	pdcr = IMX_AUDMUX_V2_PDCR_RXDSEL(master);
+	imx_audmux_v2_configure_port(slave, ptcr, pdcr);
+
+	ptcr = IMX_AUDMUX_V2_PTCR_SYN;
+	pdcr = IMX_AUDMUX_V2_PDCR_RXDSEL(slave);
+	imx_audmux_v2_configure_port(master, ptcr, pdcr);
+
+	return 0;
+}
+
 static int imx_wm8731_probe(struct platform_device *pdev)
 {
 	struct device_node *ssi_np, *codec_np;
@@ -383,6 +531,10 @@ static int imx_wm8731_probe(struct platform_device *pdev)
 	struct imx_priv *priv = &card_priv;
 	struct i2c_client *codec_dev;
 	struct imx_wm8731_data *data;
+	unsigned int src_port, ext_port;
+	unsigned int ssi_mode;
+	const char *ssi_mode_str;
+
 	int ret;
 
 	priv->pdev = pdev;
@@ -428,14 +580,44 @@ static int imx_wm8731_probe(struct platform_device *pdev)
 	data->dai.ops = &imx_hifi_ops;
 	data->dai.init = &imx_wm8731_init;
 	
-	data->ssi_num = 2; /* 1-based */
-	data->src_port = 2;
-	data->ext_port = 4;
-	
-	imx_audmux_config_slv_mode(data->src_port, data->ext_port);
-	
-	/* Slave Mode Init */
-	wm8731_slv_mode_init(data);
+	ret = of_property_read_u32(pdev->dev.of_node, "src-port", &src_port);
+	if (ret) {
+		dev_err(&pdev->dev, "failed to get \"src-port\" value\n");
+		ret = -EINVAL;
+		goto fail;
+	}
+
+	ret = of_property_read_u32(pdev->dev.of_node, "ext-port", &ext_port);
+	if (ret) {
+		dev_err(&pdev->dev, "failed to get \"ext-port\" value\n");
+		ret = -EINVAL;
+		goto fail;
+	}
+
+	ret = of_property_read_string(ssi_np, "fsl,mode", &ssi_mode_str);
+	if (ret) {
+		dev_err(&pdev->dev, "failed to get \"fsl,mode\" value\n");
+		ret = -EINVAL;
+		goto fail;
+	}
+
+	ssi_mode = strcmp(ssi_mode_str, "i2s-master");
+
+	if (ssi_mode) {
+		/* Master Mode */
+		imx_audmux_config_mst_mode(src_port, ext_port);
+		wm8731_mst_mode_init(data);
+		data->clock_enable = wm8731_mst_mode_clock_enable;
+		imx_hifi_ops.hw_params = imx_hifi_hw_params_mst_mode;
+		imx_hifi_ops.startup = imx_hifi_startup_mst_mode;
+	} else {
+		/* Slave Mode */
+		imx_audmux_config_slv_mode(src_port, ext_port);
+		wm8731_slv_mode_init(data);
+		data->clock_enable = wm8731_slv_mode_clock_enable;
+		imx_hifi_ops.hw_params = imx_hifi_hw_params_slv_mode;
+		imx_hifi_ops.startup = imx_hifi_startup_slv_mode;
+	}
 	
 	data->card.dev = &pdev->dev;
 	ret = snd_soc_of_parse_card_name(&data->card, "model");
