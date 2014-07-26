@@ -122,5 +122,14 @@ u32 vivante_cmd_init(struct vivante_gpu *gpu)
 
 void vivante_cmd_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit)
 {
+	u32 i;
 
+	for (i = 0; i < submit->nr_cmds; i++) {
+		struct vivante_gem_object *obj = submit->cmd[i].obj;
+
+		/* TODO: remove later */
+		if (unlikely(drm_debug & DRM_UT_CORE)) {
+			vivante_cmd_dump(obj, submit->cmd[i].size);
+		}
+	}
 }

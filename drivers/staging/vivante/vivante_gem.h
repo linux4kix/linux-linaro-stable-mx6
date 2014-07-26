@@ -86,6 +86,7 @@ struct vivante_gem_submit {
 		uint32_t type;
 		uint32_t size;  /* in dwords */
 		uint32_t iova;
+		struct vivante_gem_object *obj;
 	} cmd[MAX_CMDS];
 	struct {
 		uint32_t flags;
