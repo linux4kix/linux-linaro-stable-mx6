@@ -146,8 +146,7 @@ static void vivante_hw_reset(struct vivante_gpu *gpu)
 	 * - what about VG?
 	 */
 
-	while (true)
-	{
+	while (true) {
 		control = gpu_read(gpu, VIVS_HI_CLOCK_CONTROL);
 
 		/* isolate the GPU. */
@@ -499,9 +498,8 @@ static unsigned int event_alloc(struct vivante_gpu *gpu)
 	unsigned int i, event = ~0U;
 
 	ret = wait_for_completion_timeout(&gpu->event_free, msecs_to_jiffies(10 * 10000));
-	if (ret != 0) {
+	if (ret != 0)
 		dev_err(gpu->dev->dev, "wait_for_completion_timeout failed");
-	}
 
 	mutex_lock(&gpu->event_mutex);
 

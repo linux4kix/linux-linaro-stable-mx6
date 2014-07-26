@@ -552,13 +552,11 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 	if (!vivante_obj)
 		return -ENOMEM;
 
-	if (flags & ETNA_BO_CMDSTREAM)
-	{
+	if (flags & ETNA_BO_CMDSTREAM) {
 		vivante_obj->vaddr = dma_alloc_coherent(dev->dev, size,
 				&vivante_obj->paddr, GFP_KERNEL);
 
-		if (!vivante_obj->vaddr)
-		{
+		if (!vivante_obj->vaddr) {
 			kfree(vivante_obj);
 			return -ENOMEM;
 		}

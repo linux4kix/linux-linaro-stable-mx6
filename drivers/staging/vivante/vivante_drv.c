@@ -594,9 +594,8 @@ static int __init vivante_init(void)
 		return ret;
 
 	ret = platform_driver_register(&vivante_platform_driver);
-	if (ret != 0) {
+	if (ret != 0)
 		platform_driver_unregister(&vivante_gpu_driver);
-	}
 
 	return ret;
 }
