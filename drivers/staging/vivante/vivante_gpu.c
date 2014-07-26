@@ -463,7 +463,7 @@ static void hangcheck_handler(unsigned long data)
 	struct vivante_gpu *gpu = (struct vivante_gpu *)data;
 	struct drm_device *dev = gpu->dev;
 	struct vivante_drm_private *priv = dev->dev_private;
-	uint32_t fence = 0; /* TODO: gpu->funcs->last_fence(gpu); */
+	uint32_t fence = gpu->last_fence;
 
 	if (fence != gpu->hangcheck_fence) {
 		/* some progress has been made.. ya! */
