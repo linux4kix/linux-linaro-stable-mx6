@@ -58,6 +58,10 @@ struct vivante_gem_object {
 	struct reservation_object _resv;
 
 	struct drm_mm_node *gpu_vram_node;
+
+	/* for buffer manipulation during submit */
+	u32 used;
+	u32 *cur;
 };
 #define to_vivante_bo(x) container_of(x, struct vivante_gem_object, base)
 

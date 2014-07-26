@@ -27,54 +27,62 @@
  */
 
 
-static inline void CMD_LOAD_STATE(struct vivante_ringbuffer *rb, u32 reg, u32 value)
+static inline void OUT(struct vivante_gem_object *buffer, uint32_t data)
 {
-	/* write a register via cmd stream */
-	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(1) |
-			VIV_FE_LOAD_STATE_HEADER_OFFSET(reg >> VIV_FE_LOAD_STATE_HEADER_OFFSET__SHR));
-	OUT_RING(rb, value);
+	BUG_ON(buffer->used >= buffer->base.size);
+
+	/* TODO: alignment */
+	*(buffer->cur++) = data;
+	buffer->used++;
 }
 
-static inline void CMD_LOAD_STATES(struct vivante_ringbuffer *rb, u32 reg, u16 count, u32 *values)
+static inline void CMD_LOAD_STATE(struct vivante_gem_object *buffer, u32 reg, u32 value)
+{
+	/* write a register via cmd stream */
+	OUT(buffer, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(1) |
+			VIV_FE_LOAD_STATE_HEADER_OFFSET(reg >> VIV_FE_LOAD_STATE_HEADER_OFFSET__SHR));
+	OUT(buffer, value);
+}
+
+static inline void CMD_LOAD_STATES(struct vivante_gem_object *buffer, u32 reg, u16 count, u32 *values)
 {
 	u16 i;
 
-	OUT_RING(rb, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(count) |
+	OUT(buffer, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(count) |
 			VIV_FE_LOAD_STATE_HEADER_OFFSET(reg >> VIV_FE_LOAD_STATE_HEADER_OFFSET__SHR));
 
 	for (i = 0; i < count; i++)
-		OUT_RING(rb, values[i]);
+		OUT(buffer, values[i]);
 }
 
-
-static inline void CMD_END(struct vivante_ringbuffer *rb)
+static inline void CMD_END(struct vivante_gem_object *buffer)
 {
-	OUT_RING(rb, VIV_FE_END_HEADER_OP_END);
+	OUT(buffer, VIV_FE_END_HEADER_OP_END);
 }
 
-static inline void CMD_NOP(struct vivante_ringbuffer *rb)
+static inline void CMD_NOP(struct vivante_gem_object *buffer)
 {
-	OUT_RING(rb, VIV_FE_NOP_HEADER_OP_NOP);
+	OUT(buffer, VIV_FE_NOP_HEADER_OP_NOP);
 }
 
-static inline void CMD_WAIT(struct vivante_ringbuffer *rb)
+static inline void CMD_WAIT(struct vivante_gem_object *buffer)
 {
-	OUT_RING(rb, VIV_FE_WAIT_HEADER_OP_WAIT | 200);
+	OUT(buffer, VIV_FE_WAIT_HEADER_OP_WAIT | 200);
 }
 
-static inline void CMD_LINK(struct vivante_ringbuffer *rb, u16 prefetch, u32 address)
+static inline void CMD_LINK(struct vivante_gem_object *buffer, u16 prefetch, u32 address)
 {
-	OUT_RING(rb, VIV_FE_LINK_HEADER_OP_LINK | VIV_FE_LINK_HEADER_PREFETCH(prefetch));
-	OUT_RING(rb, address);
+	OUT(buffer, VIV_FE_LINK_HEADER_OP_LINK | VIV_FE_LINK_HEADER_PREFETCH(prefetch));
+	OUT(buffer, address);
 }
 
-static inline void CMD_STALL(struct vivante_ringbuffer *rb, u32 from, u32 to)
+static inline void CMD_STALL(struct vivante_gem_object *buffer, u32 from, u32 to)
 {
-	OUT_RING(rb, VIV_FE_STALL_HEADER_OP_STALL);
-	OUT_RING(rb, VIV_FE_STALL_TOKEN_FROM(from) | VIV_FE_STALL_TOKEN_TO(to));
+	OUT(buffer, VIV_FE_STALL_HEADER_OP_STALL);
+	OUT(buffer, VIV_FE_STALL_TOKEN_FROM(from) | VIV_FE_STALL_TOKEN_TO(to));
 }
 
-static void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
+static void vivante_cmd_select_pipe(struct vivante_gem_object *buffer, u8 pipe)
 {
 	u32 flush;
 	u32 stall;
@@ -87,12 +95,12 @@ static void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
 	stall = VIVS_GL_SEMAPHORE_TOKEN_FROM(SYNC_RECIPIENT_FE) |
 			VIVS_GL_SEMAPHORE_TOKEN_TO(SYNC_RECIPIENT_PE);
 
-	CMD_LOAD_STATE(rb, VIVS_GL_FLUSH_CACHE, flush);
-	CMD_LOAD_STATE(rb, VIVS_GL_SEMAPHORE_TOKEN, stall);
+	CMD_LOAD_STATE(buffer, VIVS_GL_FLUSH_CACHE, flush);
+	CMD_LOAD_STATE(buffer, VIVS_GL_SEMAPHORE_TOKEN, stall);
 
-	CMD_STALL(rb, SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
+	CMD_STALL(buffer, SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
 
-	CMD_LOAD_STATE(rb, VIVS_GL_PIPE_SELECT, VIVS_GL_PIPE_SELECT_PIPE(pipe));
+	CMD_LOAD_STATE(buffer, VIVS_GL_PIPE_SELECT, VIVS_GL_PIPE_SELECT_PIPE(pipe));
 }
 
 static void vivante_cmd_dump(struct vivante_gem_object *obj, u32 len)
@@ -108,16 +116,18 @@ static void vivante_cmd_dump(struct vivante_gem_object *obj, u32 len)
 
 u32 vivante_cmd_init(struct vivante_gpu *gpu)
 {
-	/* initialize ringbuffer */
-	gpu->rb->written = 0;
+	struct vivante_gem_object *buffer = to_vivante_bo(gpu->buffer);
 
-	vivante_cmd_select_pipe(gpu->rb, gpu->pipe);
+	/* initialize buffer */
+	buffer->used = 0;
+	buffer->cur = vivante_gem_vaddr_locked(gpu->buffer);
 
-	CMD_WAIT(gpu->rb);
-	CMD_LINK(gpu->rb, 1, vivante_gem_paddr_locked(gpu->rb->bo) + ((gpu->rb->written - 1) * 4));
-	gpu->rb->ll = gpu->rb->cur - 1;
+	vivante_cmd_select_pipe(buffer, gpu->pipe);
 
-	return gpu->rb->written;
+	CMD_WAIT(buffer);
+	CMD_LINK(buffer, 1, vivante_gem_paddr_locked(gpu->buffer) + ((buffer->used - 1) * 4));
+
+	return buffer->used;
 }
 
 void vivante_cmd_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit)

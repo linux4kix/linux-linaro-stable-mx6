@@ -226,12 +226,12 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	}
 	vivante_register_mmu(gpu->dev, gpu->mmu);
 
-	/* Create ringbuffer: */
-	gpu->rb = vivante_ringbuffer_new(gpu, PAGE_SIZE);
-	if (IS_ERR(gpu->rb)) {
-		ret = PTR_ERR(gpu->rb);
-		gpu->rb = NULL;
-		dev_err(gpu->dev->dev, "could not create ringbuffer: %d\n", ret);
+	/* Create buffer: */
+	gpu->buffer = vivante_gem_new(gpu->dev, PAGE_SIZE, ETNA_BO_CMDSTREAM | MSM_BO_WC);
+	if (IS_ERR(gpu->buffer)) {
+		ret = PTR_ERR(gpu->buffer);
+		gpu->buffer = NULL;
+		dev_err(gpu->dev->dev, "could not create buffer: %d\n", ret);
 		goto fail;
 	}
 
@@ -250,7 +250,7 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	words = ALIGN(words, 2) / 2;
 
 	gpu_write(gpu, VIVS_HI_INTR_ENBL, ~0U);
-	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, vivante_gem_paddr_locked(gpu->rb->bo));
+	gpu_write(gpu, VIVS_FE_COMMAND_ADDRESS, vivante_gem_paddr_locked(gpu->buffer));
 	gpu_write(gpu, VIVS_FE_COMMAND_CONTROL, VIVS_FE_COMMAND_CONTROL_ENABLE | VIVS_FE_COMMAND_CONTROL_PREFETCH(words));
 
 	return 0;
@@ -696,8 +696,8 @@ static void vivante_gpu_unbind(struct device *dev, struct device *master,
 
 	WARN_ON(!list_empty(&gpu->active_list));
 
-	if (gpu->rb)
-		vivante_ringbuffer_destroy(gpu->rb);
+	if (gpu->buffer)
+		drm_gem_object_unreference(gpu->buffer);
 
 	if (gpu->mmu)
 		vivante_iommu_destroy(gpu->mmu);

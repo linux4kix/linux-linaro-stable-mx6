@@ -22,7 +22,6 @@
 #include <linux/regulator/consumer.h>
 
 #include "vivante_drv.h"
-#include "vivante_ringbuffer.h"
 
 struct vivante_gem_submit;
 
@@ -86,7 +85,8 @@ struct vivante_gpu {
 	struct vivante_chip_identity identity;
 	int pipe;
 
-	struct vivante_ringbuffer *rb;
+	/* 'ring'-buffer: */
+	struct drm_gem_object *buffer;
 
 	/* event management: */
 	bool event_used[30];
