@@ -38,6 +38,7 @@
 
 struct vivante_gpu;
 struct vivante_mmu;
+struct vivante_gem_submit;
 
 struct vivante_file_private {
 	/* currently we don't do anything useful with this.. but when
@@ -109,6 +110,7 @@ struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
 struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 		uint32_t size, struct sg_table *sgt);
 u32 vivante_cmd_init(struct vivante_gpu *gpu);
+void vivante_cmd_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit);
 
 #ifdef CONFIG_DEBUG_FS
 void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m);

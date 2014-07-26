@@ -119,3 +119,8 @@ u32 vivante_cmd_init(struct vivante_gpu *gpu)
 
 	return gpu->rb->written;
 }
+
+void vivante_cmd_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit)
+{
+
+}
