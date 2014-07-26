@@ -128,7 +128,7 @@ int __init imx6sl_cpuidle_init(void)
 	 */
 	wfi_iram_base = __arm_ioremap(iram_paddr,
 					WFI_IN_IRAM_SIZE,
-					MT_MEMORY_NONCACHED);
+					MT_MEMORY_RWX_NONCACHED);
 	if (!wfi_iram_base)
 		pr_err("wfi_ram_base NOT remapped\n");
 
