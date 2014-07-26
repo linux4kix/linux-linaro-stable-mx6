@@ -16,6 +16,7 @@
  */
 
 #include "vivante_gpu.h"
+#include "vivante_gem.h"
 
 #include "common.xml.h"
 #include "state.xml.h"
@@ -92,6 +93,17 @@ static void vivante_cmd_select_pipe(struct vivante_ringbuffer *rb, u8 pipe)
 	CMD_STALL(rb, SYNC_RECIPIENT_FE, SYNC_RECIPIENT_PE);
 
 	CMD_LOAD_STATE(rb, VIVS_GL_PIPE_SELECT, VIVS_GL_PIPE_SELECT_PIPE(pipe));
+}
+
+static void vivante_cmd_dump(struct vivante_gem_object *obj, u32 len)
+{
+	u32 size = obj->base.size;
+	u32 *ptr = vivante_gem_vaddr_locked(&obj->base);
+
+	printk(KERN_INFO "free: 0x%08x\n", size - len * 4);
+
+	print_hex_dump(KERN_INFO, "cmd ", DUMP_PREFIX_OFFSET, 16, 4,
+			ptr, len * 4 * 4, 0);
 }
 
 u32 vivante_cmd_init(struct vivante_gpu *gpu)
