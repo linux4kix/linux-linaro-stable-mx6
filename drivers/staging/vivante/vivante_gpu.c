@@ -483,9 +483,6 @@ static void hangcheck_handler(unsigned long data)
 	/* if still more pending work, reset the hangcheck timer: */
 	if (gpu->submitted_fence > gpu->hangcheck_fence)
 		hangcheck_timer_reset(gpu);
-
-	/* workaround for missing irq: */
-	queue_work(priv->wq, &gpu->retire_work);
 }
 
 /*
