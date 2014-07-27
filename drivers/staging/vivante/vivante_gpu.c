@@ -244,7 +244,7 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	}
 
 	/* Start command processor */
-	words = vivante_cmd_init(gpu);
+	words = vivante_buffer_init(gpu);
 
 	/* convert number of 32 bit words to number of 64 bit words */
 	words = ALIGN(words, 2) / 2;
@@ -594,7 +594,7 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	event = event_alloc(gpu);
 	gpu->event_to_fence[event] = submit->fence;
 
-	vivante_cmd_queue(gpu, event, submit);
+	vivante_buffer_queue(gpu, event, submit);
 
 	ret = 0;
 

@@ -103,7 +103,7 @@ static void vivante_cmd_select_pipe(struct vivante_gem_object *buffer, u8 pipe)
 	CMD_LOAD_STATE(buffer, VIVS_GL_PIPE_SELECT, VIVS_GL_PIPE_SELECT_PIPE(pipe));
 }
 
-static void vivante_cmd_dump(struct vivante_gem_object *obj, u32 len)
+static void vivante_buffer_dump(struct vivante_gem_object *obj, u32 len)
 {
 	u32 size = obj->base.size;
 	u32 *ptr = vivante_gem_vaddr_locked(&obj->base);
@@ -114,7 +114,7 @@ static void vivante_cmd_dump(struct vivante_gem_object *obj, u32 len)
 			ptr, len * 4 * 4, 0);
 }
 
-u32 vivante_cmd_init(struct vivante_gpu *gpu)
+u32 vivante_buffer_init(struct vivante_gpu *gpu)
 {
 	struct vivante_gem_object *buffer = to_vivante_bo(gpu->buffer);
 
@@ -130,7 +130,7 @@ u32 vivante_cmd_init(struct vivante_gpu *gpu)
 	return buffer->used;
 }
 
-void vivante_cmd_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit)
+void vivante_buffer_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit)
 {
 	u32 i;
 
@@ -139,7 +139,7 @@ void vivante_cmd_queue(struct vivante_gpu *gpu, unsigned int event, struct vivan
 
 		/* TODO: remove later */
 		if (unlikely(drm_debug & DRM_UT_CORE)) {
-			vivante_cmd_dump(obj, submit->cmd[i].size);
+			vivante_buffer_dump(obj, submit->cmd[i].size);
 		}
 	}
 }
