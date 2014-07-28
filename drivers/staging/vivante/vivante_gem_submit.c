@@ -372,6 +372,12 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		if (ret)
 			goto out;
 
+		if (!(vivante_obj->flags & ETNA_BO_CMDSTREAM)) {
+			DRM_ERROR("cmdstream bo has flag ETNA_BO_CMDSTREAM not set\n");
+			ret = -EINVAL;
+			goto out;
+		}
+
 		if (submit_cmd.size % 4) {
 			DRM_ERROR("non-aligned cmdstream buffer size: %u\n",
 					submit_cmd.size);
