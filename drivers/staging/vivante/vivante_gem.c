@@ -96,7 +96,7 @@ void msm_gem_put_pages(struct drm_gem_object *obj)
 	/* when we start tracking the pin count, then do something here */
 }
 
-int msm_gem_mmap_obj(struct drm_gem_object *obj,
+static int vivante_gem_mmap_obj(struct drm_gem_object *obj,
 		struct vm_area_struct *vma)
 {
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
@@ -135,7 +135,7 @@ int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 		return ret;
 	}
 
-	return msm_gem_mmap_obj(vma->vm_private_data, vma);
+	return vivante_gem_mmap_obj(vma->vm_private_data, vma);
 }
 
 int msm_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
