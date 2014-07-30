@@ -59,6 +59,7 @@ int ultra_low_bus_freq_mode;
 unsigned int ddr_med_rate;
 unsigned int ddr_normal_rate;
 
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 static int bus_freq_scaling_initialized;
 static struct device *busfreq_dev;
 static int busfreq_suspended;
@@ -459,9 +460,11 @@ int set_high_bus_freq(int high_bus_freq)
 
 	return 0;
 }
+#endif
 
 void request_bus_freq(enum bus_freq_mode mode)
 {
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 	mutex_lock(&bus_freq_mutex);
 
 	if (mode == BUS_FREQ_HIGH)
@@ -507,12 +510,14 @@ void request_bus_freq(enum bus_freq_mode mode)
 		return;
 	}
 	mutex_unlock(&bus_freq_mutex);
+#endif
 	return;
 }
 EXPORT_SYMBOL(request_bus_freq);
 
 void release_bus_freq(enum bus_freq_mode mode)
 {
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 	mutex_lock(&bus_freq_mutex);
 
 	if (mode == BUS_FREQ_HIGH) {
@@ -585,10 +590,12 @@ void release_bus_freq(enum bus_freq_mode mode)
 	}
 
 	mutex_unlock(&bus_freq_mutex);
+#endif
 	return;
 }
 EXPORT_SYMBOL(release_bus_freq);
 
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 static void bus_freq_daemon_handler(struct work_struct *work)
 {
 	mutex_lock(&bus_freq_mutex);
@@ -671,6 +678,7 @@ static struct notifier_block imx_busfreq_reboot_notifier = {
 
 static DEVICE_ATTR(enable, 0644, bus_freq_scaling_enable_show,
 			bus_freq_scaling_enable_store);
+#endif
 
 /*!
  * This is the probe routine for the bus frequency driver.
@@ -683,6 +691,7 @@ static DEVICE_ATTR(enable, 0644, bus_freq_scaling_enable_show,
 
 static int busfreq_probe(struct platform_device *pdev)
 {
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 	u32 err;
 
 	busfreq_dev = &pdev->dev;
@@ -855,6 +864,7 @@ static int busfreq_probe(struct platform_device *pdev)
 		dev_err(busfreq_dev, "max_ddr_freq entry missing\n");
 		return -EINVAL;
 	}
+#endif
 
 	high_bus_freq_mode = 1;
 	med_bus_freq_mode = 0;
@@ -862,6 +872,7 @@ static int busfreq_probe(struct platform_device *pdev)
 	audio_bus_freq_mode = 0;
 	ultra_low_bus_freq_mode = 0;
 
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 	bus_freq_scaling_is_active = 1;
 	bus_freq_scaling_initialized = 1;
 
@@ -888,6 +899,7 @@ static int busfreq_probe(struct platform_device *pdev)
 		dev_err(busfreq_dev, "Busfreq init of MMDC failed\n");
 		return err;
 	}
+#endif
 	return 0;
 }
 
@@ -923,11 +935,13 @@ static int __init busfreq_init(void)
 
 static void __exit busfreq_cleanup(void)
 {
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 	sysfs_remove_file(&busfreq_dev->kobj, &dev_attr_enable.attr);
 
+	bus_freq_scaling_initialized = 0;
+#endif
 	/* Unregister the device structure */
 	platform_driver_unregister(&busfreq_driver);
-	bus_freq_scaling_initialized = 0;
 }
 
 module_init(busfreq_init);
