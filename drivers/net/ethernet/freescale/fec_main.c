@@ -1610,6 +1610,8 @@ static int fec_enet_clk_enable(struct net_device *ndev, bool enable)
 			clk_disable_unprepare(fep->clk_enet_out);
 		if (fep->clk_ptp)
 			clk_disable_unprepare(fep->clk_ptp);
+
+		pm_runtime_disable(&fep->pdev->dev);
 	}
 
 	return 0;
