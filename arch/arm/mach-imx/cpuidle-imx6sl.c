@@ -38,6 +38,7 @@ static int imx6sl_enter_wait(struct cpuidle_device *dev,
 			    struct cpuidle_driver *drv, int index)
 {
 	imx6q_set_lpm(WAIT_UNCLOCKED);
+#ifdef CONFIG_ARM_IMX6_CPUFREQ
 	if (ultra_low_bus_freq_mode || audio_bus_freq_mode) {
 		/*
 		 * Flush the TLB, to ensure no TLB maintenance occurs
@@ -50,7 +51,10 @@ static int imx6sl_enter_wait(struct cpuidle_device *dev,
 		 * Also float DDR IO pads.
 		 */
 		imx6sl_wfi_in_iram_fn(wfi_iram_base, iomux_base, reg_addrs, audio_bus_freq_mode);
-	} else {
+	}
+	else
+#endif
+	{
 		imx6sl_set_wait_clk(true);
 		cpu_do_idle();
 		imx6sl_set_wait_clk(false);
