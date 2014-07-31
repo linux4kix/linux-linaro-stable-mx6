@@ -1546,6 +1546,8 @@ static void sdhci_do_set_ios(struct sdhci_host *host, struct mmc_ios *ios)
 			ios->drv_type = (preset & SDHCI_PRESET_DRV_MASK)
 				>> SDHCI_PRESET_DRV_SHIFT;
 		}
+
+		host->ops->set_clock(host, host->clock);
 	} else
 		sdhci_writeb(host, ctrl, SDHCI_HOST_CONTROL);
 
