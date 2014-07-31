@@ -64,6 +64,9 @@ struct imx6_pcie {
 
 /* PCIe Port Logic registers (memory-mapped) */
 #define PL_OFFSET 0x700
+#define PCIE_PL_PFLR (PL_OFFSET + 0x08)
+#define PCIE_PL_PFLR_LINK_STATE_MASK		(0x3f << 16)
+#define PCIE_PL_PFLR_FORCE_LINK			(1 << 15)
 #define PCIE_PHY_DEBUG_R0 (PL_OFFSET + 0x28)
 #define PCIE_PHY_DEBUG_R1 (PL_OFFSET + 0x2c)
 #define PCIE_PHY_DEBUG_R1_XMLH_LINK_IN_TRAINING	(1 << 29)
@@ -307,6 +310,31 @@ err_sata_ref:
 static void imx6_pcie_init_phy(struct pcie_port *pp)
 {
 	struct imx6_pcie *imx6_pcie = to_imx6_pcie(pp);
+	u32 val, gpr1, gpr12;
+
+	/*
+	 * If the bootloader already enabled the link we need some special
+	 * handling to get the core back into a state where it is safe to
+	 * touch it for configuration. As there is no dedicated reset signal
+	 * wired up for MX6QDL, we need to manually force LTSSM into "detect"
+	 * state before completely disabling LTSSM, which is a prerequisite
+	 * for core configuration.
+	 * If both LTSSM_ENABLE and REF_SSP_ENABLE are active we have a strong
+	 * indication that the bootloader activated the link.
+	 */
+	regmap_read(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1, &gpr1);
+	regmap_read(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12, &gpr12);
+
+	if ((gpr1 & IMX6Q_GPR1_PCIE_REF_CLK_EN) &&
+	    (gpr12 & IMX6Q_GPR12_PCIE_CTL_2)) {
+		val = readl(pp->dbi_base + PCIE_PL_PFLR);
+		val &= ~PCIE_PL_PFLR_LINK_STATE_MASK;
+		val |= PCIE_PL_PFLR_FORCE_LINK;
+		writel(val, pp->dbi_base + PCIE_PL_PFLR);
+
+		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
+				IMX6Q_GPR12_PCIE_CTL_2, 0 << 10);
+	}
 
 	regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 			IMX6Q_GPR12_PCIE_CTL_2, 0 << 10);
@@ -999,6 +1027,14 @@ err:
 	return ret;
 }
 
+static void imx6_pcie_shutdown(struct platform_device *pdev)
+{
+	struct imx6_pcie *imx6_pcie = platform_get_drvdata(pdev);
+
+	/* bring down link, so bootloader gets clean state in case of reboot */
+	imx6_pcie_assert_core_reset(&imx6_pcie->pp);
+}
+
 static const struct of_device_id imx6_pcie_of_match[] = {
 	{ .compatible = "fsl,imx6q-pcie", },
 	{},
@@ -1011,6 +1047,7 @@ static struct platform_driver imx6_pcie_driver = {
 		.owner	= THIS_MODULE,
 		.of_match_table = imx6_pcie_of_match,
 	},
+	.shutdown = imx6_pcie_shutdown,
 };
 
 /* Freescale PCIe driver does not allow module unload */
