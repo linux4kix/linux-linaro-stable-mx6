@@ -96,6 +96,27 @@ void msm_gem_put_pages(struct drm_gem_object *obj)
 	/* when we start tracking the pin count, then do something here */
 }
 
+static int vivante_gem_mmap_cmd(struct drm_gem_object *obj,
+	struct vm_area_struct *vma)
+{
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	int ret;
+
+	/*
+	 * Clear the VM_PFNMAP flag that was set by drm_gem_mmap(), and set the
+	 * vm_pgoff (used as a fake buffer offset by DRM) to 0 as we want to map
+	 * the whole buffer.
+	 */
+	vma->vm_flags &= ~VM_PFNMAP;
+	vma->vm_pgoff = 0;
+
+	ret = dma_mmap_writecombine(obj->dev->dev, vma,
+				vivante_obj->vaddr, vivante_obj->paddr,
+				vma->vm_end - vma->vm_start);
+
+	return ret;
+}
+
 static int vivante_gem_mmap_obj(struct drm_gem_object *obj,
 		struct vm_area_struct *vma)
 {
@@ -127,6 +148,7 @@ static int vivante_gem_mmap_obj(struct drm_gem_object *obj,
 
 int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 {
+	struct vivante_gem_object *obj;
 	int ret;
 
 	ret = drm_gem_mmap(filp, vma);
@@ -135,7 +157,13 @@ int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 		return ret;
 	}
 
-	return vivante_gem_mmap_obj(vma->vm_private_data, vma);
+	obj = to_vivante_bo(vma->vm_private_data);
+	if (obj->flags & ETNA_BO_CMDSTREAM)
+		ret = vivante_gem_mmap_cmd(vma->vm_private_data, vma);
+	else
+		ret = vivante_gem_mmap_obj(vma->vm_private_data, vma);
+
+	return ret;
 }
 
 int msm_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
