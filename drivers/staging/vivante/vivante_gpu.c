@@ -260,14 +260,39 @@ fail:
 }
 
 #ifdef CONFIG_DEBUG_FS
+struct dma_debug {
+	u32 address[2];
+	u32 state[2];
+};
+
+static void verify_dma(struct vivante_gpu *gpu, struct dma_debug *debug)
+{
+	u32 i;
+
+	debug->address[0] = gpu_read(gpu, VIVS_FE_DMA_ADDRESS);
+	debug->state[0]   = gpu_read(gpu, VIVS_FE_DMA_DEBUG_STATE);
+
+	for (i = 0; i < 500; i++) {
+		debug->address[1] = gpu_read(gpu, VIVS_FE_DMA_ADDRESS);
+		debug->state[1]   = gpu_read(gpu, VIVS_FE_DMA_DEBUG_STATE);
+
+		if (debug->address[0] != debug->address[1])
+			break;
+
+		if (debug->state[0] != debug->state[1])
+			break;
+	}
+}
+
 void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 {
-	u32 dma_address = gpu_read(gpu, VIVS_FE_DMA_ADDRESS);
-	u32 dma_state = gpu_read(gpu, VIVS_FE_DMA_DEBUG_STATE);
+	struct dma_debug debug;
 	u32 dma_lo = gpu_read(gpu, VIVS_FE_DMA_LOW);
 	u32 dma_hi = gpu_read(gpu, VIVS_FE_DMA_HIGH);
 	u32 axi = gpu_read(gpu, VIVS_HI_AXI_STATUS);
 	u32 idle = gpu_read(gpu, VIVS_HI_IDLE_STATE);
+
+	verify_dma(gpu, &debug);
 
 	seq_printf(m, "\taxi: 0x08%x\n", axi);
 	seq_printf(m, "\tidle: 0x08%x\n", idle);
@@ -309,9 +334,21 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 		seq_printf(m, "\t write: 0x%08x\n", write);
 	}
 
-	seq_printf(m, "\tDMA\n");
-	seq_printf(m, "\t address: 0x%08x\n", dma_address);
-	seq_printf(m, "\t state: 0x%08x\n", dma_state);
+	seq_printf(m, "\tDMA ");
+
+	if ((debug.address[0] == debug.address[1]) && (debug.state[0] == debug.state[1])) {
+		seq_printf(m, "seems to be stuck\n");
+	} else {
+		if (debug.address[0] == debug.address[1])
+			seq_printf(m, "adress is constant\n");
+		else
+			seq_printf(m, "is runing\n");
+	}
+
+	seq_printf(m, "\t address 0: 0x%08x\n", debug.address[0]);
+	seq_printf(m, "\t address 1: 0x%08x\n", debug.address[1]);
+	seq_printf(m, "\t state 0: 0x%08x\n", debug.state[0]);
+	seq_printf(m, "\t state 1: 0x%08x\n", debug.state[1]);
 	seq_printf(m, "\t last fetch 64 bit word: 0x%08x-0x%08x\n", dma_hi, dma_lo);
 }
 #endif
