@@ -179,7 +179,7 @@ int update_ddr_freq(int ddr_rate)
 	if (ddr_rate == curr_ddr_rate)
 		return 0;
 
-	printk(KERN_DEBUG "\nBus freq set to %d start...\n", ddr_rate);
+	pr_debug("Bus freq set to %d start...\n", ddr_rate);
 
 	if (low_bus_freq_mode || audio_bus_freq_mode)
 		dll_off = true;
@@ -249,7 +249,7 @@ int update_ddr_freq(int ddr_rate)
 
 	local_irq_enable();
 
-	printk(KERN_DEBUG "Bus freq set to %d done!\n", ddr_rate);
+	pr_debug("Bus freq set to %d done!\n", ddr_rate);
 
 	return 0;
 }
@@ -266,7 +266,7 @@ int init_mmdc_ddr3_settings(struct platform_device *busfreq_pdev)
 
 	node = of_find_compatible_node(NULL, NULL, "fsl,imx6q-mmdc-combine");
 	if (!node) {
-		printk(KERN_ERR "failed to find imx6q-mmdc device tree data!\n");
+		pr_err("failed to find imx6q-mmdc device tree data!\n");
 		return -EINVAL;
 	}
 	mmdc_base = of_iomap(node, 0);
@@ -279,7 +279,7 @@ int init_mmdc_ddr3_settings(struct platform_device *busfreq_pdev)
 		node = of_find_compatible_node(NULL, NULL,
 			"fsl,imx6dl-iomuxc");
 	if (!node) {
-		printk(KERN_ERR "failed to find imx6q-iomux device tree data!\n");
+		pr_err("failed to find imx6q-iomux device tree data!\n");
 		return -EINVAL;
 	}
 	iomux_base = of_iomap(node, 0);
@@ -287,7 +287,7 @@ int init_mmdc_ddr3_settings(struct platform_device *busfreq_pdev)
 
 	node = of_find_compatible_node(NULL, NULL, "fsl,imx6q-ccm");
 	if (!node) {
-		printk(KERN_ERR "failed to find imx6q-ccm device tree data!\n");
+		pr_err("failed to find imx6q-ccm device tree data!\n");
 		return -EINVAL;
 	}
 	ccm_base = of_iomap(node, 0);
@@ -295,7 +295,7 @@ int init_mmdc_ddr3_settings(struct platform_device *busfreq_pdev)
 
 	node = of_find_compatible_node(NULL, NULL, "arm,pl310-cache");
 	if (!node) {
-		printk(KERN_ERR "failed to find imx6q-pl310-cache device tree data!\n");
+		pr_err("failed to find imx6q-pl310-cache device tree data!\n");
 		return -EINVAL;
 	}
 	l2_base = of_iomap(node, 0);
@@ -304,7 +304,7 @@ int init_mmdc_ddr3_settings(struct platform_device *busfreq_pdev)
 	node = NULL;
 	node = of_find_compatible_node(NULL, NULL, "arm,cortex-a9-gic");
 	if (!node) {
-		printk(KERN_ERR "failed to find imx6q-a9-gic device tree data!\n");
+		pr_err("failed to find imx6q-a9-gic device tree data!\n");
 		return -EINVAL;
 	}
 	gic_dist_base = of_iomap(node, 0);
