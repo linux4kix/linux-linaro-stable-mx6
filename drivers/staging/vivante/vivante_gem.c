@@ -482,7 +482,7 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 }
 #endif
 
-void msm_gem_free_object(struct drm_gem_object *obj)
+void vivante_gem_free_object(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 	struct vivante_drm_private *priv = obj->dev->dev_private;
