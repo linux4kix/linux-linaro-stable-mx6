@@ -32,8 +32,7 @@ static inline void OUT(struct vivante_gem_object *buffer, uint32_t data)
 	BUG_ON(buffer->used >= buffer->base.size);
 
 	/* TODO: alignment */
-	*(buffer->cur++) = data;
-	buffer->used++;
+	buffer->cur[buffer->used++] = data;
 }
 
 static inline void CMD_LOAD_STATE(struct vivante_gem_object *buffer, u32 reg, u32 value)
