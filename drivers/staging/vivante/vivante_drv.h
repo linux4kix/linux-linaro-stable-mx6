@@ -73,7 +73,7 @@ void vivante_update_fence(struct drm_device *dev, uint32_t fence);
 int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		struct drm_file *file);
 
-int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma);
 int msm_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
 uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj);
 int vivante_gem_get_iova_locked(struct vivante_gpu *gpu, struct drm_gem_object *obj,

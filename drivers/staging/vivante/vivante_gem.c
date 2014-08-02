@@ -125,7 +125,7 @@ static int vivante_gem_mmap_obj(struct drm_gem_object *obj,
 	return 0;
 }
 
-int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma)
+int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 {
 	int ret;
 
