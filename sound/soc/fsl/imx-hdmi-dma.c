@@ -312,11 +312,56 @@ static void hdmi_dma_copy_16_c_fast(u16 *src, u32 *dst, int samples)
 	}
 }
 
-static void hdmi_dma_copy_16(u16 *src, u32 *dst, int framecnt, int channelcnt)
+static void hdmi_dma_copy_24_c_lut(u32 *src, u32 *dst, int samples,
+				u8 *lookup_table)
+{
+	u32 sample, head;
+	int i;
+
+	for (i = 0; i < samples; i++) {
+		/* get source sample */
+		sample = *src++ & 0x00ffffff;
+
+		/* get packet header and p-bit */
+		head = *lookup_table++ ^ (odd_ones(sample) << 3);
+
+		/* store sample and header */
+		*dst++ = (head << 24) | sample;
+	}
+}
+
+static void hdmi_dma_copy_24_c_fast(u32 *src, u32 *dst, int samples)
+{
+	u32 sample;
+	int i;
+
+	for (i = 0; i < samples; i++) {
+		/* get source sample */
+		sample = *src++ & 0x00ffffff;
+
+		/* store sample and p-bit */
+		*dst++ = (odd_ones(sample) << (3+24)) | sample;
+	}
+}
+
+static void hdmi_mmap_copy(u8 *src, int samplesize, u32 *dst, int framecnt, int channelcnt)
 {
 	/* split input frames into 192-frame each */
 	int count_in_192 = (framecnt + 191) / 192;
 	int i;
+
+	typedef void (*fn_copy_lut)(u8 *src, u32 *dst, int samples, u8 *lookup_table);
+	typedef void (*fn_copy_fast)(u8 *src, u32 *dst, int samples);
+	fn_copy_lut copy_lut;
+	fn_copy_fast copy_fast;
+
+	if (samplesize == 4) {
+		copy_lut = (fn_copy_lut)hdmi_dma_copy_24_c_lut;
+		copy_fast = (fn_copy_fast)hdmi_dma_copy_24_c_fast;
+	} else {
+		copy_lut = (fn_copy_lut)hdmi_dma_copy_16_c_lut;
+		copy_fast = (fn_copy_fast)hdmi_dma_copy_16_c_fast;
+	}
 
 	for (i = 0; i < count_in_192; i++) {
 		int count, samples;
@@ -324,20 +369,20 @@ static void hdmi_dma_copy_16(u16 *src, u32 *dst, int framecnt, int channelcnt)
 		/* handles frame index [0, 48) */
 		count = (framecnt < 48) ? framecnt : 48;
 		samples = count * channelcnt;
-		hdmi_dma_copy_16_c_lut(src, dst, samples, g_packet_head_table);
+		copy_lut(src, dst, samples, g_packet_head_table);
 		framecnt -= count;
 		if (framecnt == 0)
 			break;
 
-		src  += samples;
+		src  += samples * samplesize;
 		dst += samples;
 
 		/* handles frame index [48, 192) */
 		count = (framecnt < 192 - 48) ? framecnt : 192 - 48;
 		samples = count * channelcnt;
-		hdmi_dma_copy_16_c_fast(src, dst, samples);
+		copy_fast(src, dst, samples);
 		framecnt -= count;
-		src  += samples;
+		src  += samples * samplesize;
 		dst += samples;
 	}
 }
@@ -350,7 +395,6 @@ static void hdmi_dma_mmap_copy(struct snd_pcm_substream *substream,
 	struct hdmi_dma_priv *priv = runtime->private_data;
 	struct device *dev = rtd->platform->dev;
 	u32 framecount, *dst;
-	u16 *src16;
 
 	framecount = count / (priv->sample_align * priv->channels);
 
@@ -359,9 +403,10 @@ static void hdmi_dma_mmap_copy(struct snd_pcm_substream *substream,
 
 	switch (priv->format) {
 	case SNDRV_PCM_FORMAT_S16_LE:
+	case SNDRV_PCM_FORMAT_S24_LE:
 		/* dma_buffer is the mmapped buffer we are copying pcm from. */
-		src16 = (u16 *)(runtime->dma_area + offset);
-		hdmi_dma_copy_16(src16, dst, framecount, priv->channels);
+		hdmi_mmap_copy(runtime->dma_area + offset,
+			       priv->sample_align, dst, framecount, priv->channels);
 		break;
 	default:
 		dev_err(dev, "unsupported sample format %s\n",
