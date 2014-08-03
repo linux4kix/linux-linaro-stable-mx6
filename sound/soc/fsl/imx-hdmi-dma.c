@@ -229,30 +229,29 @@ static u32 hdmi_dma_add_frame_info(struct hdmi_dma_priv *priv,
 	union hdmi_audio_dma_data_t subframe;
 
 	subframe.U = 0;
-	iec_header.B.channel = subframe_idx;
-
-	/* fill b (start-of-block) */
-	subframe.B.b = (priv->frame_idx == 0) ? 1 : 0;
 
 	/* fill c (channel status) */
-	if (priv->frame_idx < 42)
-		subframe.B.c = (iec_header.U >> priv->frame_idx) & 0x1;
-	else
-		subframe.B.c = 0;
-
+	if (priv->frame_idx < 42) {
+		iec_header.B.channel = 
+			(iec_header.B.linear_pcm == 0) ? subframe_idx : 0;
+		subframe.B.c = iec_header.U >> priv->frame_idx;
+	}
+	
 	/* fill v (validity) */
 	subframe.B.v = iec_header.B.linear_pcm;
-
-	subframe.B.p = odd_ones(pcm_data);
-	subframe.B.p ^= subframe.B.c;
-	subframe.B.p ^= subframe.B.u;
-	subframe.B.p ^= subframe.B.v;
 
 	/* fill data */
 	if (priv->sample_bits == 16)
 		subframe.B.data = pcm_data << 8;
 	else
 		subframe.B.data = pcm_data;
+
+	/* fill p (parity) Note: Do not include b ! */
+	subframe.B.p = odd_ones(subframe.U);
+
+	/* fill b (start-of-block) */
+	if (priv->frame_idx == 0)
+		subframe.B.b = 1;
 
 	return subframe.U;
 }
