@@ -185,6 +185,16 @@
 &spdif {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hummingboard_spdif>;
+	clocks = <&clks 197>, <&clks 0>,
+		 <&clks 197>, <&clks 0>,
+		 <&clks 0>,   <&clks 0>,
+		 <&clks 0>,   <&clks 0>,
+		 <&clks 0>;
+	clock-names = "core",  "rxtx0",
+		      "rxtx1", "rxtx2",
+		      "rxtx3", "rxtx4",
+		      "rxtx5", "rxtx6",
+		      "rxtx7";
 	status = "okay";
 };
 
