@@ -136,13 +136,13 @@ static struct cea_channel_speaker_allocation channel_allocations[] = {
 					 /* 2.1 */
 	{ .ca_index = 0x01, .speakers = {   0,    0,   0,   0,   0,  LFE,  FR,  FL },},
 					 /* Dolby Surround */
+	{ .ca_index = 0x08, .speakers = {   0,    0,  RR,  RL,   0,    0,  FR,  FL },},  /* Prefer FL/FR/RL/RR over FL/FR/LFE/FC */
 	{ .ca_index = 0x02, .speakers = {   0,    0,   0,   0,  FC,    0,  FR,  FL },},
 	{ .ca_index = 0x03, .speakers = {   0,    0,   0,   0,  FC,  LFE,  FR,  FL },},
 	{ .ca_index = 0x04, .speakers = {   0,    0,   0,  RC,   0,    0,  FR,  FL },},
 	{ .ca_index = 0x05, .speakers = {   0,    0,   0,  RC,   0,  LFE,  FR,  FL },},
 	{ .ca_index = 0x06, .speakers = {   0,    0,   0,  RC,  FC,    0,  FR,  FL },},
 	{ .ca_index = 0x07, .speakers = {   0,    0,   0,  RC,  FC,  LFE,  FR,  FL },},
-	{ .ca_index = 0x08, .speakers = {   0,    0,  RR,  RL,   0,    0,  FR,  FL },},
 	{ .ca_index = 0x09, .speakers = {   0,    0,  RR,  RL,   0,  LFE,  FR,  FL },},
 	{ .ca_index = 0x0a, .speakers = {   0,    0,  RR,  RL,  FC,    0,  FR,  FL },},
 					 /* surround51 */

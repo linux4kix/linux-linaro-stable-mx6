@@ -79,6 +79,26 @@ struct hdmi_dma_priv {
 /* max 8 channels supported; channels are interleaved */
 static u8 g_packet_head_table[48 * 8];
 
+/* channel remapping for hdmi_dma_copy_xxxx() */
+static u8 g_channel_remap_table[24];
+
+/* default mapping tables */
+static const u8 channel_maps_alsa_cea[5][8] = { 
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 0CH: no remapping */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 2CH: no remapping */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 4CH: no remapping */
+	{ 0, 1, 4, 5, 3, 2, 6, 7 },	/* 6CH: ALSA5.1 to CEA */
+	{ 0, 1, 6, 7, 3, 2, 4, 5 }	/* 8CH: ALSA7.1 to CEA */
+};
+
+static const u8 channel_maps_cea_alsa[5][8] = { 
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 0CH: no remapping */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 2CH: no remapping */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 4CH: no remapping */
+	{ 0, 1, 5, 4, 2, 3, 6, 7 },	/* 6CH: CEA to ALSA5.1 */
+	{ 0, 1, 5, 4, 6, 7, 2, 3 }	/* 8CH: CEA to ALSA7.1 */
+};
+
 union hdmi_audio_header_t iec_header;
 EXPORT_SYMBOL(iec_header);
 
@@ -259,7 +279,7 @@ static u32 hdmi_dma_add_frame_info(struct hdmi_dma_priv *priv,
 static void init_table(int channels)
 {
 	unsigned char *p = g_packet_head_table;
-	int i, ch = 0;
+	int i, map_sel, ch = 0;
 
 	for (i = 0; i < 48; i++) {
 		int b = 0;
@@ -276,6 +296,12 @@ static void init_table(int channels)
 			*p++ = (b << 4) | (c << 2) | (c << 3);
 		}
 	}
+
+	map_sel = channels / 2;
+	for (i = 0; i < 24; i++) {
+		g_channel_remap_table[i] = (i / channels) * channels + 
+			channel_maps_cea_alsa[map_sel][i % channels];
+	}
 }
 
 /* Optimization for IEC head */
@@ -283,31 +309,41 @@ static void hdmi_dma_copy_16_c_lut(u16 *src, u32 *dst, int samples,
 				u8 *lookup_table)
 {
 	u32 sample, head;
-	int i;
+	int i = 0;
 
-	for (i = 0; i < samples; i++) {
+	while (samples--) {
 		/* get source sample */
-		sample = *src++;
+		sample = src[g_channel_remap_table[i]];
 
 		/* get packet header and p-bit */
 		head = *lookup_table++ ^ (odd_ones(sample) << 3);
 
 		/* store sample and header */
 		*dst++ = (head << 24) | (sample << 8);
+
+		if (++i == 24) {
+			src += 24;
+			i = 0;
+		}
 	}
 }
 
 static void hdmi_dma_copy_16_c_fast(u16 *src, u32 *dst, int samples)
 {
 	u32 sample;
-	int i;
+	int i = 0;
 
-	for (i = 0; i < samples; i++) {
+	while (samples--) {
 		/* get source sample */
-		sample = *src++;
+		sample = src[g_channel_remap_table[i]];
 
 		/* store sample and p-bit */
 		*dst++ = (odd_ones(sample) << (3+24)) | (sample << 8);
+
+		if (++i == 24) {
+			src += 24;
+			i = 0;
+		}
 	}
 }
 
@@ -315,31 +351,41 @@ static void hdmi_dma_copy_24_c_lut(u32 *src, u32 *dst, int samples,
 				u8 *lookup_table)
 {
 	u32 sample, head;
-	int i;
+	int i = 0;
 
-	for (i = 0; i < samples; i++) {
+	while (samples--) {
 		/* get source sample */
-		sample = *src++ & 0x00ffffff;
+		sample = src[g_channel_remap_table[i]] & 0x00ffffff;
 
 		/* get packet header and p-bit */
 		head = *lookup_table++ ^ (odd_ones(sample) << 3);
 
 		/* store sample and header */
 		*dst++ = (head << 24) | sample;
+
+		if (++i == 24) {
+			src += 24;
+			i = 0;
+		}
 	}
 }
 
 static void hdmi_dma_copy_24_c_fast(u32 *src, u32 *dst, int samples)
 {
 	u32 sample;
-	int i;
+	int i = 0;
 
-	for (i = 0; i < samples; i++) {
+	while (samples--) {
 		/* get source sample */
-		sample = *src++ & 0x00ffffff;
+		sample = src[g_channel_remap_table[i]] & 0x00ffffff;
 
 		/* store sample and p-bit */
 		*dst++ = (odd_ones(sample) << (3+24)) | sample;
+
+		if (++i == 24) {
+			src += 24;
+			i = 0;
+		}
 	}
 }
 
@@ -525,8 +571,8 @@ static int hdmi_dma_set_thrsld_incrtype(struct device *dev, int channels)
 
 static int hdmi_dma_configure_dma(struct device *dev, int channels)
 {
-	u8 i, val = 0;
 	int ret;
+	static u8 chan_enable[] = { 0x00, 0x03, 0x33, 0x3f, 0xff };
 
 	if (channels <= 0 || channels > 8 || channels % 2 != 0) {
 		dev_err(dev, "unsupported channel number: %d\n", channels);
@@ -539,10 +585,7 @@ static int hdmi_dma_configure_dma(struct device *dev, int channels)
 	if (ret)
 		return ret;
 
-	for (i = 0; i < channels; i += 2)
-		val |= 0x3 << i;
-
-	hdmi_writeb(val, HDMI_AHB_DMA_CONF1);
+	hdmi_writeb(chan_enable[channels / 2], HDMI_AHB_DMA_CONF1);
 
 	return 0;
 }
@@ -641,24 +684,45 @@ static int hdmi_dma_copy(struct snd_pcm_substream *substream, int channel,
 	struct hdmi_dma_priv *priv = runtime->private_data;
 	unsigned int count = frames_to_bytes(runtime, frames);
 	unsigned int pos_bytes = frames_to_bytes(runtime, pos);
-	u32 *hw_buf;
-	int subframe_idx;
-	u32 pcm_data;
-
+	int channel_no, pcm_idx, subframe_no, bits_left, sample_bits, map_sel;
+	u32 pcm_data[8], pcm_temp, *hw_buf, sample_block;
+	
 	/* Adding frame info to pcm data from userspace and copy to hw_buffer */
 	hw_buf = (u32 *)(priv->hw_buffer.area + (pos_bytes * priv->buffer_ratio));
 
+	sample_bits = priv->sample_align * 8;
+	sample_block = priv->sample_align * priv->channels;
+	map_sel = (iec_header.B.linear_pcm == 0) ? (priv->channels / 2) : 0;
+
 	while (count > 0) {
-		for (subframe_idx = 1 ; subframe_idx <= priv->channels ; subframe_idx++) {
-			if (copy_from_user(&pcm_data, buf, priv->sample_align))
-				return -EFAULT;
+		if (copy_from_user(pcm_data, buf, sample_block))
+			return -EFAULT;
 
-			buf += priv->sample_align;
-			count -= priv->sample_align;
+		buf += sample_block;
+		count -= sample_block;
 
-			/* Save the header info to the audio dma buffer */
-			*hw_buf++ = hdmi_dma_add_frame_info(priv, pcm_data, subframe_idx);
-		}
+		channel_no = pcm_idx = 0;
+		do {
+			pcm_temp = pcm_data[pcm_idx++];
+			bits_left = 32;
+			for (;;) {
+				/* re-map channels */
+				subframe_no = channel_maps_alsa_cea[map_sel][channel_no];
+
+				/* Save the header info to the audio dma buffer */
+				hw_buf[subframe_no] = hdmi_dma_add_frame_info(
+							priv, pcm_temp, subframe_no + 1);
+				channel_no++;
+
+				if (bits_left <= sample_bits)
+					break;
+
+				bits_left -= sample_bits;
+				pcm_temp >>= sample_bits;
+			}
+		} while (channel_no < priv->channels);
+
+		hw_buf += priv->channels;
 
 		priv->frame_idx++;
 		if (priv->frame_idx == 192)
