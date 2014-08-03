@@ -239,6 +239,9 @@ static u32 hdmi_dma_add_frame_info(struct hdmi_dma_priv *priv,
 	else
 		subframe.B.c = 0;
 
+	/* fill v (validity) */
+	subframe.B.v = iec_header.B.linear_pcm;
+
 	subframe.B.p = odd_ones(pcm_data);
 	subframe.B.p ^= subframe.B.c;
 	subframe.B.p ^= subframe.B.u;
