@@ -211,7 +211,7 @@ static void hdmi_mask(int mask)
 	hdmi_writeb(regval, HDMI_AHB_DMA_MASK);
 }
 
-int odd_ones(unsigned a)
+static inline int odd_ones(unsigned a)
 {
 	a ^= a >> 8;
 	a ^= a >> 4;
@@ -279,51 +279,32 @@ static void init_table(int channels)
 static void hdmi_dma_copy_16_c_lut(u16 *src, u32 *dst, int samples,
 				u8 *lookup_table)
 {
-	u32 sample, head, p;
+	u32 sample, head;
 	int i;
 
 	for (i = 0; i < samples; i++) {
 		/* get source sample */
 		sample = *src++;
 
-		/* xor every bit */
-		p = sample ^ (sample >> 8);
-		p ^= (p >> 4);
-		p ^= (p >> 2);
-		p ^= (p >> 1);
-		p &= 1;	/* only want last bit */
-		p <<= 3; /* bit p */
+		/* get packet header and p-bit */
+		head = *lookup_table++ ^ (odd_ones(sample) << 3);
 
-		/* get packet header */
-		head = *lookup_table++;
-
-		/* fix head */
-		head ^= p;
-
-		/* store */
+		/* store sample and header */
 		*dst++ = (head << 24) | (sample << 8);
 	}
 }
 
 static void hdmi_dma_copy_16_c_fast(u16 *src, u32 *dst, int samples)
 {
-	u32 sample, p;
+	u32 sample;
 	int i;
 
 	for (i = 0; i < samples; i++) {
 		/* get source sample */
 		sample = *src++;
 
-		/* xor every bit */
-		p = sample ^ (sample >> 8);
-		p ^= (p >> 4);
-		p ^= (p >> 2);
-		p ^= (p >> 1);
-		p &= 1;	/* only want last bit */
-		p <<= 3; /* bit p */
-
-		/* store */
-		*dst++ = (p << 24) | (sample << 8);
+		/* store sample and p-bit */
+		*dst++ = (odd_ones(sample) << (3+24)) | (sample << 8);
 	}
 }
 
