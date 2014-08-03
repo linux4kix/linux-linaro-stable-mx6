@@ -213,6 +213,7 @@ static void hdmi_mask(int mask)
 
 static inline int odd_ones(unsigned a)
 {
+	a ^= a >> 16;
 	a ^= a >> 8;
 	a ^= a >> 4;
 	a ^= a >> 2;

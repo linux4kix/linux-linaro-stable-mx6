@@ -301,7 +301,7 @@ static void fsl_hdmi_get_playback_sample_size(void)
 	playback_sample_size[i++] = 16;
 
 	if (edid_cfg.sample_sizes & 0x4)
-		playback_sample_size[i++] = 24;
+		playback_sample_size[i++] = 32;
 
 	playback_constraint_bits.list = playback_sample_size;
 	playback_constraint_bits.count = i;
