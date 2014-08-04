@@ -130,7 +130,6 @@
 
 &can1 {
 	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_hummingboard_flexcan1>;
 	status = "okay";
 };
 
@@ -158,11 +157,33 @@
 };
 
 &iomuxc {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_hog>;
 	hummingboard {
-		pinctrl_hummingboard_flexcan1: hummingboard-flexcan1 {
+		pinctrl_hog: hoggrp {
 			fsl,pins = <
-				MX6QDL_PAD_SD3_CLK__FLEXCAN1_RX 0x80000000
-				MX6QDL_PAD_SD3_CMD__FLEXCAN1_TX 0x80000000
+				/*
+				 * 26 pin header GPIO description. The pins 
+				 * numbering as following -
+				 * GPIO number | GPIO (bank,num) |  PIN number
+				 * ------------+-----------------+------------
+				 * gpio1       | (1,1)           | IO7
+				 * gpio73      | (3,9)           | IO11
+				 * gpio72      | (3,8)           | IO12
+				 * gpio71      | (3,7)           | IO13
+				 * gpio70      | (3,6)           | IO15
+				 * gpio194     | (7,2)           | IO16
+				 * gpio195     | (7,3)           | IO18
+				 * gpio67      | (3,3)           | IO22
+				 */
+				MX6QDL_PAD_GPIO_1__GPIO1_IO01 0x8001b0b1
+				MX6QDL_PAD_EIM_DA9__GPIO3_IO09 0x8001b0b1
+				MX6QDL_PAD_EIM_DA8__GPIO3_IO08 0x8001b0b1
+				MX6QDL_PAD_EIM_DA7__GPIO3_IO07 0x8001b0b1
+				MX6QDL_PAD_EIM_DA6__GPIO3_IO06 0x8001b0b1
+				MX6QDL_PAD_SD3_CMD__GPIO7_IO02 0x8001b0b1
+				MX6QDL_PAD_SD3_CLK__GPIO7_IO03 0x8001b0b1
+				MX6QDL_PAD_EIM_DA3__GPIO3_IO03 0x8001b0b1
 			>;
 		};
 
