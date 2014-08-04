@@ -31,12 +31,13 @@ static inline void OUT(struct vivante_gem_object *buffer, uint32_t data)
 {
 	BUG_ON(buffer->used >= buffer->base.size);
 
-	/* TODO: alignment */
 	buffer->cur[buffer->used++] = data;
 }
 
 static inline void CMD_LOAD_STATE(struct vivante_gem_object *buffer, u32 reg, u32 value)
 {
+	buffer->used = ALIGN(buffer->used, 2);
+
 	/* write a register via cmd stream */
 	OUT(buffer, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(1) |
 			VIV_FE_LOAD_STATE_HEADER_OFFSET(reg >> VIV_FE_LOAD_STATE_HEADER_OFFSET__SHR));
@@ -46,6 +47,7 @@ static inline void CMD_LOAD_STATE(struct vivante_gem_object *buffer, u32 reg, u3
 static inline void CMD_LOAD_STATES(struct vivante_gem_object *buffer, u32 reg, u16 count, u32 *values)
 {
 	u16 i;
+	buffer->used = ALIGN(buffer->used, 2);
 
 	OUT(buffer, VIV_FE_LOAD_STATE_HEADER_OP_LOAD_STATE | VIV_FE_LOAD_STATE_HEADER_COUNT(count) |
 			VIV_FE_LOAD_STATE_HEADER_OFFSET(reg >> VIV_FE_LOAD_STATE_HEADER_OFFSET__SHR));
@@ -56,27 +58,37 @@ static inline void CMD_LOAD_STATES(struct vivante_gem_object *buffer, u32 reg, u
 
 static inline void CMD_END(struct vivante_gem_object *buffer)
 {
+	buffer->used = ALIGN(buffer->used, 2);
+
 	OUT(buffer, VIV_FE_END_HEADER_OP_END);
 }
 
 static inline void CMD_NOP(struct vivante_gem_object *buffer)
 {
+	buffer->used = ALIGN(buffer->used, 2);
+
 	OUT(buffer, VIV_FE_NOP_HEADER_OP_NOP);
 }
 
 static inline void CMD_WAIT(struct vivante_gem_object *buffer)
 {
+	buffer->used = ALIGN(buffer->used, 2);
+
 	OUT(buffer, VIV_FE_WAIT_HEADER_OP_WAIT | 200);
 }
 
 static inline void CMD_LINK(struct vivante_gem_object *buffer, u16 prefetch, u32 address)
 {
+	buffer->used = ALIGN(buffer->used, 2);
+
 	OUT(buffer, VIV_FE_LINK_HEADER_OP_LINK | VIV_FE_LINK_HEADER_PREFETCH(prefetch));
 	OUT(buffer, address);
 }
 
 static inline void CMD_STALL(struct vivante_gem_object *buffer, u32 from, u32 to)
 {
+	buffer->used = ALIGN(buffer->used, 2);
+
 	OUT(buffer, VIV_FE_STALL_HEADER_OP_STALL);
 	OUT(buffer, VIV_FE_STALL_TOKEN_FROM(from) | VIV_FE_STALL_TOKEN_TO(to));
 }
