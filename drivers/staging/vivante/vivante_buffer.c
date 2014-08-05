@@ -31,7 +31,7 @@ static inline void OUT(struct vivante_gem_object *buffer, uint32_t data)
 {
 	BUG_ON(buffer->used >= buffer->base.size);
 
-	buffer->cur[buffer->used++] = data;
+	buffer->start[buffer->used++] = data;
 }
 
 static inline void CMD_LOAD_STATE(struct vivante_gem_object *buffer, u32 reg, u32 value)
@@ -131,7 +131,7 @@ u32 vivante_buffer_init(struct vivante_gpu *gpu)
 
 	/* initialize buffer */
 	buffer->used = 0;
-	buffer->cur = vivante_gem_vaddr_locked(gpu->buffer);
+	buffer->start = vivante_gem_vaddr_locked(gpu->buffer);
 
 	vivante_cmd_select_pipe(buffer, gpu->pipe);
 
