@@ -110,7 +110,7 @@ static int vivante_gem_mmap_cmd(struct drm_gem_object *obj,
 	vma->vm_flags &= ~VM_PFNMAP;
 	vma->vm_pgoff = 0;
 
-	ret = dma_mmap_writecombine(obj->dev->dev, vma,
+	ret = dma_mmap_coherent(obj->dev->dev, vma,
 				vivante_obj->vaddr, vivante_obj->paddr,
 				vma->vm_end - vma->vm_start);
 
