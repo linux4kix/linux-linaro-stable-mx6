@@ -136,7 +136,7 @@ u32 vivante_buffer_init(struct vivante_gpu *gpu)
 	vivante_cmd_select_pipe(buffer, gpu->pipe);
 
 	CMD_WAIT(buffer);
-	CMD_LINK(buffer, 1, (u32)buffer->start + ((buffer->used - 1) * 4));
+	CMD_LINK(buffer, 1, vivante_gem_paddr_locked(gpu->buffer) + ((buffer->used - 1) * 4));
 
 	return buffer->used;
 }
