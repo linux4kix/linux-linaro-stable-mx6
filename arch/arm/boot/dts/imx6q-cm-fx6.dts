@@ -233,6 +233,12 @@
 	status = "okay";
    };
 
+   eth@pcie {
+	compatible = "intel,i211";
+	local-mac-address = [00 1C 1D 1E 1F 20];
+	status = "okay";
+   };
+
 };
 
 &iomuxc {
