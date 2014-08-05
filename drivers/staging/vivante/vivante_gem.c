@@ -482,19 +482,23 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 }
 #endif
 
-void vivante_gem_free_object(struct drm_gem_object *obj)
+static void vivante_free_cmd(struct drm_gem_object *obj)
 {
-	struct drm_device *dev = obj->dev;
-	struct vivante_drm_private *priv = obj->dev->dev_private;
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+
+	drm_gem_free_mmap_offset(obj);
+
+	dma_free_coherent(obj->dev->dev, obj->size,
+		vivante_obj->vaddr, vivante_obj->paddr);
+
+	drm_gem_object_release(obj);
+}
+
+static void vivante_free_obj(struct drm_gem_object *obj)
+{
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct vivante_drm_private *priv = obj->dev->dev_private;
 	struct vivante_iommu *mmu = priv->mmu;
-
-	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
-
-	/* object should not be on active list: */
-	WARN_ON(is_active(vivante_obj));
-
-	list_del(&vivante_obj->mm_list);
 
 	if (mmu && vivante_obj->iova) {
 		uint32_t offset = vivante_obj->gpu_vram_node->start;
@@ -525,6 +529,24 @@ void vivante_gem_free_object(struct drm_gem_object *obj)
 		reservation_object_fini(vivante_obj->resv);
 
 	drm_gem_object_release(obj);
+}
+
+void vivante_gem_free_object(struct drm_gem_object *obj)
+{
+	struct drm_device *dev = obj->dev;
+	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+
+	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
+
+	/* object should not be on active list: */
+	WARN_ON(is_active(vivante_obj));
+
+	list_del(&vivante_obj->mm_list);
+
+	if (vivante_obj->flags & ETNA_BO_CMDSTREAM)
+		vivante_free_cmd(obj);
+	else
+		vivante_free_obj(obj);
 
 	kfree(vivante_obj);
 }
