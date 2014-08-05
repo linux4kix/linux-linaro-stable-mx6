@@ -61,7 +61,6 @@ struct vivante_gem_object {
 
 	/* for buffer manipulation during submit */
 	u32 used;
-	u32 *start;
 };
 #define to_vivante_bo(x) container_of(x, struct vivante_gem_object, base)
 
