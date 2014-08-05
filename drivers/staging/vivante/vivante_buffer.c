@@ -117,7 +117,7 @@ static void vivante_cmd_select_pipe(struct vivante_gem_object *buffer, u8 pipe)
 static void vivante_buffer_dump(struct vivante_gem_object *obj, u32 len)
 {
 	u32 size = obj->base.size;
-	u32 *ptr = vivante_gem_vaddr_locked(&obj->base);
+	u32 *ptr = obj->start;
 
 	printk(KERN_INFO "free: 0x%08x\n", size - len * 4);
 
@@ -136,7 +136,7 @@ u32 vivante_buffer_init(struct vivante_gpu *gpu)
 	vivante_cmd_select_pipe(buffer, gpu->pipe);
 
 	CMD_WAIT(buffer);
-	CMD_LINK(buffer, 1, vivante_gem_paddr_locked(gpu->buffer) + ((buffer->used - 1) * 4));
+	CMD_LINK(buffer, 1, (u32)buffer->start + ((buffer->used - 1) * 4));
 
 	return buffer->used;
 }
