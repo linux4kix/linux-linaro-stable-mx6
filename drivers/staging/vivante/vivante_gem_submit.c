@@ -359,7 +359,6 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		void __user *userptr =
 			to_user_ptr(args->cmds + (i * sizeof(submit_cmd)));
 		struct vivante_gem_object *vivante_obj;
-		uint32_t iova;
 
 		ret = copy_from_user(&submit_cmd, userptr, sizeof(submit_cmd));
 		if (ret) {
@@ -368,7 +367,7 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		}
 
 		ret = submit_bo(submit, submit_cmd.submit_idx,
-				&vivante_obj, &iova, NULL);
+				&vivante_obj, NULL, NULL);
 		if (ret)
 			goto out;
 
@@ -394,7 +393,6 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 
 		submit->cmd[i].type = submit_cmd.type;
 		submit->cmd[i].size = submit_cmd.size / 4;
-		submit->cmd[i].iova = iova + submit_cmd.submit_offset;
 		submit->cmd[i].obj = vivante_obj;
 
 		if (submit->valid)
