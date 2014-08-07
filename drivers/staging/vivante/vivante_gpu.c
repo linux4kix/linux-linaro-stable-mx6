@@ -542,6 +542,7 @@ static unsigned int event_alloc(struct vivante_gpu *gpu)
 		if (gpu->event_used[i] == false) {
 			gpu->event_used[i] = true;
 			event = i;
+			break;
 		}
 	}
 
