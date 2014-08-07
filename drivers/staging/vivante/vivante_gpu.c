@@ -672,18 +672,20 @@ static irqreturn_t irq_handler(int irq, void *data)
 	struct vivante_gpu *gpu = data;
 	irqreturn_t ret = IRQ_NONE;
 
-	u32 event = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
+	u32 intr = gpu_read(gpu, VIVS_HI_INTR_ACKNOWLEDGE);
 
-	if (event != 0) {
-		if (event & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
+	if (intr != 0) {
+		dev_dbg(gpu->dev->dev, "intr 0x%08x\n", intr);
+
+		if (intr & VIVS_HI_INTR_ACKNOWLEDGE_AXI_BUS_ERROR)
 			dev_err(gpu->dev->dev, "AXI bus error\n");
-
-		/* handle irq */
-		dev_info(gpu->dev->dev, "event 0x%08x\n", event);
-
-		gpu->retired_fence = gpu->event_to_fence[event];
-		event_free(gpu, event);
-		vivante_gpu_retire(gpu);
+		else {
+			uint8_t event = __fls(intr);
+			dev_dbg(gpu->dev->dev, "event %u\n", event);
+			gpu->retired_fence = gpu->event_to_fence[event];
+			event_free(gpu, event);
+			vivante_gpu_retire(gpu);
+		}
 
 		ret = IRQ_HANDLED;
 	}
