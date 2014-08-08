@@ -630,6 +630,12 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	 */
 
 	event = event_alloc(gpu);
+	if (unlikely(event == ~0U)) {
+		DRM_ERROR("no free event\n");
+		ret = -EBUSY;
+		goto fail;
+	}
+
 	gpu->event_to_fence[event] = submit->fence;
 
 	vivante_buffer_queue(gpu, event, submit);
@@ -662,6 +668,7 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	}
 	hangcheck_timer_reset(gpu);
 
+fail:
 	return ret;
 }
 
