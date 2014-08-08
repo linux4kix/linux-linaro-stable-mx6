@@ -297,52 +297,52 @@ void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m)
 	seq_printf(m, "\taxi: 0x08%x\n", axi);
 	seq_printf(m, "\tidle: 0x08%x\n", idle);
 	if ((idle & VIVS_HI_IDLE_STATE_FE) == 0)
-		seq_printf(m, "\t FE is not idle\n");
+		seq_puts(m, "\t FE is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_DE) == 0)
-		seq_printf(m, "\t DE is not idle\n");
+		seq_puts(m, "\t DE is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_PE) == 0)
-		seq_printf(m, "\t PE is not idle\n");
+		seq_puts(m, "\t PE is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_SH) == 0)
-		seq_printf(m, "\t SH is not idle\n");
+		seq_puts(m, "\t SH is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_PA) == 0)
-		seq_printf(m, "\t PA is not idle\n");
+		seq_puts(m, "\t PA is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_SE) == 0)
-		seq_printf(m, "\t SE is not idle\n");
+		seq_puts(m, "\t SE is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_RA) == 0)
-		seq_printf(m, "\t RA is not idle\n");
+		seq_puts(m, "\t RA is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_TX) == 0)
-		seq_printf(m, "\t TX is not idle\n");
+		seq_puts(m, "\t TX is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_VG) == 0)
-		seq_printf(m, "\t VG is not idle\n");
+		seq_puts(m, "\t VG is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_IM) == 0)
-		seq_printf(m, "\t IM is not idle\n");
+		seq_puts(m, "\t IM is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_FP) == 0)
-		seq_printf(m, "\t FP is not idle\n");
+		seq_puts(m, "\t FP is not idle\n");
 	if ((idle & VIVS_HI_IDLE_STATE_TS) == 0)
-		seq_printf(m, "\t TS is not idle\n");
+		seq_puts(m, "\t TS is not idle\n");
 	if (idle & VIVS_HI_IDLE_STATE_AXI_LP)
-		seq_printf(m, "\t AXI low power mode\n");
+		seq_puts(m, "\t AXI low power mode\n");
 
 	if (gpu->identity.features & chipFeatures_DEBUG_MODE) {
 		u32 read0 = gpu_read(gpu, VIVS_MC_DEBUG_READ0);
 		u32 read1 = gpu_read(gpu, VIVS_MC_DEBUG_READ1);
 		u32 write = gpu_read(gpu, VIVS_MC_DEBUG_WRITE);
 
-		seq_printf(m, "\tMC\n");
+		seq_puts(m, "\tMC\n");
 		seq_printf(m, "\t read0: 0x%08x\n", read0);
 		seq_printf(m, "\t read1: 0x%08x\n", read1);
 		seq_printf(m, "\t write: 0x%08x\n", write);
 	}
 
-	seq_printf(m, "\tDMA ");
+	seq_puts(m, "\tDMA ");
 
 	if ((debug.address[0] == debug.address[1]) && (debug.state[0] == debug.state[1])) {
-		seq_printf(m, "seems to be stuck\n");
+		seq_puts(m, "seems to be stuck\n");
 	} else {
 		if (debug.address[0] == debug.address[1])
-			seq_printf(m, "adress is constant\n");
+			seq_puts(m, "adress is constant\n");
 		else
-			seq_printf(m, "is runing\n");
+			seq_puts(m, "is runing\n");
 	}
 
 	seq_printf(m, "\t address 0: 0x%08x\n", debug.address[0]);
