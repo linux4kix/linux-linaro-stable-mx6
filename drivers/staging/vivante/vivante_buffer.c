@@ -120,7 +120,8 @@ static void vivante_buffer_dump(struct vivante_gem_object *obj, u32 len)
 	u32 size = obj->base.size;
 	u32 *ptr = obj->vaddr;
 
-	printk(KERN_INFO "free: 0x%08x\n", size - len * 4);
+	dev_dbg(obj->gpu->dev->dev, "virt %p phys 0x%08x free 0x%08x\n",
+			obj->vaddr, obj->paddr, size - len * 4);
 
 	print_hex_dump(KERN_INFO, "cmd ", DUMP_PREFIX_OFFSET, 16, 4,
 			ptr, len * 4 * 4, 0);
