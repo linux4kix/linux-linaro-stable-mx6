@@ -613,7 +613,7 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 {
 	struct drm_device *dev = gpu->dev;
 	struct vivante_drm_private *priv = dev->dev_private;
-	int ret;
+	int ret = 0;
 	unsigned int event, i;
 
 	submit->fence = ++priv->next_fence;
@@ -639,8 +639,6 @@ int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submi
 	gpu->event_to_fence[event] = submit->fence;
 
 	vivante_buffer_queue(gpu, event, submit);
-
-	ret = 0;
 
 	priv->lastctx = ctx;
 
