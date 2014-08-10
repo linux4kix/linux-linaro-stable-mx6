@@ -166,9 +166,9 @@ static void imx_pu_clk(bool enable)
 			clk_prepare_enable(gpu2d_clk);
 			clk_prepare_enable(openvg_axi_clk);
 		} else {
+			clk_prepare_enable(vpu_clk);
 			clk_prepare_enable(gpu3d_clk);
 			clk_prepare_enable(gpu3d_shader_clk);
-			clk_prepare_enable(vpu_clk);
 			clk_prepare_enable(gpu2d_clk);
 			clk_prepare_enable(gpu2d_axi_clk);
 			clk_prepare_enable(openvg_axi_clk);
@@ -178,12 +178,12 @@ static void imx_pu_clk(bool enable)
 			clk_disable_unprepare(gpu2d_clk);
 			clk_disable_unprepare(openvg_axi_clk);
 		} else {
-			clk_disable_unprepare(gpu3d_clk);
-			clk_disable_unprepare(gpu3d_shader_clk);
-			clk_disable_unprepare(vpu_clk);
-			clk_disable_unprepare(gpu2d_clk);
-			clk_disable_unprepare(gpu2d_axi_clk);
 			clk_disable_unprepare(openvg_axi_clk);
+			clk_disable_unprepare(gpu2d_axi_clk);
+			clk_disable_unprepare(gpu2d_clk);
+			clk_disable_unprepare(gpu3d_shader_clk);
+			clk_disable_unprepare(gpu3d_clk);
+			clk_disable_unprepare(vpu_clk);
 		}
 	}
 }
@@ -406,7 +406,7 @@ static int imx_gpc_probe(struct platform_device *pdev)
 	int ret;
 
 	gpc_dev = &pdev->dev;
-
+	
 	pu_reg = devm_regulator_get(gpc_dev, "pu");
 	if (IS_ERR(pu_reg)) {
 		ret = PTR_ERR(pu_reg);
