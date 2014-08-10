@@ -431,7 +431,7 @@ static int fsl_hdmi_iec_get(struct snd_kcontrol *kcontrol,
 {
 	int i;
 
-	for (i = 0 ; i < 4 ; i++)
+	for (i = 0 ; i < 6 ; i++)
 		uvalue->value.iec958.status[i] = iec_header.status[i];
 
 	return 0;
@@ -446,7 +446,7 @@ static int fsl_hdmi_iec_put(struct snd_kcontrol *kcontrol,
 	if (uvalue->value.iec958.status[0] & IEC958_AES0_PROFESSIONAL)
 		return -EPERM;
 
-	for (i = 0 ; i < 4 ; i++) {
+	for (i = 0 ; i < 6 ; i++) {
 		iec_header.status[i] = uvalue->value.iec958.status[i];
 		pr_debug("%s status[%d]=0x%02x\n", __func__, i, iec_header.status[i]);
 	}
