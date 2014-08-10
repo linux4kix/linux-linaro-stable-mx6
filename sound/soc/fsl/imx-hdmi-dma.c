@@ -247,18 +247,24 @@ static u32 hdmi_dma_add_frame_info(struct hdmi_dma_priv *priv,
 				   u32 pcm_data, int subframe_idx)
 {
 	union hdmi_audio_dma_data_t subframe;
+	union hdmi_audio_header_t tmp_header;
 
 	subframe.U = 0;
 
-	/* fill c (channel status) */
 	if (priv->frame_idx < 42) {
-		iec_header.B.channel =
-			(iec_header.B.linear_pcm == 0) ? (subframe_idx + 1) : 0;
-		subframe.B.c = iec_header.U >> priv->frame_idx;
-	}
+		tmp_header = iec_header;
 
-	/* fill v (validity) */
-	subframe.B.v = iec_header.B.linear_pcm;
+		/* fill v (validity) */
+		subframe.B.v = tmp_header.B.linear_pcm;
+
+		/* fill c (channel status) */
+		if (tmp_header.B.linear_pcm == 0)
+			tmp_header.B.channel = subframe_idx + 1;
+		subframe.B.c = tmp_header.U >> priv->frame_idx;
+	} else {
+		/* fill v (validity), c is always zero */
+		subframe.B.v = iec_header.B.linear_pcm;
+	}
 
 	/* fill data */
 	if (priv->sample_bits == 16)
@@ -277,8 +283,9 @@ static u32 hdmi_dma_add_frame_info(struct hdmi_dma_priv *priv,
 
 static void init_table(int channels)
 {
-	unsigned char *p = g_packet_head_table;
 	int i, map_sel, ch;
+	unsigned char *p = g_packet_head_table;
+	union hdmi_audio_header_t tmp_header = iec_header;
 
 	for (i = 0; i < 48; i++) {
 		int b = 0;
@@ -288,8 +295,8 @@ static void init_table(int channels)
 		for (ch = 0; ch < channels; ch++) {
 			int c = 0;
 			if (i < 42) {
-				iec_header.B.channel = ch+1;
-				c = (iec_header.U >> i) & 0x1;
+				tmp_header.B.channel = ch + 1;
+				c = (tmp_header.U >> i) & 0x1;
 			}
 			/* preset bit p as c */
 			*p++ = (b << 4) | (c << 2) | (c << 3);
