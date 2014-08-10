@@ -153,6 +153,10 @@ unlock:
 static int imx6_cpufreq_init(struct cpufreq_policy *policy)
 {
 	policy->clk = arm_clk;
+
+	if (policy->cur > freq_table[0].frequency)
+		request_bus_freq(BUS_FREQ_HIGH);
+
 	return cpufreq_generic_init(policy, freq_table, transition_latency);
 }
 
