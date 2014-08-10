@@ -80,10 +80,12 @@ static int imx6_set_target(struct cpufreq_policy *policy, unsigned int index)
 
 	/* scaling up?  scale voltage before frequency */
 	if (new_freq > old_freq) {
-		ret = regulator_set_voltage_tol(pu_reg, imx6_soc_volt[index], 0);
-		if (ret) {
-			dev_err(cpu_dev, "failed to scale vddpu up: %d\n", ret);
-			goto unlock;
+		if (regulator_is_enabled(pu_reg)) {
+			ret = regulator_set_voltage_tol(pu_reg, imx6_soc_volt[index], 0);
+			if (ret) {
+				dev_err(cpu_dev, "failed to scale vddpu up: %d\n", ret);
+				goto unlock;
+			}
 		}
 		ret = regulator_set_voltage_tol(soc_reg, imx6_soc_volt[index], 0);
 		if (ret) {
@@ -135,10 +137,12 @@ static int imx6_set_target(struct cpufreq_policy *policy, unsigned int index)
 			dev_warn(cpu_dev, "failed to scale vddsoc down: %d\n", ret);
 			ret = 0;
 		}
-		ret = regulator_set_voltage_tol(pu_reg, imx6_soc_volt[index], 0);
-		if (ret) {
-			dev_warn(cpu_dev, "failed to scale vddpu down: %d\n", ret);
-			ret = 0;
+		if (regulator_is_enabled(pu_reg)) {
+			ret = regulator_set_voltage_tol(pu_reg, imx6_soc_volt[index], 0);
+			if (ret) {
+				dev_warn(cpu_dev, "failed to scale vddpu down: %d\n", ret);
+				ret = 0;
+			}
 		}
 	}
 
