@@ -374,10 +374,10 @@ static int vivante_ioctl_gem_new(struct drm_device *dev, void *data,
 
 #define TS(t) ((struct timespec){ .tv_sec = (t).tv_sec, .tv_nsec = (t).tv_nsec })
 
-static int msm_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
+static int vivante_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_msm_gem_cpu_prep *args = data;
+	struct drm_vivante_gem_cpu_prep *args = data;
 	struct drm_gem_object *obj;
 	int ret;
 
@@ -392,10 +392,10 @@ static int msm_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
 	return ret;
 }
 
-static int msm_ioctl_gem_cpu_fini(struct drm_device *dev, void *data,
+static int vivante_ioctl_gem_cpu_fini(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_msm_gem_cpu_fini *args = data;
+	struct drm_vivante_gem_cpu_fini *args = data;
 	struct drm_gem_object *obj;
 	int ret;
 
@@ -439,11 +439,11 @@ static int vivante_ioctl_wait_fence(struct drm_device *dev, void *data,
 }
 
 static const struct drm_ioctl_desc vivante_ioctls[] = {
-	DRM_IOCTL_DEF_DRV(VIVANTE_GET_PARAM, vivante_ioctl_get_param,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_NEW,   vivante_ioctl_gem_new,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VIVANTE_GET_PARAM,    vivante_ioctl_get_param,    DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_NEW,      vivante_ioctl_gem_new,      DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_INFO,     vivante_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_PREP, msm_ioctl_gem_cpu_prep, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_FINI, msm_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_CPU_PREP, vivante_ioctl_gem_cpu_prep, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_CPU_FINI, vivante_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_SUBMIT,   vivante_ioctl_gem_submit,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(VIVANTE_WAIT_FENCE,   vivante_ioctl_wait_fence,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 };

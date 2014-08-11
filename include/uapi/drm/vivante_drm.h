@@ -87,17 +87,17 @@ struct drm_vivante_gem_info {
 	uint64_t offset;         /* out, offset to pass to mmap() */
 };
 
-#define MSM_PREP_READ        0x01
-#define MSM_PREP_WRITE       0x02
-#define MSM_PREP_NOSYNC      0x04
+#define ETNA_PREP_READ        0x01
+#define ETNA_PREP_WRITE       0x02
+#define ETNA_PREP_NOSYNC      0x04
 
-struct drm_msm_gem_cpu_prep {
+struct drm_vivante_gem_cpu_prep {
 	uint32_t handle;         /* in */
 	uint32_t op;             /* in, mask of MSM_PREP_x */
 	struct drm_vivante_timespec timeout;   /* in */
 };
 
-struct drm_msm_gem_cpu_fini {
+struct drm_vivante_gem_cpu_fini {
 	uint32_t handle;         /* in */
 };
 
@@ -196,18 +196,18 @@ struct drm_vivante_wait_fence {
  */
 #define DRM_VIVANTE_GEM_NEW            0x02
 #define DRM_VIVANTE_GEM_INFO           0x03
-#define DRM_MSM_GEM_CPU_PREP           0x04
-#define DRM_MSM_GEM_CPU_FINI           0x05
+#define DRM_VIVANTE_GEM_CPU_PREP       0x04
+#define DRM_VIVANTE_GEM_CPU_FINI       0x05
 #define DRM_VIVANTE_GEM_SUBMIT         0x06
 #define DRM_VIVANTE_WAIT_FENCE         0x07
 #define DRM_VIVANTE_NUM_IOCTLS         0x08
 
-#define DRM_IOCTL_VIVANTE_GET_PARAM        DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GET_PARAM, struct drm_vivante_param)
-#define DRM_IOCTL_VIVANTE_GEM_NEW          DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_NEW, struct drm_vivante_gem_new)
-#define DRM_IOCTL_VIVANTE_GEM_INFO         DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_INFO, struct drm_vivante_gem_info)
-#define DRM_IOCTL_MSM_GEM_CPU_PREP     DRM_IOW (DRM_COMMAND_BASE + DRM_MSM_GEM_CPU_PREP, struct drm_msm_gem_cpu_prep)
-#define DRM_IOCTL_MSM_GEM_CPU_FINI     DRM_IOW (DRM_COMMAND_BASE + DRM_MSM_GEM_CPU_FINI, struct drm_msm_gem_cpu_fini)
+#define DRM_IOCTL_VIVANTE_GET_PARAM    DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GET_PARAM, struct drm_vivante_param)
+#define DRM_IOCTL_VIVANTE_GEM_NEW      DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_NEW, struct drm_vivante_gem_new)
+#define DRM_IOCTL_VIVANTE_GEM_INFO     DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_INFO, struct drm_vivante_gem_info)
+#define DRM_IOCTL_VIVANTE_GEM_CPU_PREP DRM_IOW (DRM_COMMAND_BASE + DRM_VIVANTE_GEM_CPU_PREP, struct drm_vivante_gem_cpu_prep)
+#define DRM_IOCTL_VIVANTE_GEM_CPU_FINI DRM_IOW (DRM_COMMAND_BASE + DRM_VIVANTE_GEM_CPU_FINI, struct drm_vivante_gem_cpu_fini)
 #define DRM_IOCTL_VIVANTE_GEM_SUBMIT   DRM_IOWR(DRM_COMMAND_BASE + DRM_VIVANTE_GEM_SUBMIT, struct drm_vivante_gem_submit)
-#define DRM_IOCTL_VIVANTE_WAIT_FENCE       DRM_IOW (DRM_COMMAND_BASE + DRM_VIVANTE_WAIT_FENCE, struct drm_vivante_wait_fence)
+#define DRM_IOCTL_VIVANTE_WAIT_FENCE   DRM_IOW (DRM_COMMAND_BASE + DRM_VIVANTE_WAIT_FENCE, struct drm_vivante_wait_fence)
 
 #endif /* __VIVANTE_DRM_H__ */
