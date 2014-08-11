@@ -99,9 +99,9 @@ dma_addr_t vivante_gem_paddr_locked(struct drm_gem_object *obj);
 void vivante_gem_move_to_active(struct drm_gem_object *obj,
 		struct vivante_gpu *gpu, bool write, uint32_t fence);
 void vivante_gem_move_to_inactive(struct drm_gem_object *obj);
-int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
+int vivante_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout);
-int msm_gem_cpu_fini(struct drm_gem_object *obj);
+int vivante_gem_cpu_fini(struct drm_gem_object *obj);
 void vivante_gem_free_object(struct drm_gem_object *obj);
 int vivante_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 		uint32_t size, uint32_t flags, uint32_t *handle);

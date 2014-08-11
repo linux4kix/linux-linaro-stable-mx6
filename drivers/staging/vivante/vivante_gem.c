@@ -415,7 +415,7 @@ void vivante_gem_move_to_inactive(struct drm_gem_object *obj)
 	list_add_tail(&vivante_obj->mm_list, &priv->inactive_list);
 }
 
-int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
+int vivante_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout)
 {
 /*
@@ -443,7 +443,7 @@ int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 	return ret;
 }
 
-int msm_gem_cpu_fini(struct drm_gem_object *obj)
+int vivante_gem_cpu_fini(struct drm_gem_object *obj)
 {
 	/* TODO cache maintenance */
 	return 0;

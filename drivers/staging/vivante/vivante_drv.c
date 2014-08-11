@@ -385,7 +385,7 @@ static int vivante_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
 	if (!obj)
 		return -ENOENT;
 
-	ret = msm_gem_cpu_prep(obj, args->op, &TS(args->timeout));
+	ret = vivante_gem_cpu_prep(obj, args->op, &TS(args->timeout));
 
 	drm_gem_object_unreference_unlocked(obj);
 
@@ -403,7 +403,7 @@ static int vivante_ioctl_gem_cpu_fini(struct drm_device *dev, void *data,
 	if (!obj)
 		return -ENOENT;
 
-	ret = msm_gem_cpu_fini(obj);
+	ret = vivante_gem_cpu_fini(obj);
 
 	drm_gem_object_unreference_unlocked(obj);
 
