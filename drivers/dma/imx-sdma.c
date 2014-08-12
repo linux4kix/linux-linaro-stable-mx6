@@ -1412,13 +1412,12 @@ static void sdma_issue_pending(struct dma_chan *chan)
 	struct sdma_channel *sdmac = to_sdma_chan(chan);
 	struct sdma_engine *sdma = sdmac->sdma;
 
-	/* Only HDMI audio uses other_script, and it does not care status */
-	if (sdmac->status == DMA_IN_PROGRESS || sdmac->other_script)
+	if (sdmac->status == DMA_IN_PROGRESS)
 		sdma_enable_channel(sdma, sdmac->channel);
 }
 
 #define SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V1	34
-#define SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V2	39
+#define SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V2	38
 
 static void sdma_add_scripts(struct sdma_engine *sdma,
 		const struct sdma_script_start_addrs *addr)
@@ -1459,7 +1458,10 @@ static void sdma_load_firmware(const struct firmware *fw, void *context)
 		goto err_firmware;
 	switch (header->version_major) {
 		case 1:
-			sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V1;
+			if (header->version_minor > 0)
+				sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V2;
+			else
+				sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V1;
 			break;
 		case 2:
 			sdma->script_number = SDMA_SCRIPT_ADDRS_ARRAY_SIZE_V2;
