@@ -92,7 +92,7 @@ struct vivante_gpu {
 	bool event_used[30];
 	uint32_t event_to_fence[30];
 	struct completion event_free;
-	struct mutex event_mutex;
+	struct spinlock event_spinlock;
 
 	/* list of GEM active objects: */
 	struct list_head active_list;

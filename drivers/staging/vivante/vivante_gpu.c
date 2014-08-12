@@ -236,7 +236,7 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	}
 
 	/* Setup event management */
-	mutex_init(&gpu->event_mutex);
+	spin_lock_init(&gpu->event_spinlock);
 	init_completion(&gpu->event_free);
 	for (i = 0; i < ARRAY_SIZE(gpu->event_used); i++) {
 		gpu->event_used[i] = false;
@@ -528,14 +528,14 @@ static void hangcheck_handler(unsigned long data)
 
 static unsigned int event_alloc(struct vivante_gpu *gpu)
 {
-	unsigned long ret;
+	unsigned long ret, flags;
 	unsigned int i, event = ~0U;
 
 	ret = wait_for_completion_timeout(&gpu->event_free, msecs_to_jiffies(10 * 10000));
 	if (!ret)
 		dev_err(gpu->dev->dev, "wait_for_completion_timeout failed");
 
-	mutex_lock(&gpu->event_mutex);
+	spin_lock_irqsave(&gpu->event_spinlock, flags);
 
 	/* find first free event */
 	for (i = 0; i < ARRAY_SIZE(gpu->event_used); i++) {
@@ -546,21 +546,23 @@ static unsigned int event_alloc(struct vivante_gpu *gpu)
 		}
 	}
 
-	mutex_unlock(&gpu->event_mutex);
+	spin_unlock_irqrestore(&gpu->event_spinlock, flags);
 
 	return event;
 }
 
 static void event_free(struct vivante_gpu *gpu, unsigned int event)
 {
-	mutex_lock(&gpu->event_mutex);
+	unsigned long flags;
+
+	spin_lock_irqsave(&gpu->event_spinlock, flags);
 
 	if (gpu->event_used[event] == false) {
 		dev_warn(gpu->dev->dev, "event %u is already marked as free", event);
-		mutex_unlock(&gpu->event_mutex);
+		spin_unlock_irqrestore(&gpu->event_spinlock, flags);
 	} else {
 		gpu->event_used[event] = false;
-		mutex_unlock(&gpu->event_mutex);
+		spin_unlock_irqrestore(&gpu->event_spinlock, flags);
 
 		complete(&gpu->event_free);
 	}
