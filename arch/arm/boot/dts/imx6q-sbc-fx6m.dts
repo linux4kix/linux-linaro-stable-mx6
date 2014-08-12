@@ -11,31 +11,18 @@
 * http://www.gnu.org/copyleft/gpl.html
 */
 
-#include "imx6q-cm-fx6.dts"
+/dts-v1/;
+#include "imx6q-sb-fx6m.dtsi"
+#include "imx6q-cm-fx6.dtsi"
 
 / {
 	model = "CompuLab CM-FX6 on SBC-FX6m";	
 	compatible = "compulab,cm-fx6", "compulab,sbc-fx6m", "fsl,imx6q";
 
-	eth@pcie {
-		compatible = "intel,i211";
-		local-mac-address = [FF FF FF FF FF FF];
-		status = "okay";
-	};
-
-	gpio-keys {
-		compatible = "gpio-keys";
-		power {
-			label = "Power Button";
-			gpios = <&gpio1 29 1>;
-			linux,code = <116>; /* KEY_POWER */
-			gpio-key,wakeup;
-		};
-	};
 };
 
 &iomuxc {
-	imx6q-sb-fx6m {
+	imx6q-sbc-fx6m {
 		/* pins for uart2 */
 		pinctrl_uart2: uart2grp {
 			fsl,pins = <
@@ -45,16 +32,9 @@
 				MX6QDL_PAD_SD4_DAT6__UART2_CTS_B 0x1b0b1
 		>;
 		};
-
-		/* pins for pcie */
-		pinctrl_pcie: pciegrp {
-			fsl,pins = <
-				MX6QDL_PAD_ENET_RXD1__GPIO1_IO26 0x80000000
-				MX6QDL_PAD_EIM_CS1__GPIO2_IO24 0x80000000
-		>;
-	    };
 	};
 };
+
 
 &i2c1 {
 	rtc@56 {
@@ -63,11 +43,7 @@
 	};
 };
 
-&pcie {
-	pinctrl-names = "default";
-	pinctrl-0 = <&pinctrl_pcie>;
-	reset-gpio = <&gpio1 26 0>;
-	power-on-gpio = <&gpio2 24 0>;
+&usdhc3 {
 	status = "okay";
 };
 

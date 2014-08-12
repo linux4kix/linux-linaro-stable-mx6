@@ -11,10 +11,22 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-/dts-v1/;
-#include "imx6q-cm-fx6.dtsi"
+#include "imx6q-sb-fx6x.dtsi"
 
 / {
-	model = "CompuLab CM-FX6";
-	compatible = "compulab,cm-fx6", "fsl,imx6q";
+	eth@pcie {
+		compatible = "intel,i211";
+		local-mac-address = [FF FF FF FF FF FF];
+		status = "okay";
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		power {
+			label = "Power Button";
+			gpios = <&gpio1 29 1>;
+			linux,code = <116>; /* KEY_POWER */
+			gpio-key,wakeup;
+		};
+	};
 };

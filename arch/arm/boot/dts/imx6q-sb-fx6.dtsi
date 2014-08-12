@@ -11,10 +11,4 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-/dts-v1/;
-#include "imx6q-cm-fx6.dtsi"
-
-/ {
-	model = "CompuLab CM-FX6";
-	compatible = "compulab,cm-fx6", "fsl,imx6q";
-};
+#include "imx6q-sb-fx6x.dtsi"
