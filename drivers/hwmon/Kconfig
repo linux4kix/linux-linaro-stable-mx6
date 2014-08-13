@@ -1596,6 +1596,7 @@ config SENSORS_MAG3110
 config MXC_MMA8451
 	tristate "MMA8451 device driver"
 	depends on I2C
+	depends on INPUT_POLLDEV
 	default y
 
 endif # HWMON
