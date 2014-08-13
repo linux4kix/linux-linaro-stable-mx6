@@ -527,7 +527,8 @@ static void fsl_ssi_rxtx_config(struct fsl_ssi_private *ssi_private,
 	}
 }
 
-static void fsl_ssi_clk_ctrl(struct fsl_ssi_private *ssi_private, bool enable,
+static void fsl_ssi_clk_ctrl(struct fsl_ssi_private *ssi_private, bool enable)
+{
 	if (enable) {
 		if (ssi_private->ssi_on_imx) {
 			if (!IS_ERR(ssi_private->baudclk))
@@ -1599,6 +1600,11 @@ error_dev:
 			clk_unprepare(ssi_private->baudclk);
 		clk_unprepare(ssi_private->clk);
 	}
+error_clk:
+	if (!IS_ERR(ssi_private->baudclk))
+		clk_unprepare(ssi_private->baudclk);
+	if (!IS_ERR(ssi_private->clk))
+		clk_unprepare(ssi_private->clk);
 
 error_irqmap:
 	if (ssi_private->irq_stats)
