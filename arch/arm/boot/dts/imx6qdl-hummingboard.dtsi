@@ -65,8 +65,7 @@
 
 	sound-spdif {
 		compatible = "fsl,imx-audio-spdif";
-		model = "On-board SPDIF";
-		/* IMX6 doesn't implement this yet */
+		model = "imx-spdif";
 		spdif-controller = <&spdif>;
 		spdif-out;
 	};
