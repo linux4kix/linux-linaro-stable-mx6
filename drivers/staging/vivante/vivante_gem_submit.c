@@ -161,27 +161,28 @@ retry:
 			submit->bos[i].flags |= BO_LOCKED;
 		}
 
-
 		/* if locking succeeded, pin bo: */
-		ret = vivante_gem_get_iova_locked(submit->gpu, &vivante_obj->base, &iova);
+		if (vivante_obj->flags & ETNA_BO_CMDSTREAM) {
+			ret = vivante_gem_get_iova_locked(submit->gpu, &vivante_obj->base, &iova);
 
-		/* this would break the logic in the fail path.. there is no
-		 * reason for this to happen, but just to be on the safe side
-		 * let's notice if this starts happening in the future:
-		 */
-		WARN_ON(ret == -EDEADLK);
+			/* this would break the logic in the fail path.. there is no
+			 * reason for this to happen, but just to be on the safe side
+			 * let's notice if this starts happening in the future:
+			 */
+			WARN_ON(ret == -EDEADLK);
 
-		if (ret)
-			goto fail;
+			if (ret)
+				goto fail;
 
-		submit->bos[i].flags |= BO_PINNED;
+			submit->bos[i].flags |= BO_PINNED;
 
-		if (iova == submit->bos[i].iova) {
-			submit->bos[i].flags |= BO_VALID;
-		} else {
-			submit->bos[i].iova = iova;
-			submit->bos[i].flags &= ~BO_VALID;
-			submit->valid = false;
+			if (iova == submit->bos[i].iova) {
+				submit->bos[i].flags |= BO_VALID;
+			} else {
+				submit->bos[i].iova = iova;
+				submit->bos[i].flags &= ~BO_VALID;
+				submit->valid = false;
+			}
 		}
 	}
 
