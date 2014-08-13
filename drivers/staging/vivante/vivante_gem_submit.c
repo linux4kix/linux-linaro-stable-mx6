@@ -235,23 +235,12 @@ static int submit_reloc(struct vivante_gem_submit *submit, struct vivante_gem_ob
 		uint32_t offset, uint32_t nr_relocs, uint64_t relocs)
 {
 	uint32_t i, last_offset = 0;
-	uint32_t *ptr;
+	uint32_t *ptr = obj->vaddr;
 	int ret;
 
 	if (offset % 4) {
 		DRM_ERROR("non-aligned cmdstream buffer: %u\n", offset);
 		return -EINVAL;
-	}
-
-	/* For now, just map the entire thing.  Eventually we probably
-	 * to do it page-by-page, w/ kmap() if not vmap()d..
-	 */
-	ptr = vivante_gem_vaddr_locked(&obj->base);
-
-	if (IS_ERR(ptr)) {
-		ret = PTR_ERR(ptr);
-		DBG("failed to map: %d", ret);
-		return ret;
 	}
 
 	for (i = 0; i < nr_relocs; i++) {
