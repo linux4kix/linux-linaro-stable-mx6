@@ -262,7 +262,7 @@ int vivante_gem_get_iova_locked(struct vivante_gpu * gpu, struct drm_gem_object 
 	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
 	int ret = 0;
 
-	if (!vivante_obj->iova) {
+	if (!vivante_obj->iova  && !(vivante_obj->flags & ETNA_BO_CMDSTREAM)) {
 		struct vivante_drm_private *priv = obj->dev->dev_private;
 		struct vivante_iommu *mmu = priv->mmu;
 		struct page **pages = get_pages(obj);
