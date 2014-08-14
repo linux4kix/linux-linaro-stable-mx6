@@ -162,7 +162,7 @@ retry:
 		}
 
 		/* if locking succeeded, pin bo: */
-		if (!(vivante_obj->flags & ETNA_BO_CMDSTREAM)) {
+		if (vivante_obj->flags & ETNA_BO_CMDSTREAM) {
 			ret = vivante_gem_get_iova_locked(submit->gpu, &vivante_obj->base, &iova);
 
 			/* this would break the logic in the fail path.. there is no
