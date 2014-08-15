@@ -587,9 +587,10 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 	bool valid = true;
 
 	/* validate flags */
-	if ((flags & ETNA_BO_CMDSTREAM) && (flags & MSM_BO_CACHE_MASK))
-		valid = false;
-	else {
+	if (flags & ETNA_BO_CMDSTREAM) {
+		if ((flags & MSM_BO_CACHE_MASK) != 0)
+			valid = false;
+	} else {
 		switch (flags & MSM_BO_CACHE_MASK) {
 		case MSM_BO_UNCACHED:
 		case MSM_BO_CACHED:
