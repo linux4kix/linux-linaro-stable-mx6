@@ -124,7 +124,7 @@ static void vivante_buffer_dump(struct vivante_gem_object *obj, u32 len)
 			obj->vaddr, obj->paddr, size - len * 4);
 
 	print_hex_dump(KERN_INFO, "cmd ", DUMP_PREFIX_OFFSET, 16, 4,
-			ptr, len * 4 * 4, 0);
+			ptr, len * 4, 0);
 }
 
 u32 vivante_buffer_init(struct vivante_gpu *gpu)
