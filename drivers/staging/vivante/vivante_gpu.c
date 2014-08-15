@@ -227,7 +227,7 @@ int vivante_gpu_init(struct vivante_gpu *gpu)
 	vivante_register_mmu(gpu->dev, gpu->mmu);
 
 	/* Create buffer: */
-	gpu->buffer = vivante_gem_new(gpu->dev, PAGE_SIZE, ETNA_BO_CMDSTREAM | MSM_BO_WC);
+	gpu->buffer = vivante_gem_new(gpu->dev, PAGE_SIZE, ETNA_BO_CMDSTREAM);
 	if (IS_ERR(gpu->buffer)) {
 		ret = PTR_ERR(gpu->buffer);
 		gpu->buffer = NULL;
