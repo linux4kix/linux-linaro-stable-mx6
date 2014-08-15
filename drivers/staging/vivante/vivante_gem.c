@@ -584,15 +584,26 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 	struct vivante_drm_private *priv = dev->dev_private;
 	struct vivante_gem_object *vivante_obj;
 	unsigned sz = sizeof(*vivante_obj);
+	bool valid = true;
 
-	switch (flags & MSM_BO_CACHE_MASK) {
-	case MSM_BO_UNCACHED:
-	case MSM_BO_CACHED:
-	case MSM_BO_WC:
-		break;
-	default:
-		dev_err(dev->dev, "invalid cache flag: %x\n",
-				(flags & MSM_BO_CACHE_MASK));
+	/* validate flags */
+	if ((flags & ETNA_BO_CMDSTREAM) && (flags & MSM_BO_CACHE_MASK))
+		valid = false;
+	else {
+		switch (flags & MSM_BO_CACHE_MASK) {
+		case MSM_BO_UNCACHED:
+		case MSM_BO_CACHED:
+		case MSM_BO_WC:
+			break;
+		default:
+			valid = false;
+		}
+	}
+
+	if (!valid) {
+		dev_err(dev->dev, "invalid cache flag: %x (cmd: %d)\n",
+				(flags & MSM_BO_CACHE_MASK),
+				(flags & ETNA_BO_CMDSTREAM));
 		return -EINVAL;
 	}
 
