@@ -146,12 +146,16 @@ void vivante_buffer_queue(struct vivante_gpu *gpu, unsigned int event, struct vi
 {
 	u32 i;
 
+	/* update offset for every cmd stream */
+	for (i = 0; i < submit->nr_cmds; i++)
+			submit->cmd[i].obj->offset = submit->cmd[i].size;
+
 	for (i = 0; i < submit->nr_cmds; i++) {
 		struct vivante_gem_object *obj = submit->cmd[i].obj;
 
 		/* TODO: remove later */
 		if (unlikely(drm_debug & DRM_UT_CORE)) {
-			vivante_buffer_dump(obj, submit->cmd[i].size);
+			vivante_buffer_dump(obj, obj->offset);
 		}
 	}
 }
