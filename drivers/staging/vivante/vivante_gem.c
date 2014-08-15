@@ -583,7 +583,7 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 {
 	struct vivante_drm_private *priv = dev->dev_private;
 	struct vivante_gem_object *vivante_obj;
-	unsigned sz;
+	unsigned sz = sizeof(*vivante_obj);;
 
 	switch (flags & MSM_BO_CACHE_MASK) {
 	case MSM_BO_UNCACHED:
@@ -595,8 +595,6 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 				(flags & MSM_BO_CACHE_MASK));
 		return -EINVAL;
 	}
-
-	sz = sizeof(*vivante_obj);
 
 	vivante_obj = kzalloc(sz, GFP_KERNEL);
 	if (!vivante_obj)
