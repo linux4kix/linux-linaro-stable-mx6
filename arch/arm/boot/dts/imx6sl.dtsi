@@ -42,7 +42,6 @@
 			device_type = "cpu";
 			reg = <0x0>;
 			next-level-cache = <&L2>;
-#if 0
 			operating-points = <
 				/* kHz    uV */
 				996000  1275000
@@ -55,7 +54,6 @@
 				792000          1175000
 				396000          1175000
 			>;
-#endif
 			clock-latency = <61036>; /* two CLK32 periods */
 			clocks = <&clks IMX6SL_CLK_ARM>, <&clks IMX6SL_CLK_PLL2_PFD2>,
 					<&clks IMX6SL_CLK_STEP>, <&clks IMX6SL_CLK_PLL1_SW>,
