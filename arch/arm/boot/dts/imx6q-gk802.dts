@@ -13,6 +13,10 @@
 	model = "Zealz GK802";
 	compatible = "zealz,imx6q-gk802", "fsl,imx6q";
 
+        aliases {
+                mxcfb0 = &mxcfb1;
+        };
+
 	chosen {
 		stdout-path = &uart4;
 	};
@@ -34,6 +38,14 @@
 			regulator-max-microvolt = <3300000>;
 			regulator-always-on;
 		};
+
+                reg_usb_h1_vbus: usb_h1_vbus {
+                        compatible = "regulator-fixed";
+                        regulator-name = "usb_h1_vbus";
+                        regulator-min-microvolt = <5000000>;
+                        regulator-max-microvolt = <5000000>;
+                        gpio = <&gpio2 0 0>;
+                };
 	};
 
 	gpio-keys {
@@ -45,8 +57,44 @@
 			linux,code = <0x198>; /* KEY_RESTART */
 			gpio-key,wakeup;
 		};
-	};
+
+        };
+
+        sound-hdmi {
+                compatible = "fsl,imx6q-audio-hdmi",
+                             "fsl,imx-audio-hdmi";
+                model = "imx-audio-hdmi";
+                hdmi-controller = <&hdmi_audio>;
+        };
+
+        mxcfb1: fb@0 {
+                compatible = "fsl,mxc_sdc_fb";
+                disp_dev = "hdmi";
+                interface_pix_fmt = "RGB24";
+                mode_str ="1920x1080M@60";
+                default_bpp = <32>;
+                int_clk = <0>;
+                late_init = <0>;
+                status = "okay";
+        };
 };
+
+&hdmi_core {
+        ipu_id = <0>;
+        disp_id = <0>;
+        status = "okay";
+};
+
+&hdmi_video {
+        fsl,phy_reg_vlev = <0x0294>;
+        fsl,phy_reg_cksymtx = <0x800d>;
+        status = "okay";
+};
+
+&hdmi_audio {
+        status = "okay";
+};
+
 
 /* Internal I2C */
 &i2c2 {
@@ -68,6 +116,11 @@
 	pinctrl-0 = <&pinctrl_i2c3>;
 	clock-frequency = <100000>;
 	status = "okay";
+
+ 	ddc: imx6_hdmi_i2c@50 {
+		compatible = "fsl,imx6-hdmi-i2c";
+		reg = <0x50>;
+	};
 };
 
 &iomuxc {
@@ -141,14 +194,19 @@
 
 /* External USB-A port (USBOTG) */
 &usbotg {
-	disable-over-current;
-	status = "okay";
+        phy_type = "utmi";
+        dr_mode = "host";
+        disable-over-current;
+        status = "okay";
 };
 
 /* Internal USB port (USBH1), connected to RTL8192CU */
 &usbh1 {
-	disable-over-current;
-	status = "okay";
+        phy_type = "utmi";
+        dr_mode = "host";
+        vbus-supply = <&reg_usb_h1_vbus>;
+        disable-over-current;
+        status = "okay";
 };
 
 /* External microSD */
