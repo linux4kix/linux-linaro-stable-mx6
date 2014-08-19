@@ -142,8 +142,8 @@ EXPORT_SYMBOL(iec_header);
  *    is necessary for 6 ch.
  */
 #define HDMI_DMA_PERIOD_BYTES		(12288)
-#define HDMI_DMA_BUF_SIZE		(128 * 1024)
-#define HDMI_PCM_BUF_SIZE		(128 * 1024)
+#define HDMI_DMA_BUF_SIZE		(1280 * 1024)
+#define HDMI_PCM_BUF_SIZE		(1280 * 1024)
 
 #define hdmi_audio_debug(dev, reg) \
 	dev_dbg(dev, #reg ": 0x%02x\n", hdmi_readb(reg))
@@ -1012,7 +1012,7 @@ static struct snd_pcm_hardware snd_imx_hardware = {
 	.period_bytes_min = HDMI_DMA_PERIOD_BYTES / 2,
 	.period_bytes_max = HDMI_DMA_PERIOD_BYTES / 2,
 	.periods_min = 8,
-	.periods_max = 8,
+	.periods_max = HDMI_DMA_BUF_SIZE / HDMI_DMA_PERIOD_BYTES,
 	.fifo_size = 0,
 };
 
@@ -1193,6 +1193,7 @@ static int imx_soc_platform_probe(struct platform_device *pdev)
 	case 0x0a:
 		snd_imx_hardware.period_bytes_max = HDMI_DMA_PERIOD_BYTES / 4;
 		snd_imx_hardware.period_bytes_min = HDMI_DMA_PERIOD_BYTES / 4;
+		snd_imx_hardware.periods_max = HDMI_DMA_BUF_SIZE / (HDMI_DMA_PERIOD_BYTES / 2);
 		break;
 	default:
 		break;
