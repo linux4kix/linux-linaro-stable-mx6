@@ -1217,8 +1217,11 @@ fec_enet_rx(struct net_device *ndev, int budget)
 
 	while (!((status = bdp->cbd_sc) & BD_ENET_RX_EMPTY)) {
 
-		if (pkt_received >= budget)
+		if (pkt_received >= budget) {
+			/* overwhelmed take a breath */
+			udelay(210);
 			break;
+		}
 		pkt_received++;
 
 		/* Since we have allocated space to hold a complete frame,
