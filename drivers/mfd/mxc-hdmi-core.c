@@ -58,6 +58,7 @@ static struct clk *pixel_clk;
 static int hdmi_ratio;
 int mxc_hdmi_ipu_id;
 int mxc_hdmi_disp_id;
+static int hdmi_core_edid_status;
 static struct mxc_edid_cfg hdmi_core_edid_cfg;
 static int hdmi_core_init;
 static unsigned int hdmi_dma_running;
@@ -584,23 +585,26 @@ void hdmi_set_sample_rate(unsigned int rate)
 }
 EXPORT_SYMBOL(hdmi_set_sample_rate);
 
-void hdmi_set_edid_cfg(struct mxc_edid_cfg *cfg)
+void hdmi_set_edid_cfg(int edid_status, struct mxc_edid_cfg *cfg)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&edid_spinlock, flags);
+	hdmi_core_edid_status = edid_status;
 	memcpy(&hdmi_core_edid_cfg, cfg, sizeof(struct mxc_edid_cfg));
 	spin_unlock_irqrestore(&edid_spinlock, flags);
 }
 EXPORT_SYMBOL(hdmi_set_edid_cfg);
 
-void hdmi_get_edid_cfg(struct mxc_edid_cfg *cfg)
+int hdmi_get_edid_cfg(struct mxc_edid_cfg *cfg)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&edid_spinlock, flags);
 	memcpy(cfg, &hdmi_core_edid_cfg, sizeof(struct mxc_edid_cfg));
 	spin_unlock_irqrestore(&edid_spinlock, flags);
+
+	return hdmi_core_edid_status;
 }
 EXPORT_SYMBOL(hdmi_get_edid_cfg);
 

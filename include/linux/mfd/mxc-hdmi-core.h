@@ -46,8 +46,8 @@ void hdmi_set_dma_mode(unsigned int dma_running);
 void hdmi_init_clk_regenerator(void);
 void hdmi_clk_regenerator_update_pixel_clock(u32 pixclock);
 
-void hdmi_set_edid_cfg(struct mxc_edid_cfg *cfg);
-void hdmi_get_edid_cfg(struct mxc_edid_cfg *cfg);
+void hdmi_set_edid_cfg(int edid_status, struct mxc_edid_cfg *cfg);
+int hdmi_get_edid_cfg(struct mxc_edid_cfg *cfg);
 
 extern int mxc_hdmi_ipu_id;
 extern int mxc_hdmi_disp_id;
