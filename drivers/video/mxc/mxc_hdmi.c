@@ -26,6 +26,7 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/device.h>
@@ -138,6 +139,7 @@ struct hdmi_data_info {
 	unsigned int pix_repet_factor;
 	unsigned int hdcp_enable;
 	unsigned int rgb_out_enable;
+	unsigned int rgb_quant_range;
 	struct hdmi_vmode video_mode;
 };
 
@@ -205,6 +207,10 @@ extern void mxc_hdmi_cec_handle(u16 cec_stat);
 static void mxc_hdmi_setup(struct mxc_hdmi *hdmi, unsigned long event);
 static void hdmi_enable_overflow_interrupts(void);
 static void hdmi_disable_overflow_interrupts(void);
+
+static char *rgb_quant_range = "default";
+module_param(rgb_quant_range, charp, S_IRUGO);
+MODULE_PARM_DESC(rgb_quant_range, "RGB Quant Range (default, limited, full)");
 
 static struct platform_device_id imx_hdmi_devtype[] = {
 	{
@@ -324,6 +330,55 @@ static ssize_t mxc_hdmi_store_rgb_out_enable(struct device *dev,
 static DEVICE_ATTR(rgb_out_enable, S_IRUGO | S_IWUSR,
 				mxc_hdmi_show_rgb_out_enable,
 				mxc_hdmi_store_rgb_out_enable);
+
+static ssize_t mxc_hdmi_show_rgb_quant_range(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct mxc_hdmi *hdmi = dev_get_drvdata(dev);
+
+	switch (hdmi->hdmi_data.rgb_quant_range) {
+	case HDMI_FC_AVICONF2_RGB_QUANT_LIMITED_RANGE: 
+		strcpy(buf, "limited\n");
+		break;
+	case HDMI_FC_AVICONF2_RGB_QUANT_FULL_RANGE: 
+		strcpy(buf, "full\n");
+		break;
+	case HDMI_FC_AVICONF2_RGB_QUANT_DEFAULT: 
+	default:
+		strcpy(buf, "default\n");
+		break;
+	};
+
+	return strlen(buf);
+}
+
+static ssize_t mxc_hdmi_store_rgb_quant_range(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct mxc_hdmi *hdmi = dev_get_drvdata(dev);
+	int ret = count;
+
+	if (sysfs_streq("limited", buf)) {
+		hdmi->hdmi_data.rgb_quant_range = HDMI_FC_AVICONF2_RGB_QUANT_LIMITED_RANGE;
+	} else if (sysfs_streq("full", buf)) {
+		hdmi->hdmi_data.rgb_quant_range = HDMI_FC_AVICONF2_RGB_QUANT_FULL_RANGE;
+	} else if (sysfs_streq("default", buf)) {
+		hdmi->hdmi_data.rgb_quant_range = HDMI_FC_AVICONF2_RGB_QUANT_DEFAULT;
+	} else {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	/* Reconfig HDMI for output RGB Quant Range change if using RGB out */
+	if(hdmi->hdmi_data.rgb_out_enable)
+		mxc_hdmi_setup(hdmi, 0);
+out:
+	return ret;
+}
+
+static DEVICE_ATTR(rgb_quant_range, S_IRUGO | S_IWUSR,
+				mxc_hdmi_show_rgb_quant_range,
+				mxc_hdmi_store_rgb_quant_range);
 
 static ssize_t mxc_hdmi_show_hdcp_enable(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -1379,7 +1434,7 @@ static void hdmi_config_AVI(struct mxc_hdmi *hdmi)
 	 ********************************************/
 
 	val = HDMI_FC_AVICONF2_IT_CONTENT_NO_DATA | ext_colorimetry |
-		HDMI_FC_AVICONF2_RGB_QUANT_DEFAULT |
+		hdmi->hdmi_data.rgb_quant_range |
 		HDMI_FC_AVICONF2_SCALING_NONE;
 	hdmi_writeb(val, HDMI_FC_AVICONF2);
 
@@ -2637,6 +2692,14 @@ static int mxc_hdmi_disp_init(struct mxc_dispdrv_handle *disp,
 	/* Default HDMI working in RGB mode */
 	hdmi->hdmi_data.rgb_out_enable = true;
 
+	if (!strcasecmp(rgb_quant_range, "limited")) {
+		hdmi->hdmi_data.rgb_quant_range = HDMI_FC_AVICONF2_RGB_QUANT_LIMITED_RANGE;
+	} else if (!strcasecmp(rgb_quant_range, "full")) {
+		hdmi->hdmi_data.rgb_quant_range = HDMI_FC_AVICONF2_RGB_QUANT_FULL_RANGE;
+	} else {
+		hdmi->hdmi_data.rgb_quant_range = HDMI_FC_AVICONF2_RGB_QUANT_DEFAULT;
+	}
+
 	ret = devm_request_irq(&hdmi->pdev->dev, irq, mxc_hdmi_hotplug, IRQF_SHARED,
 			dev_name(&hdmi->pdev->dev), hdmi);
 	if (ret < 0) {
@@ -2662,6 +2725,11 @@ static int mxc_hdmi_disp_init(struct mxc_dispdrv_handle *disp,
 	if (ret < 0)
 		dev_warn(&hdmi->pdev->dev,
 			"cound not create sys node for rgb out enable\n");
+
+	ret = device_create_file(&hdmi->pdev->dev, &dev_attr_rgb_quant_range);
+	if (ret < 0)
+		dev_warn(&hdmi->pdev->dev,
+			"cound not create sys node for rgb quant range\n");
 
 	ret = device_create_file(&hdmi->pdev->dev, &dev_attr_hdcp_enable);
 	if (ret < 0)
