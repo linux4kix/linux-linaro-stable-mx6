@@ -164,6 +164,7 @@ struct mxc_hdmi {
 
 	struct hdmi_data_info hdmi_data;
 	int vic;
+	int edid_status;
 	struct mxc_edid_cfg edid_cfg;
 	u8 edid[HDMI_EDID_LEN];
 	bool fb_reg;
@@ -1977,24 +1978,22 @@ static void mxc_hdmi_set_mode(struct mxc_hdmi *hdmi)
 
 static void mxc_hdmi_cable_connected(struct mxc_hdmi *hdmi)
 {
-	int edid_status;
-
 	dev_dbg(&hdmi->pdev->dev, "%s\n", __func__);
 
 	hdmi->cable_plugin = true;
 
 	/* HDMI Initialization Step C */
-	edid_status = mxc_hdmi_read_edid(hdmi);
+	hdmi->edid_status = mxc_hdmi_read_edid(hdmi);
 
 	/* Read EDID again if first EDID read failed */
-	if (edid_status == HDMI_EDID_NO_MODES ||
-			edid_status == HDMI_EDID_FAIL) {
+	if (hdmi->edid_status == HDMI_EDID_NO_MODES ||
+			hdmi->edid_status == HDMI_EDID_FAIL) {
 		dev_info(&hdmi->pdev->dev, "Read EDID again\n");
-		edid_status = mxc_hdmi_read_edid(hdmi);
+		hdmi->edid_status = mxc_hdmi_read_edid(hdmi);
 	}
 
 	/* HDMI Initialization Steps D, E, F */
-	switch (edid_status) {
+	switch (hdmi->edid_status) {
 	case HDMI_EDID_SUCCESS:
 		mxc_hdmi_edid_rebuild_modelist(hdmi);
 		break;
@@ -2231,7 +2230,7 @@ static void mxc_hdmi_setup(struct mxc_hdmi *hdmi, unsigned long event)
 	hdmi_disable_overflow_interrupts();
 
 	dev_dbg(&hdmi->pdev->dev, "CEA mode used vic=%d\n", hdmi->vic);
-	if (hdmi->edid_cfg.hdmi_cap) {
+	if (hdmi->edid_cfg.hdmi_cap || !hdmi->edid_status) {
 		hdmi_set_dvi_mode(0);
 		hdmi->hdmi_data.video_mode.mDVI = false;
 	} else {
