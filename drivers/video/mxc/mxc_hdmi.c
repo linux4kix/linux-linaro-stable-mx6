@@ -154,7 +154,8 @@ struct mxc_hdmi {
 	struct fb_info *fbi;
 	struct clk *hdmi_isfr_clk;
 	struct clk *hdmi_iahb_clk;
-	struct delayed_work hotplug_work;
+	struct timer_list jitter_timer;
+	struct work_struct hotplug_work;
 	struct delayed_work hdcp_hdp_work;
 
 	struct notifier_block nb;
@@ -1997,9 +1998,8 @@ static void mxc_hdmi_cable_disconnected(struct mxc_hdmi *hdmi)
 
 static void hotplug_worker(struct work_struct *work)
 {
-	struct delayed_work *delay_work = to_delayed_work(work);
 	struct mxc_hdmi *hdmi =
-		container_of(delay_work, struct mxc_hdmi, hotplug_work);
+		container_of(work, struct mxc_hdmi, hotplug_work);
 	u32 hdmi_phy_stat0, hdmi_phy_pol0, hdmi_phy_mask0;
 	unsigned long flags;
 	char event_string[32];
@@ -2058,6 +2058,13 @@ static void hotplug_worker(struct work_struct *work)
 	spin_unlock_irqrestore(&hdmi->irq_lock, flags);
 }
 
+static void hotplug_work_launch(unsigned long data)
+{
+        struct mxc_hdmi *hdmi = (struct mxc_hdmi *)data;
+        pr_debug("%s\n", __func__);
+        schedule_work(&hdmi->hotplug_work);
+}
+
 static void hdcp_hdp_worker(struct work_struct *work)
 {
 	struct delayed_work *delay_work = to_delayed_work(work);
@@ -2102,6 +2109,7 @@ static irqreturn_t mxc_hdmi_hotplug(int irq, void *data)
 	if (intr_stat & hdmi->plug_event) {
 
 		dev_dbg(&hdmi->pdev->dev, "Hotplug interrupt received\n");
+		dev_dbg(&hdmi->pdev->dev, "intr_stat %u plug_event %u\n", intr_stat, hdmi->plug_event);
 		hdmi->latest_intr_stat = intr_stat;
 
 		/* Mute interrupts until handled */
@@ -2117,7 +2125,9 @@ static irqreturn_t mxc_hdmi_hotplug(int irq, void *data)
 		/* Clear Hotplug interrupts */
 		hdmi_writeb(hdmi->plug_event, HDMI_IH_PHY_STAT0);
 
-		schedule_delayed_work(&(hdmi->hotplug_work), msecs_to_jiffies(20));
+		if(hdmi_inited) {
+			mod_timer(&hdmi->jitter_timer, jiffies + HZ);
+		}
 	}
 
 	/* Check HDCP  interrupt state */
@@ -2583,7 +2593,8 @@ static int mxc_hdmi_disp_init(struct mxc_dispdrv_handle *disp,
 	hdmi->plug_event = HDMI_DVI_IH_STAT;
 	hdmi->plug_mask = HDMI_DVI_STAT;
 
-	INIT_DELAYED_WORK(&hdmi->hotplug_work, hotplug_worker);
+	setup_timer(&hdmi->jitter_timer, hotplug_work_launch, (unsigned long)hdmi);
+	INIT_WORK(&hdmi->hotplug_work, hotplug_worker);
 	INIT_DELAYED_WORK(&hdmi->hdcp_hdp_work, hdcp_hdp_worker);
 
 	/* Configure registers related to HDMI interrupt
