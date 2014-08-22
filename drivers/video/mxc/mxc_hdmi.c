@@ -2176,9 +2176,11 @@ static void mxc_hdmi_setup(struct mxc_hdmi *hdmi, unsigned long event)
 	hdmi_disable_overflow_interrupts();
 
 	dev_dbg(&hdmi->pdev->dev, "CEA mode used vic=%d\n", hdmi->vic);
-	if (hdmi->edid_cfg.hdmi_cap)
+	if (hdmi->edid_cfg.hdmi_cap) {
+		hdmi_set_dvi_mode(0);
 		hdmi->hdmi_data.video_mode.mDVI = false;
-	else {
+	} else {
+		hdmi_set_dvi_mode(1);
 		dev_dbg(&hdmi->pdev->dev, "CEA mode vic=%d work in DVI\n", hdmi->vic);
 		hdmi->hdmi_data.video_mode.mDVI = true;
 	}
@@ -2327,10 +2329,17 @@ static int mxc_hdmi_fb_event(struct notifier_block *nb,
 
 			hdmi->blank = *((int *)event->data);
 
+			/* Re-enable HPD interrupts */
+			val = hdmi_readb(HDMI_PHY_MASK0);
+			val &= ~hdmi->plug_mask;
+			hdmi_writeb(val, HDMI_PHY_MASK0);
+
+			/* Unmute interrupts */
+			hdmi_writeb(~hdmi->plug_event, HDMI_IH_MUTE_PHY_STAT0);
+
 			if (hdmi->fb_reg && hdmi->cable_plugin)
 				mxc_hdmi_setup(hdmi, val);
 			hdmi_set_blank_state(1);
-
 		} else if (*((int *)event->data) != hdmi->blank) {
 			dev_dbg(&hdmi->pdev->dev,
 				"event=FB_EVENT_BLANK - BLANK\n");
@@ -2338,6 +2347,20 @@ static int mxc_hdmi_fb_event(struct notifier_block *nb,
 			mxc_hdmi_abort_stream();
 
 			mxc_hdmi_phy_disable(hdmi);
+
+			if(hdmi->plug_mask == HDMI_DVI_STAT) {
+				u8 val;
+				pr_info("In DVI Mode disable interrupts\n");
+				val = hdmi_readb(HDMI_IH_MUTE_PHY_STAT0);
+				val |= hdmi->plug_event;
+				hdmi_writeb(val, HDMI_IH_MUTE_PHY_STAT0);
+
+				val = hdmi_readb(HDMI_PHY_MASK0);
+				val |= hdmi->plug_mask;
+				hdmi_writeb(val, HDMI_PHY_MASK0);
+
+				hdmi_set_dvi_mode(1);
+			}
 
 			hdmi->blank = *((int *)event->data);
 		} else

@@ -39,7 +39,6 @@
 #include <linux/mfd/mxc-hdmi-core.h>
 #include <linux/of_device.h>
 #include <linux/mod_devicetable.h>
-#include <linux/mfd/mxc-hdmi-core.h>
 
 struct mxc_hdmi_data {
 	struct platform_device *pdev;
@@ -67,6 +66,17 @@ static unsigned int hdmi_cable_state;
 static unsigned int hdmi_blank_state;
 static unsigned int hdmi_abort_state;
 static spinlock_t hdmi_audio_lock, hdmi_blank_state_lock, hdmi_cable_state_lock;
+
+void hdmi_set_dvi_mode(unsigned int state)
+{
+	if (state) {
+		mxc_hdmi_abort_stream();
+		hdmi_cec_stop_device();
+	} else {
+		hdmi_cec_start_device();
+	}
+}
+EXPORT_SYMBOL(hdmi_set_dvi_mode);
 
 unsigned int hdmi_set_cable_state(unsigned int state)
 {
