@@ -449,7 +449,7 @@ static const struct drm_ioctl_desc vivante_ioctls[] = {
 };
 
 static const struct vm_operations_struct vm_ops = {
-	.fault = msm_gem_fault,
+	.fault = vivante_gem_fault,
 	.open = drm_gem_vm_open,
 	.close = drm_gem_vm_close,
 };

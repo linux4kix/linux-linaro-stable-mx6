@@ -166,7 +166,7 @@ int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 	return ret;
 }
 
-int msm_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+int vivante_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct drm_gem_object *obj = vma->vm_private_data;
 	struct drm_device *dev = obj->dev;
