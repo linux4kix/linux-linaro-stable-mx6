@@ -1697,15 +1697,16 @@ static int mxc_hdmi_read_edid(struct mxc_hdmi *hdmi)
 		}
 
 	}
+
+	/* Save edid cfg for audio driver */
+	hdmi_set_edid_cfg(hdmi->edid_status, &hdmi->edid_cfg);
+
 	if (ret < 0)
 		return HDMI_EDID_FAIL;
 
 	dev_info(&hdmi->pdev->dev, "%s HDMI in %s mode\n", __func__, hdmi->edid_cfg.hdmi_cap?"HDMI":"DVI");
 	hdmi->plug_event = hdmi->edid_cfg.hdmi_cap?HDMI_IH_PHY_STAT0_HPD:HDMI_DVI_IH_STAT;
 	hdmi->plug_mask = hdmi->edid_cfg.hdmi_cap?HDMI_PHY_HPD:HDMI_DVI_STAT;
-
-	/* Save edid cfg for audio driver */
-	hdmi_set_edid_cfg(hdmi->edid_status, &hdmi->edid_cfg);
 
 	if (!memcmp(edid_old, hdmi->edid, HDMI_EDID_LEN)) {
 		dev_info(&hdmi->pdev->dev, "same edid\n");

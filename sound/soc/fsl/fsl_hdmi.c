@@ -334,11 +334,11 @@ static void fsl_hdmi_get_playback_channels(void)
 static int fsl_hdmi_update_constraints(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
-	int ret;
+	int edid_status, ret;
 
-	hdmi_get_edid_cfg(&edid_cfg);
+	edid_status = hdmi_get_edid_cfg(&edid_cfg);
 
-	if (!edid_cfg.hdmi_cap)
+	if (edid_status && !edid_cfg.hdmi_cap)
 		return -1;
 
 	fsl_hdmi_get_playback_rates();
