@@ -31,7 +31,7 @@
 
 struct vivante_iommu_domain_pgtable {
 	uint32_t *pgtable;
-	dma_addr_t handle;
+	dma_addr_t paddr;
 };
 
 struct vivante_iommu_domain {
@@ -42,7 +42,7 @@ struct vivante_iommu_domain {
 static int pgtable_alloc(struct vivante_iommu_domain_pgtable *pgtable,
 			 size_t size)
 {
-	pgtable->pgtable = dma_alloc_coherent(NULL, size, &pgtable->handle, GFP_KERNEL);
+	pgtable->pgtable = dma_alloc_coherent(NULL, size, &pgtable->paddr, GFP_KERNEL);
 	if (!pgtable->pgtable)
 		return -ENOMEM;
 
@@ -52,7 +52,7 @@ static int pgtable_alloc(struct vivante_iommu_domain_pgtable *pgtable,
 static void pgtable_free(struct vivante_iommu_domain_pgtable *pgtable,
 			 size_t size)
 {
-	dma_free_coherent(NULL, size, pgtable->pgtable, pgtable->handle);
+	dma_free_coherent(NULL, size, pgtable->pgtable, pgtable->paddr);
 }
 
 static uint32_t pgtable_read(struct vivante_iommu_domain_pgtable *pgtable,
@@ -171,11 +171,11 @@ struct iommu_domain *vivante_iommu_domain_alloc(struct vivante_gpu *gpu)
 	/* set page table address in MC */
 	vivante_domain = domain->priv;
 
-	gpu_write(gpu, VIVS_MC_MMU_FE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
-	gpu_write(gpu, VIVS_MC_MMU_TX_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
-	gpu_write(gpu, VIVS_MC_MMU_PE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
-	gpu_write(gpu, VIVS_MC_MMU_PEZ_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
-	gpu_write(gpu, VIVS_MC_MMU_RA_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.pgtable);
+	gpu_write(gpu, VIVS_MC_MMU_FE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_TX_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_PE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_PEZ_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_RA_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
 
 	return domain;
 
