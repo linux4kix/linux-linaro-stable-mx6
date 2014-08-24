@@ -18,6 +18,7 @@
 		gpios = <&gpio3 5 1>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_hummingboard_gpio3_5>;
+		linux,rc-map-name = "rc-rc6-mce";
 	};
 
 	regulators {
