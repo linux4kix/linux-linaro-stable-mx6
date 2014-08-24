@@ -23,6 +23,6 @@
 # Makefile for the drm device driver.  This driver provides support for the
 # Direct Rendering Infrastructure (DRI) in XFree86 4.1.0 and higher.
 
-galcore-y := galcore_drm_drv.o
+galcore_drm-y := galcore_drm_drv.o galcore_drm_gem.o
 
-obj-$(CONFIG_DRM_GALCORE)	+= galcore_drm_drv.o
+obj-$(CONFIG_DRM_GALCORE)	:= galcore_drm.o

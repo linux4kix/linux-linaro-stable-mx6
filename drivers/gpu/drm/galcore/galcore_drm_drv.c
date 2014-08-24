@@ -50,61 +50,87 @@
 #include <linux/module.h>
 #include <drm/drmP.h>
 
+#include "galcore_drm_gem.h"
+#include <drm/galcore_drm.h>
+#include "galcore_drm_ioctlP.h"
+
 static struct platform_device *galcore_drm_pdev;
 
+static struct drm_ioctl_desc galcore_drm_ioctls[] = {
+	DRM_IOCTL_DEF_DRV(GALCORE_GEM_CREATE, galcore_drm_gem_create_ioctl,
+		DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(GALCORE_GEM_MMAP, galcore_drm_gem_mmap_ioctl,
+		DRM_UNLOCKED),
+	DRM_IOCTL_DEF_DRV(GALCORE_GEM_PWRITE, galcore_drm_gem_pwrite_ioctl,
+		DRM_UNLOCKED),
+};
+
 static const struct file_operations galcore_drm_driver_fops = {
-	.owner = THIS_MODULE,
-	.open = drm_open,
-	.release = drm_release,
-	.unlocked_ioctl = drm_ioctl,
-	.mmap = drm_mmap,
-	.poll = drm_poll,
-	.llseek = noop_llseek,
+	.owner			= THIS_MODULE,
+	.llseek			= no_llseek,
+	.poll			= drm_poll,
+	.unlocked_ioctl 	= drm_ioctl,
+	.mmap			= drm_gem_mmap,
+	.open			= drm_open,
+	.release		= drm_release,
 };
 
 static struct drm_driver galcore_drm_driver = {
-	.fops = &galcore_drm_driver_fops,
-	.name = "galcore-drm",
-	.desc = "Vivante galcore DRM",
-	.date = "20140824",
-	.major = 1,
-	.minor = 0,
+	.fops			= &galcore_drm_driver_fops,
+	.name			= "galcore-drm",
+	.desc			= "Vivante galcore DRM",
+	.date			= "20140824",
+	.gem_free_object	= galcore_drm_gem_free_object,
+	.prime_handle_to_fd	= drm_gem_prime_handle_to_fd,
+	.prime_fd_to_handle	= drm_gem_prime_fd_to_handle,
+	.gem_prime_export	= galcore_drm_gem_prime_export,
+	.gem_prime_import	= galcore_drm_gem_prime_import,
+#if 0
+	.dumb_create		= galcore_drm_gem_dumb_create,
+	.dumb_map_offset	= galcore_drm_gem_dumb_map_offset,
+	.dumb_destroy		= galcore_drm_gem_dumb_destroy,
+#endif
+	.gem_vm_ops		= &galcore_drm_gem_vm_ops,
+	.major			= 1,
+	.minor			= 0,
+	.driver_features	= DRIVER_GEM | DRIVER_PRIME,
+	.ioctls			= galcore_drm_ioctls,
 };
 
 static int galcore_drm_platform_probe(struct platform_device *pdev)
 {
-        int ret;
+	int ret;
 
-        ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
-        if (ret)
-                return ret;
+	ret = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
+	if (ret)
+		return ret;
 
-        return drm_platform_init(&galcore_drm_driver, pdev);
+	return drm_platform_init(&galcore_drm_driver, pdev);
 }
 
 static int galcore_drm_platform_remove(struct platform_device *pdev)
 {
-        drm_put_dev(platform_get_drvdata(pdev));
+	drm_put_dev(platform_get_drvdata(pdev));
 
-        return 0;
+	return 0;
 }
 
 static struct platform_driver galcore_drm_platform_driver = {
-        .probe          = galcore_drm_platform_probe,
-        .remove         = galcore_drm_platform_remove,
-        .driver         = {
-                .owner  = THIS_MODULE,
-                .name   = "galcore-drm",
-        },
+	.probe		= galcore_drm_platform_probe,
+	.remove		= galcore_drm_platform_remove,
+	.driver		= {
+		.owner	= THIS_MODULE,
+		.name	= "galcore-drm",
+	},
 };
 
 static int __init galcore_drm_init(void)
 {
 	int ret;
 
-        ret = platform_driver_register(&galcore_drm_platform_driver);
-        if (ret < 0)
-                goto out;
+	ret = platform_driver_register(&galcore_drm_platform_driver);
+	if (ret < 0)
+		goto out;
 
 	galcore_drm_pdev = platform_device_register_simple("galcore-drm", -1,
 					NULL, 0);
@@ -117,9 +143,9 @@ out:
 
 static void __exit galcore_drm_exit(void)
 {
-        platform_device_unregister(galcore_drm_pdev);
+	platform_device_unregister(galcore_drm_pdev);
 
-        platform_driver_unregister(&galcore_drm_platform_driver);
+	platform_driver_unregister(&galcore_drm_platform_driver);
 }
 
 module_init(galcore_drm_init);
