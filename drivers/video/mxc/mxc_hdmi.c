@@ -1698,9 +1698,6 @@ static int mxc_hdmi_read_edid(struct mxc_hdmi *hdmi)
 
 	}
 
-	/* Save edid cfg for audio driver */
-	hdmi_set_edid_cfg(hdmi->edid_status, &hdmi->edid_cfg);
-
 	if (ret < 0)
 		return HDMI_EDID_FAIL;
 
@@ -2011,6 +2008,9 @@ static void mxc_hdmi_cable_connected(struct mxc_hdmi *hdmi)
 		mxc_hdmi_default_modelist(hdmi);
 		break;
 	}
+
+	/* Save edid cfg for audio driver */
+	hdmi_set_edid_cfg(hdmi->edid_status, &hdmi->edid_cfg);
 
 	/* Setting video mode */
 	mxc_hdmi_set_mode(hdmi);
