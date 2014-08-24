@@ -300,7 +300,7 @@
 		VLC-supply = <&reg_audio>;
 	};
 
-	hdmi: edid@50 {
+	ddc: edid@50 {
 		compatible = "fsl,imx6-hdmi-i2c";
 		reg = <0x50>;
 	};
