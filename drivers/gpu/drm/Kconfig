@@ -205,4 +205,6 @@ source "drivers/gpu/drm/msm/Kconfig"
 
 source "drivers/gpu/drm/tegra/Kconfig"
 
+source "drivers/gpu/drm/galcore/Kconfig"
+
 source "drivers/gpu/drm/panel/Kconfig"

@@ -1,0 +1,9 @@
+config DRM_GALCORE
+	tristate "DRM support for Vivante GPUs using galcore"
+	depends on DRM && ARM
+	help
+	  Provide an Memory Management interface into the GEM MM subsystem
+	  for Vivante GPU's still using the out of tree Galcore driver.
+
+	  This driver provides no hardware support; it is simple here for 
+	  Memory Allocation and as an interface for dmabuf.
