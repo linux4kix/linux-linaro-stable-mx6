@@ -175,6 +175,15 @@
 			};
 		};
 	};
+
+	display-subsystem {
+		compatible = "fsl,imx-display-subsystem";
+		ports = <&ipu1_di0>, <&ipu1_di1>;
+	};
+};
+
+&hdmi {
+	compatible = "fsl,imx6dl-hdmi";
 };
 
 &ldb {
