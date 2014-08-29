@@ -721,7 +721,7 @@
 		pinctrl-0 = <&pinctrl_sound_novena>;
 
 		clocks = <&clks 169>;
-		assigned-clocks = <&clks 201>, <&clks 57>, <&clks 173>, <&clks 169>;
+		assigned-clocks = <&clks 201>, <&clks 57>, <&clks 222>, <&clks 169>;
 		assigned-clock-parents = <&clks 169>, <&clks 203>, <&clks 3>, <&clks 100>;
 		assigned-clock-rates = <0 0 722534400 22579200>;
 	};

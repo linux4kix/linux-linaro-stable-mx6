@@ -97,7 +97,7 @@ static int es8328_set_deemph(struct snd_soc_codec *codec)
 	 * rate.
 	 */
 	if (!es8328) {
-		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__
+		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__, __LINE__);
 		return 0;
 	}
 
@@ -126,7 +126,7 @@ static int es8328_get_deemph(struct snd_kcontrol *kcontrol,
 	struct es8328_priv *es8328 = snd_soc_codec_get_drvdata(codec);
 
 	if (!es8328) {
-		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__
+		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__, __LINE__);
 		return 0;
 	}
 	ucontrol->value.enumerated.item[0] = es8328->deemph;
@@ -145,12 +145,12 @@ static int es8328_put_deemph(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 
 	if (!es8328) {
-		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__
+		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__, __LINE__);
 		return 0;
 	}
 
 	if (!codec) {
-		pr_err("es8328 %s: %s:%d - couldn't find codec\n", __func__, __F
+		pr_err("es8328 %s: %s:%d - couldn't find codec\n", __func__, __FILE__, __LINE__);
 		return 0;
 	}
 
