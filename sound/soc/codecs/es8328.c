@@ -96,6 +96,11 @@ static int es8328_set_deemph(struct snd_soc_codec *codec)
 	 * If we're using deemphasis select the nearest available sample
 	 * rate.
 	 */
+	if (!es8328) {
+		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__
+		return 0;
+	}
+
 	if (es8328->deemph) {
 		best = 1;
 		for (i = 2; i < ARRAY_SIZE(deemph_settings); i++) {
@@ -120,6 +125,10 @@ static int es8328_get_deemph(struct snd_kcontrol *kcontrol,
 	struct snd_soc_codec *codec = snd_soc_dapm_kcontrol_codec(kcontrol);
 	struct es8328_priv *es8328 = snd_soc_codec_get_drvdata(codec);
 
+	if (!es8328) {
+		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__
+		return 0;
+	}
 	ucontrol->value.enumerated.item[0] = es8328->deemph;
 	return 0;
 }
@@ -134,6 +143,16 @@ static int es8328_put_deemph(struct snd_kcontrol *kcontrol,
 
 	if (deemph > 1)
 		return -EINVAL;
+
+	if (!es8328) {
+		pr_err("es8328: %s: priv is NULL at %s:%d\n", __func__, __FILE__
+		return 0;
+	}
+
+	if (!codec) {
+		pr_err("es8328 %s: %s:%d - couldn't find codec\n", __func__, __F
+		return 0;
+	}
 
 	ret = es8328_set_deemph(codec);
 	if (ret < 0)
