@@ -32,8 +32,8 @@ static int tpcompactkbd_send_cmd(struct hid_device *hdev,
 {
 	unsigned char buf[] = {0x18, byte2, byte3};
 
-	return hid_hw_raw_request(hdev, buf[0], buf, sizeof(buf),
-			HID_FEATURE_REPORT, HID_REQ_SET_REPORT);
+	return hdev->hid_get_raw_report(hdev, buf[0], buf, sizeof(buf),
+			HID_FEATURE_REPORT);
 }
 
 /* Toggle fnlock on or off, if fnmode allows */
