@@ -117,7 +117,7 @@ static int es8328_set_deemph(struct snd_soc_codec *codec)
 static int es8328_get_deemph(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_codec *codec = snd_soc_dapm_kcontrol_codec(kcontrol);
 	struct es8328_priv *es8328 = snd_soc_codec_get_drvdata(codec);
 
 	ucontrol->value.enumerated.item[0] = es8328->deemph;
@@ -127,7 +127,7 @@ static int es8328_get_deemph(struct snd_kcontrol *kcontrol,
 static int es8328_put_deemph(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct snd_soc_codec *codec = snd_soc_dapm_kcontrol_codec(kcontrol);
 	struct es8328_priv *es8328 = snd_soc_codec_get_drvdata(codec);
 	int deemph = ucontrol->value.enumerated.item[0];
 	int ret;
