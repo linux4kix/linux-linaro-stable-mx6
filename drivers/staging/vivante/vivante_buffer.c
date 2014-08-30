@@ -144,11 +144,36 @@ u32 vivante_buffer_init(struct vivante_gpu *gpu)
 
 void vivante_buffer_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit)
 {
-	u32 i;
+       struct vivante_gem_object *buffer = to_vivante_bo(gpu->buffer);
+       struct vivante_gem_object *cmd;
+       u32 *lw = buffer->vaddr + ((buffer->offset - 4) * 4);
+       u32 back;
+       u32 i;
 
-	/* update offset for every cmd stream */
-	for (i = 0; i < submit->nr_cmds; i++)
-			submit->cmd[i].obj->offset = submit->cmd[i].size;
+       vivante_buffer_dump(buffer, 0x50);
+
+       /* save offset back into main buffer */
+       back = buffer->offset;
+
+       /* trigger event */
+       CMD_LOAD_STATE(buffer, VIVS_GL_EVENT, VIVS_GL_EVENT_EVENT_ID(event) | VIVS_GL_EVENT_FROM_PE);
+
+       /* append WAIT/LINK to main buffer */
+       CMD_WAIT(buffer);
+       CMD_LINK(buffer, 2, buffer->paddr + ((buffer->offset - 1) * 4));
+
+       /* update offset for every cmd stream */
+       for (i = 0; i < submit->nr_cmds; i++)
+                submit->cmd[i].obj->offset = submit->cmd[i].size;
+
+       /* TODO: inter-connect all cmd buffers */
+
+       /* jump back from last cmd to main buffer */
+       cmd = submit->cmd[submit->nr_cmds - 1].obj;
+       CMD_LINK(cmd, 4, buffer->paddr + (back * 4));
+
+       printk(KERN_ERR "stream link @ 0x%08x\n", cmd->paddr + ((cmd->offset - 1) * 4));
+       printk(KERN_ERR "stream link @ %p\n", cmd->vaddr + ((cmd->offset - 1) * 4));
 
 	for (i = 0; i < submit->nr_cmds; i++) {
 		struct vivante_gem_object *obj = submit->cmd[i].obj;
@@ -158,4 +183,20 @@ void vivante_buffer_queue(struct vivante_gpu *gpu, unsigned int event, struct vi
 			vivante_buffer_dump(obj, obj->offset);
 		}
 	}
+
+       /* change ll to NOP */
+       printk(KERN_ERR "link op: %p\n", lw);
+       printk(KERN_ERR "link addr: %p\n", lw + 1);
+       printk(KERN_ERR "addr: 0x%08x\n", submit->cmd[0].obj->paddr);
+       printk(KERN_ERR "back: 0x%08x\n", buffer->paddr + (back * 4));
+       printk(KERN_ERR "event: %d\n", event);
+
+       /* Change WAIT into a LINK command; write the address first. */
+       i = VIV_FE_LINK_HEADER_OP_LINK | VIV_FE_LINK_HEADER_PREFETCH(submit->cmd[0].size * 2);
+       *(lw + 1) = submit->cmd[0].obj->paddr;
+       mb();
+       *(lw)= i;
+       mb();
+
+       vivante_buffer_dump(buffer, 0x50);
 }
