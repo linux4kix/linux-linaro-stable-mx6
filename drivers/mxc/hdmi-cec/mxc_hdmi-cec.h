@@ -35,4 +35,13 @@
 #define HDMICEC_IOC_GETPHYADDRESS	\
 				_IOR(HDMICEC_IOC_MAGIC, 4, unsigned char[4])
 
+#define MAX_MESSAGE_LEN                         16
+
+#define MESSAGE_TYPE_RECEIVE_SUCCESS            1
+#define MESSAGE_TYPE_NOACK                      2
+#define MESSAGE_TYPE_DISCONNECTED               3
+#define MESSAGE_TYPE_CONNECTED                  4
+#define MESSAGE_TYPE_SEND_SUCCESS               5
+
 #endif				/* !_HDMICEC_H_ */
+
