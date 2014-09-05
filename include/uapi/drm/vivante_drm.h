@@ -49,12 +49,23 @@ struct drm_vivante_timespec {
 	int64_t tv_nsec;         /* nanoseconds */
 };
 
-#define VIVANTE_PARAM_GPU_MODEL		0x01
-#define VIVANTE_PARAM_GPU_REVISION	0x02
-#define VIVANTE_PARAM_GPU_FEATURES_0	0x03
-#define VIVANTE_PARAM_GPU_FEATURES_1	0x04
-#define VIVANTE_PARAM_GPU_FEATURES_2	0x05
-#define VIVANTE_PARAM_GPU_FEATURES_3	0x06
+#define VIVANTE_PARAM_GPU_MODEL                     0x01
+#define VIVANTE_PARAM_GPU_REVISION                  0x02
+#define VIVANTE_PARAM_GPU_FEATURES_0                0x03
+#define VIVANTE_PARAM_GPU_FEATURES_1                0x04
+#define VIVANTE_PARAM_GPU_FEATURES_2                0x05
+#define VIVANTE_PARAM_GPU_FEATURES_3                0x06
+
+#define VIVANTE_PARAM_GPU_STREAM_COUNT              0x10
+#define VIVANTE_PARAM_GPU_REGISTER_MAX              0x11
+#define VIVANTE_PARAM_GPU_THREAD_COUNT              0x12
+#define VIVANTE_PARAM_GPU_VERTEX_CACHE_SIZE         0x13
+#define VIVANTE_PARAM_GPU_SHADER_CORE_COUNT         0x14
+#define VIVANTE_PARAM_GPU_PIXEL_PIPES               0x15
+#define VIVANTE_PARAM_GPU_VERTEX_OUTPUT_BUFFER_SIZE 0x16
+#define VIVANTE_PARAM_GPU_BUFFER_SIZE               0x17
+#define VIVANTE_PARAM_GPU_INSTRUCTION_COUNT         0x18
+#define VIVANTE_PARAM_GPU_NUM_CONSTANTS             0x19
 
 //#define MSM_PARAM_GMEM_SIZE  0x02
 
