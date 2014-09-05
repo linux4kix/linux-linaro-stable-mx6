@@ -55,6 +55,7 @@ struct drm_vivante_timespec {
 #define VIVANTE_PARAM_GPU_FEATURES_1                0x04
 #define VIVANTE_PARAM_GPU_FEATURES_2                0x05
 #define VIVANTE_PARAM_GPU_FEATURES_3                0x06
+#define VIVANTE_PARAM_GPU_FEATURES_4                0x07
 
 #define VIVANTE_PARAM_GPU_STREAM_COUNT              0x10
 #define VIVANTE_PARAM_GPU_REGISTER_MAX              0x11

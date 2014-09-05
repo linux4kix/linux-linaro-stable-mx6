@@ -58,6 +58,10 @@ int vivante_gpu_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *val
 		*value = gpu->identity.minor_features2;
 		break;
 
+	case VIVANTE_PARAM_GPU_FEATURES_4:
+		*value = gpu->identity.minor_features3;
+		break;
+
 	case VIVANTE_PARAM_GPU_STREAM_COUNT:
 		*value = gpu->identity.stream_count;
 		break;
