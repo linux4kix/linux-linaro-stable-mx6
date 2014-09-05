@@ -66,6 +66,41 @@ int vivante_gpu_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *val
 	return 0;
 }
 
+static void vivante_hw_specs(struct vivante_gpu *gpu)
+{
+	if (gpu->identity.minor_features & chipMinorFeatures0_MORE_MINOR_FEATURES) {
+		u32 specs[2];
+
+		specs[0] = gpu_read(gpu, VIVS_HI_CHIP_SPECS);
+		specs[1] = gpu_read(gpu, VIVS_HI_CHIP_SPECS_2);
+
+		gpu->identity.stream_count = specs[0] & 0xf;
+		gpu->identity.register_max = specs[0] & 0xf0;
+		gpu->identity.thread_count = specs[0] & 0xf00;
+		gpu->identity.vertex_cache_size = specs[0] & 0x1f000;
+		gpu->identity.shader_core_count = specs[0] & 0xf00000;
+		gpu->identity.pixel_pipes = specs[0] & 0xf000000;
+		gpu->identity.vertex_output_buffer_size = specs[0] & 0xf0000000;
+
+		gpu->identity.buffer_size = specs[1] & 0xff;
+		gpu->identity.instruction_count = specs[1] & 0xff00;
+		gpu->identity.num_constants = specs[1] & 0xffff0000;
+	} else {
+		dev_err(gpu->dev->dev, "TODO: determine GPU specs based on model\n");
+	}
+
+	dev_info(gpu->dev->dev, "stream_count:  %x\n", gpu->identity.stream_count);
+	dev_info(gpu->dev->dev, "register_max: %x\n", gpu->identity.register_max);
+	dev_info(gpu->dev->dev, "thread_count: %x\n", gpu->identity.thread_count);
+	dev_info(gpu->dev->dev, "vertex_cache_size: %x\n", gpu->identity.vertex_cache_size);
+	dev_info(gpu->dev->dev, "shader_core_count: %x\n", gpu->identity.shader_core_count);
+	dev_info(gpu->dev->dev, "pixel_pipes: %x\n", gpu->identity.pixel_pipes);
+	dev_info(gpu->dev->dev, "vertex_output_buffer_size: %x\n", gpu->identity.vertex_output_buffer_size);
+	dev_info(gpu->dev->dev, "buffer_size: %x\n", gpu->identity.buffer_size);
+	dev_info(gpu->dev->dev, "instruction_count: %x\n", gpu->identity.instruction_count);
+	dev_info(gpu->dev->dev, "num_constants: %x\n", gpu->identity.num_constants);
+}
+
 static void vivante_hw_identify(struct vivante_gpu *gpu)
 {
 	u32 chipIdentity;
@@ -133,6 +168,8 @@ static void vivante_hw_identify(struct vivante_gpu *gpu)
 	dev_info(gpu->dev->dev, "minor_features1: %x\n", gpu->identity.minor_features1);
 	dev_info(gpu->dev->dev, "minor_features2: %x\n", gpu->identity.minor_features2);
 	dev_info(gpu->dev->dev, "minor_features3: %x\n", gpu->identity.minor_features3);
+
+	vivante_hw_specs(gpu);
 }
 
 static void vivante_hw_reset(struct vivante_gpu *gpu)
