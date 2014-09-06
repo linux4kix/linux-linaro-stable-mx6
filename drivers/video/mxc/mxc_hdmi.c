@@ -702,7 +702,7 @@ static void hdmi_video_csc(struct mxc_hdmi *hdmi)
 {
 	int color_depth = 0;
 	int interpolation = HDMI_CSC_CFG_INTMODE_DISABLE;
-	int decimation = 0;
+	int decimation = HDMI_CSC_CFG_DECMODE_DISABLE;
 	u8 val;
 
 	/* YCC422 interpolation to 444 mode */
