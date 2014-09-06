@@ -118,17 +118,17 @@ static void vivante_hw_specs(struct vivante_gpu *gpu)
 		specs[0] = gpu_read(gpu, VIVS_HI_CHIP_SPECS);
 		specs[1] = gpu_read(gpu, VIVS_HI_CHIP_SPECS_2);
 
-		gpu->identity.stream_count = specs[0] & 0xf;
-		gpu->identity.register_max = specs[0] & 0xf0;
-		gpu->identity.thread_count = specs[0] & 0xf00;
-		gpu->identity.vertex_cache_size = specs[0] & 0x1f000;
-		gpu->identity.shader_core_count = specs[0] & 0xf00000;
-		gpu->identity.pixel_pipes = specs[0] & 0xf000000;
-		gpu->identity.vertex_output_buffer_size = specs[0] & 0xf0000000;
+		gpu->identity.stream_count = VIVS_HI_CHIP_SPECS_STREAM_COUNT(specs[0]);
+		gpu->identity.register_max = VIVS_HI_CHIP_SPECS_REGISTER_MAX(specs[0]);
+		gpu->identity.thread_count = VIVS_HI_CHIP_SPECS_THREAD_COUNT(specs[0]);
+		gpu->identity.vertex_cache_size = VIVS_HI_CHIP_SPECS_VERTEX_CACHE_SIZE(specs[0]);
+		gpu->identity.shader_core_count = VIVS_HI_CHIP_SPECS_SHADER_CORE_COUNT(specs[0]);
+		gpu->identity.pixel_pipes = VIVS_HI_CHIP_SPECS_PIXEL_PIPES(specs[0]);
+		gpu->identity.vertex_output_buffer_size = VIVS_HI_CHIP_SPECS_VERTEX_OUTPUT_BUFFER_SIZE(specs[0]);
 
-		gpu->identity.buffer_size = specs[1] & 0xff;
-		gpu->identity.instruction_count = specs[1] & 0xff00;
-		gpu->identity.num_constants = specs[1] & 0xffff0000;
+		gpu->identity.buffer_size = VIVS_HI_CHIP_SPECS_2_BUFFER_SIZE(specs[1]);
+		gpu->identity.instruction_count = VIVS_HI_CHIP_SPECS_2_INSTRUCTION_COUNT(specs[1]);
+		gpu->identity.num_constants = VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS(specs[1]);
 	} else {
 		dev_err(gpu->dev->dev, "TODO: determine GPU specs based on model\n");
 	}
