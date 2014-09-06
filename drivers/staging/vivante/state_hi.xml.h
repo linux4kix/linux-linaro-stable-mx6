@@ -8,12 +8,12 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- /home/debian/etna_viv/rnndb/state.xml    (  18526 bytes, from 2014-04-21 10:54:26)
-- /home/debian/etna_viv/rnndb/common.xml   (  18379 bytes, from 2014-04-21 10:54:26)
-- /home/debian/etna_viv/rnndb/state_hi.xml (  22495 bytes, from 2014-04-21 11:14:48)
-- /home/debian/etna_viv/rnndb/state_2d.xml (  51191 bytes, from 2014-04-21 10:54:26)
-- /home/debian/etna_viv/rnndb/state_3d.xml (  54570 bytes, from 2014-04-21 10:54:26)
-- /home/debian/etna_viv/rnndb/state_vg.xml (   5942 bytes, from 2014-04-21 10:54:26)
+- /home/christian/projects/etna_viv/rnndb/state.xml    (  18526 bytes, from 2014-09-06 05:57:57)
+- /home/christian/projects/etna_viv/rnndb/common.xml   (  18379 bytes, from 2014-09-06 05:57:57)
+- /home/christian/projects/etna_viv/rnndb/state_hi.xml (  23176 bytes, from 2014-09-06 06:07:47)
+- /home/christian/projects/etna_viv/rnndb/state_2d.xml (  51191 bytes, from 2014-09-06 05:57:57)
+- /home/christian/projects/etna_viv/rnndb/state_3d.xml (  54570 bytes, from 2014-09-06 05:57:57)
+- /home/christian/projects/etna_viv/rnndb/state_vg.xml (   5942 bytes, from 2014-09-06 05:57:57)
 
 Copyright (C) 2014
 */
@@ -124,6 +124,27 @@ Copyright (C) 2014
 #define VIVS_HI_PROFILE_WRITE_BYTES8				0x00000044
 
 #define VIVS_HI_CHIP_SPECS					0x00000048
+#define VIVS_HI_CHIP_SPECS_STREAM_COUNT__MASK			0x0000000f
+#define VIVS_HI_CHIP_SPECS_STREAM_COUNT__SHIFT			0
+#define VIVS_HI_CHIP_SPECS_STREAM_COUNT(x)			(((x) << VIVS_HI_CHIP_SPECS_STREAM_COUNT__SHIFT) & VIVS_HI_CHIP_SPECS_STREAM_COUNT__MASK)
+#define VIVS_HI_CHIP_SPECS_REGISTER_MAX__MASK			0x000000f0
+#define VIVS_HI_CHIP_SPECS_REGISTER_MAX__SHIFT			4
+#define VIVS_HI_CHIP_SPECS_REGISTER_MAX(x)			(((x) << VIVS_HI_CHIP_SPECS_REGISTER_MAX__SHIFT) & VIVS_HI_CHIP_SPECS_REGISTER_MAX__MASK)
+#define VIVS_HI_CHIP_SPECS_THREAD_COUNT__MASK			0x00000f00
+#define VIVS_HI_CHIP_SPECS_THREAD_COUNT__SHIFT			8
+#define VIVS_HI_CHIP_SPECS_THREAD_COUNT(x)			(((x) << VIVS_HI_CHIP_SPECS_THREAD_COUNT__SHIFT) & VIVS_HI_CHIP_SPECS_THREAD_COUNT__MASK)
+#define VIVS_HI_CHIP_SPECS_VERTEX_CACHE_SIZE__MASK		0x0001f000
+#define VIVS_HI_CHIP_SPECS_VERTEX_CACHE_SIZE__SHIFT		12
+#define VIVS_HI_CHIP_SPECS_VERTEX_CACHE_SIZE(x)			(((x) << VIVS_HI_CHIP_SPECS_VERTEX_CACHE_SIZE__SHIFT) & VIVS_HI_CHIP_SPECS_VERTEX_CACHE_SIZE__MASK)
+#define VIVS_HI_CHIP_SPECS_SHADER_CORE_COUNT__MASK		0x01f00000
+#define VIVS_HI_CHIP_SPECS_SHADER_CORE_COUNT__SHIFT		20
+#define VIVS_HI_CHIP_SPECS_SHADER_CORE_COUNT(x)			(((x) << VIVS_HI_CHIP_SPECS_SHADER_CORE_COUNT__SHIFT) & VIVS_HI_CHIP_SPECS_SHADER_CORE_COUNT__MASK)
+#define VIVS_HI_CHIP_SPECS_PIXEL_PIPES__MASK			0x0e000000
+#define VIVS_HI_CHIP_SPECS_PIXEL_PIPES__SHIFT			25
+#define VIVS_HI_CHIP_SPECS_PIXEL_PIPES(x)			(((x) << VIVS_HI_CHIP_SPECS_PIXEL_PIPES__SHIFT) & VIVS_HI_CHIP_SPECS_PIXEL_PIPES__MASK)
+#define VIVS_HI_CHIP_SPECS_VERTEX_OUTPUT_BUFFER_SIZE__MASK	0xf0000000
+#define VIVS_HI_CHIP_SPECS_VERTEX_OUTPUT_BUFFER_SIZE__SHIFT	28
+#define VIVS_HI_CHIP_SPECS_VERTEX_OUTPUT_BUFFER_SIZE(x)		(((x) << VIVS_HI_CHIP_SPECS_VERTEX_OUTPUT_BUFFER_SIZE__SHIFT) & VIVS_HI_CHIP_SPECS_VERTEX_OUTPUT_BUFFER_SIZE__MASK)
 
 #define VIVS_HI_PROFILE_WRITE_BURSTS				0x0000004c
 
@@ -151,6 +172,15 @@ Copyright (C) 2014
 #define VIVS_HI_PROFILE_IDLE_CYCLES				0x0000007c
 
 #define VIVS_HI_CHIP_SPECS_2					0x00000080
+#define VIVS_HI_CHIP_SPECS_2_BUFFER_SIZE__MASK			0x000000ff
+#define VIVS_HI_CHIP_SPECS_2_BUFFER_SIZE__SHIFT			0
+#define VIVS_HI_CHIP_SPECS_2_BUFFER_SIZE(x)			(((x) << VIVS_HI_CHIP_SPECS_2_BUFFER_SIZE__SHIFT) & VIVS_HI_CHIP_SPECS_2_BUFFER_SIZE__MASK)
+#define VIVS_HI_CHIP_SPECS_2_INSTRUCTION_COUNT__MASK		0x0000ff00
+#define VIVS_HI_CHIP_SPECS_2_INSTRUCTION_COUNT__SHIFT		8
+#define VIVS_HI_CHIP_SPECS_2_INSTRUCTION_COUNT(x)		(((x) << VIVS_HI_CHIP_SPECS_2_INSTRUCTION_COUNT__SHIFT) & VIVS_HI_CHIP_SPECS_2_INSTRUCTION_COUNT__MASK)
+#define VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS__MASK		0xffff0000
+#define VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS__SHIFT		16
+#define VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS(x)			(((x) << VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS__SHIFT) & VIVS_HI_CHIP_SPECS_2_NUM_CONSTANTS__MASK)
 
 #define VIVS_HI_CHIP_MINOR_FEATURE_2				0x00000084
 
