@@ -365,7 +365,6 @@ static void imx6_pcie_init_phy(struct pcie_port *pp)
 
 static int imx6_pcie_wait_for_link(struct pcie_port *pp)
 {
-	struct imx6_pcie *imx6_pcie = to_imx6_pcie(pp);
 	int count = 200;
 
 	while (!dw_pcie_link_up(pp)) {
