@@ -267,6 +267,12 @@
 				MX6QDL_PAD_SD2_DAT3__SD2_DATA3 0x13059
 			>;
 		};
+
+		pinctrl_hummingboard_pcie_reset: hummingboard-pcie-reset {
+			fsl,pins = <
+				MX6QDL_PAD_EIM_DA4__GPIO3_IO04 0x80000000
+			>;
+		};
 	};
 };
 
@@ -321,4 +327,13 @@
 	fsl,cpu_pupscr_sw = <0xf>;
 	fsl,cpu_pdnscr_iso2sw = <0x1>;
 	fsl,cpu_pdnscr_iso = <0x1>;
+};
+
+&pcie {
+	pinctrl-names = "default";
+	pinctrl-0 = <
+		&pinctrl_hummingboard_pcie_reset
+	>;
+	reset-gpio = <&gpio3 4 0>;
+	status = "okay";
 };
