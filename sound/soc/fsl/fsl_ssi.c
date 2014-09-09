@@ -1326,6 +1326,7 @@ static int fsl_ssi_probe(struct platform_device *pdev)
 	int ret = 0;
 	struct device_attribute *dev_attr = NULL;
 	struct device_node *np = pdev->dev.of_node;
+	u32 dmas[4];
 	const struct of_device_id *of_id;
 	enum fsl_ssi_type hw_type;
 	const char *p, *sprop;
@@ -1478,10 +1479,22 @@ static int fsl_ssi_probe(struct platform_device *pdev)
 		 * We have burstsize be "fifo_depth - 2" to match the SSI
 		 * watermark setting in fsl_ssi_startup().
 		 */
+		ssi_private->dma_params_tx.maxburst = ssi_private->fifo_depth - 2;
+		ssi_private->dma_params_rx.maxburst = ssi_private->fifo_depth - 2;
 		ssi_private->dma_params_tx.addr =
 			ssi_private->ssi_phys + offsetof(struct ccsr_ssi, stx0);
 		ssi_private->dma_params_rx.addr =
 			ssi_private->ssi_phys + offsetof(struct ccsr_ssi, srx0);
+
+		ret = !of_property_read_u32_array(np, "dmas", dmas, 4);
+		if (ssi_private->use_dma && !ret && dmas[2] == IMX_DMATYPE_SSI_DUAL) {
+			ssi_private->use_dual_fifo = true;
+			/* When using dual fifo mode, we need to keep watermark
+			 * as even numbers due to dma script limitation.
+			 */
+			ssi_private->dma_params_tx.maxburst &= ~0x1;
+			ssi_private->dma_params_rx.maxburst &= ~0x1;
+		}
 	}
 
 	/*
