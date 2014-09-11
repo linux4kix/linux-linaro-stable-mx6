@@ -29,6 +29,7 @@
 #include <linux/types.h>
 #include <linux/busfreq-imx6.h>
 
+#include "../pci.h"
 #include "pcie-designware.h"
 
 #define to_imx6_pcie(x)	container_of(x, struct imx6_pcie, pp)
@@ -866,6 +867,9 @@ static int __init imx6_pcie_probe(struct platform_device *pdev)
 		ret = PTR_ERR(imx6_pcie->iomuxc_gpr);
 		goto err;
 	}
+
+        if (of_find_property(np, "no-msi", NULL))
+                pci_no_msi();
 
 	if (IS_ENABLED(CONFIG_EP_MODE_IN_EP_RC_SYS)) {
 		if (IS_ENABLED(CONFIG_EP_SELF_IO_TEST)) {
