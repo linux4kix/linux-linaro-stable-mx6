@@ -782,6 +782,7 @@
 	power-on-gpio = <&gpio7 12 GPIO_ACTIVE_HIGH>;
 	disable-gpio = <&gpio2 16 GPIO_ACTIVE_HIGH>;
 	status = "okay";
+	no-msi;
 };
 
 &hdmi {
