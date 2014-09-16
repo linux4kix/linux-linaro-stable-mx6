@@ -38,7 +38,7 @@
 	};
  */
 
- 
+
 #include <linux/module.h>
 #include <linux/errno.h>
 #include <linux/interrupt.h>
@@ -494,8 +494,7 @@ static long lirc_ioctl(struct file *filep, unsigned int cmd, unsigned long arg) 
 	return 0;
 }
 
-static int lirc_gpio_get_devtree_pdata(struct device *dev, struct lirc_gpio_platform_data *pdata)
-{
+static int lirc_gpio_get_devtree_pdata(struct device *dev, struct lirc_gpio_platform_data *pdata) {
 	struct device_node *np = dev->of_node;
 	enum of_gpio_flags flags;
 	struct property *prop;
@@ -572,7 +571,7 @@ static int init_port(void) {
 		}
 	}
 
-	if(gpio_dev->gpio_rx_nr >= 0) {	
+	if(gpio_dev->gpio_rx_nr >= 0) {
 		gpio_direction_input(gpio_dev->gpio_rx_nr);
 	}
 	if(gpio_dev->gpio_tx_nr >= 0) {
@@ -705,7 +704,7 @@ static int lirc_gpio_probe(struct platform_device *pdev) {
 			} else {
 				gpio_dev->gpio_tx_nr = gpio_out_pin;
 			}
-		}	
+		}
 	}
 	if(sense > -2) {
 		gpio_dev->sense = sense;
@@ -713,8 +712,8 @@ static int lirc_gpio_probe(struct platform_device *pdev) {
 	if(softcarrier >= 0) {
 		gpio_dev->softcarrier = softcarrier;
 	}
-	
-	printk(KERN_DEBUG LIRC_DRIVER_NAME ": rx %d, tx %d, sense %d, softcarrier %d\n", 
+
+	printk(KERN_DEBUG LIRC_DRIVER_NAME ": rx %d, tx %d, sense %d, softcarrier %d\n",
 		   gpio_dev->gpio_rx_nr, gpio_dev->gpio_tx_nr, gpio_dev->sense, gpio_dev->softcarrier);
 
 	platform_set_drvdata(pdev, gpio_dev);
@@ -729,7 +728,7 @@ static int lirc_gpio_probe(struct platform_device *pdev) {
 			  LIRC_CAN_REC_MODE2;
 
 	driver.dev = &pdev->dev;
-	driver.minor = lirc_register_driver(&driver);	
+	driver.minor = lirc_register_driver(&driver);
 
 	if(driver.minor < 0) {
 		printk(KERN_ERR LIRC_DRIVER_NAME ": device registration failed with %d\n", result);
@@ -752,8 +751,8 @@ exit_gpio:
 static int lirc_gpio_remove(struct platform_device *pdev) {
 	struct lirc_gpio_dev *gpio_dev = platform_get_drvdata(pdev);
 
-	lirc_gpio_exit();	
-	
+	lirc_gpio_exit();
+
 	kfree(gpio_dev);
 
 	return 0;
@@ -780,3 +779,4 @@ MODULE_PARM_DESC(sense, "Override autodetection of IR receiver circuit"
 
 module_param(softcarrier, int, S_IRUGO);
 MODULE_PARM_DESC(softcarrier, "Software carrier (0 = off, 1 = on, default on)");
+
