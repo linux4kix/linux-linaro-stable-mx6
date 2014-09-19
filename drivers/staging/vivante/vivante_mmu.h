@@ -20,18 +20,18 @@
 
 #include <linux/iommu.h>
 
-struct vivante_iommu {
+struct etnaviv_iommu {
 	struct drm_device *dev;
 	struct iommu_domain *domain;
 };
 
-int vivante_iommu_attach(struct vivante_iommu *iommu, const char **names, int cnt);
-int vivante_iommu_map(struct vivante_iommu *iommu, uint32_t iova, struct sg_table *sgt,
+int etnaviv_iommu_attach(struct etnaviv_iommu *iommu, const char **names, int cnt);
+int etnaviv_iommu_map(struct etnaviv_iommu *iommu, uint32_t iova, struct sg_table *sgt,
 		unsigned len, int prot);
-int vivante_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova, struct sg_table *sgt,
+int etnaviv_iommu_unmap(struct etnaviv_iommu *iommu, uint32_t iova, struct sg_table *sgt,
 		unsigned len);
-void vivante_iommu_destroy(struct vivante_iommu *iommu);
+void etnaviv_iommu_destroy(struct etnaviv_iommu *iommu);
 
-struct vivante_iommu *vivante_iommu_new(struct drm_device *dev, struct iommu_domain *domain);
+struct etnaviv_iommu *etnaviv_iommu_new(struct drm_device *dev, struct iommu_domain *domain);
 
 #endif /* __VIVANTE_MMU_H__ */

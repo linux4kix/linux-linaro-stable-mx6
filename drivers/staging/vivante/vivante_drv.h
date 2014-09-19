@@ -15,8 +15,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __VIVANTE_DRV_H__
-#define __VIVANTE_DRV_H__
+#ifndef __ETNAVIV_DRV_H__
+#define __ETNAVIV_DRV_H__
 
 #include <linux/kernel.h>
 #include <linux/clk.h>
@@ -36,11 +36,11 @@
 #include <drm/drm_fb_helper.h>
 #include <drm/vivante_drm.h>
 
-struct vivante_gpu;
-struct vivante_mmu;
-struct vivante_gem_submit;
+struct etnaviv_gpu;
+struct etnaviv_mmu;
+struct etnaviv_gem_submit;
 
-struct vivante_file_private {
+struct etnaviv_file_private {
 	/* currently we don't do anything useful with this.. but when
 	 * per-context address spaces are supported we'd keep track of
 	 * the context's page-tables here.
@@ -48,9 +48,9 @@ struct vivante_file_private {
 	int dummy;
 };
 
-struct vivante_drm_private {
-	struct vivante_gpu *gpu[VIVANTE_MAX_PIPES];
-	struct vivante_file_private *lastctx;
+struct etnaviv_drm_private {
+	struct etnaviv_gpu *gpu[ETNA_MAX_PIPES];
+	struct etnaviv_file_private *lastctx;
 
 	uint32_t next_fence, completed_fence;
 	wait_queue_head_t fence_event;
@@ -61,27 +61,27 @@ struct vivante_drm_private {
 	struct workqueue_struct *wq;
 
 	/* registered MMUs: */
-	struct vivante_iommu *mmu;
+	struct etnaviv_iommu *mmu;
 };
 
-void vivante_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu);
+void etnaviv_register_mmu(struct drm_device *dev, struct etnaviv_iommu *mmu);
 
-int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
+int etnaviv_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
 		uint32_t fence,	struct timespec *timeout);
-void vivante_update_fence(struct drm_device *dev, uint32_t fence);
+void etnaviv_update_fence(struct drm_device *dev, uint32_t fence);
 
-int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
+int etnaviv_ioctl_gem_submit(struct drm_device *dev, void *data,
 		struct drm_file *file);
 
-int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma);
-int vivante_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
+int etnaviv_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+int etnaviv_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf);
 uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj);
-int vivante_gem_get_iova_locked(struct vivante_gpu *gpu, struct drm_gem_object *obj,
+int etnaviv_gem_get_iova_locked(struct etnaviv_gpu *gpu, struct drm_gem_object *obj,
 		uint32_t *iova);
-int vivante_gem_get_iova(struct vivante_gpu *gpu, struct drm_gem_object *obj, int id, uint32_t *iova);
-struct page **vivante_gem_get_pages(struct drm_gem_object *obj);
+int etnaviv_gem_get_iova(struct etnaviv_gpu *gpu, struct drm_gem_object *obj, int id, uint32_t *iova);
+struct page **etnaviv_gem_get_pages(struct drm_gem_object *obj);
 void msm_gem_put_pages(struct drm_gem_object *obj);
-void vivante_gem_put_iova(struct drm_gem_object *obj);
+void etnaviv_gem_put_iova(struct drm_gem_object *obj);
 int msm_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
 		struct drm_mode_create_dumb *args);
 int msm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
@@ -93,24 +93,24 @@ struct drm_gem_object *msm_gem_prime_import_sg_table(struct drm_device *dev,
 		size_t size, struct sg_table *sg);
 int msm_gem_prime_pin(struct drm_gem_object *obj);
 void msm_gem_prime_unpin(struct drm_gem_object *obj);
-void *vivante_gem_vaddr_locked(struct drm_gem_object *obj);
+void *etnaviv_gem_vaddr_locked(struct drm_gem_object *obj);
 void *msm_gem_vaddr(struct drm_gem_object *obj);
-dma_addr_t vivante_gem_paddr_locked(struct drm_gem_object *obj);
-void vivante_gem_move_to_active(struct drm_gem_object *obj,
-		struct vivante_gpu *gpu, bool write, uint32_t fence);
-void vivante_gem_move_to_inactive(struct drm_gem_object *obj);
-int vivante_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
+dma_addr_t etnaviv_gem_paddr_locked(struct drm_gem_object *obj);
+void etnaviv_gem_move_to_active(struct drm_gem_object *obj,
+		struct etnaviv_gpu *gpu, bool write, uint32_t fence);
+void etnaviv_gem_move_to_inactive(struct drm_gem_object *obj);
+int etnaviv_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout);
-int vivante_gem_cpu_fini(struct drm_gem_object *obj);
-void vivante_gem_free_object(struct drm_gem_object *obj);
-int vivante_gem_new_handle(struct drm_device *dev, struct drm_file *file,
+int etnaviv_gem_cpu_fini(struct drm_gem_object *obj);
+void etnaviv_gem_free_object(struct drm_gem_object *obj);
+int etnaviv_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 		uint32_t size, uint32_t flags, uint32_t *handle);
-struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
+struct drm_gem_object *etnaviv_gem_new(struct drm_device *dev,
 		uint32_t size, uint32_t flags);
 struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 		uint32_t size, struct sg_table *sgt);
-u32 vivante_buffer_init(struct vivante_gpu *gpu);
-void vivante_buffer_queue(struct vivante_gpu *gpu, unsigned int event, struct vivante_gem_submit *submit);
+u32 etnaviv_buffer_init(struct etnaviv_gpu *gpu);
+void etnaviv_buffer_queue(struct etnaviv_gpu *gpu, unsigned int event, struct etnaviv_gem_submit *submit);
 
 #ifdef CONFIG_DEBUG_FS
 void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m);
@@ -118,17 +118,17 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m);
 void msm_framebuffer_describe(struct drm_framebuffer *fb, struct seq_file *m);
 #endif
 
-void __iomem *vivante_ioremap(struct platform_device *pdev, const char *name,
+void __iomem *etnaviv_ioremap(struct platform_device *pdev, const char *name,
 		const char *dbgname);
-void vivante_writel(u32 data, void __iomem *addr);
-u32 vivante_readl(const void __iomem *addr);
+void etnaviv_writel(u32 data, void __iomem *addr);
+u32 etnaviv_readl(const void __iomem *addr);
 
 #define DBG(fmt, ...) DRM_DEBUG(fmt"\n", ##__VA_ARGS__)
 #define VERB(fmt, ...) if (0) DRM_DEBUG(fmt"\n", ##__VA_ARGS__)
 
 static inline bool fence_completed(struct drm_device *dev, uint32_t fence)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
+	struct etnaviv_drm_private *priv = dev->dev_private;
 	return priv->completed_fence >= fence;
 }
 

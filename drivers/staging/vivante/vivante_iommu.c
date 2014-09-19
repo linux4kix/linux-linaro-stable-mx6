@@ -29,17 +29,17 @@
 
 #define GPU_MEM_START	0x80000000
 
-struct vivante_iommu_domain_pgtable {
+struct etnaviv_iommu_domain_pgtable {
 	uint32_t *pgtable;
 	dma_addr_t paddr;
 };
 
-struct vivante_iommu_domain {
-	struct vivante_iommu_domain_pgtable pgtable;
+struct etnaviv_iommu_domain {
+	struct etnaviv_iommu_domain_pgtable pgtable;
 	spinlock_t map_lock;
 };
 
-static int pgtable_alloc(struct vivante_iommu_domain_pgtable *pgtable,
+static int pgtable_alloc(struct etnaviv_iommu_domain_pgtable *pgtable,
 			 size_t size)
 {
 	pgtable->pgtable = dma_alloc_coherent(NULL, size, &pgtable->paddr, GFP_KERNEL);
@@ -49,13 +49,13 @@ static int pgtable_alloc(struct vivante_iommu_domain_pgtable *pgtable,
 	return 0;
 }
 
-static void pgtable_free(struct vivante_iommu_domain_pgtable *pgtable,
+static void pgtable_free(struct etnaviv_iommu_domain_pgtable *pgtable,
 			 size_t size)
 {
 	dma_free_coherent(NULL, size, pgtable->pgtable, pgtable->paddr);
 }
 
-static uint32_t pgtable_read(struct vivante_iommu_domain_pgtable *pgtable,
+static uint32_t pgtable_read(struct etnaviv_iommu_domain_pgtable *pgtable,
 			   unsigned long iova)
 {
 	/* calcuate index into page table */
@@ -67,7 +67,7 @@ static uint32_t pgtable_read(struct vivante_iommu_domain_pgtable *pgtable,
 	return paddr;
 }
 
-static void pgtable_write(struct vivante_iommu_domain_pgtable *pgtable,
+static void pgtable_write(struct etnaviv_iommu_domain_pgtable *pgtable,
 			  unsigned long iova, phys_addr_t paddr)
 {
 	/* calcuate index into page table */
@@ -76,106 +76,106 @@ static void pgtable_write(struct vivante_iommu_domain_pgtable *pgtable,
 	pgtable->pgtable[index] = paddr;
 }
 
-static int vivante_iommu_domain_init(struct iommu_domain *domain)
+static int etnaviv_iommu_domain_init(struct iommu_domain *domain)
 {
-	struct vivante_iommu_domain *vivante_domain;
+	struct etnaviv_iommu_domain *etnaviv_domain;
 	int ret;
 
-	vivante_domain = kmalloc(sizeof(*vivante_domain), GFP_KERNEL);
-	if (!vivante_domain)
+	etnaviv_domain = kmalloc(sizeof(*etnaviv_domain), GFP_KERNEL);
+	if (!etnaviv_domain)
 		return -ENOMEM;
 
-	ret = pgtable_alloc(&vivante_domain->pgtable, PT_SIZE);
+	ret = pgtable_alloc(&etnaviv_domain->pgtable, PT_SIZE);
 	if (ret < 0) {
-		kfree(vivante_domain);
+		kfree(etnaviv_domain);
 		return ret;
 	}
 
-	spin_lock_init(&vivante_domain->map_lock);
-	domain->priv = vivante_domain;
+	spin_lock_init(&etnaviv_domain->map_lock);
+	domain->priv = etnaviv_domain;
 	return 0;
 }
 
-static void vivante_iommu_domain_destroy(struct iommu_domain *domain)
+static void etnaviv_iommu_domain_destroy(struct iommu_domain *domain)
 {
-	struct vivante_iommu_domain *vivante_domain = domain->priv;
+	struct etnaviv_iommu_domain *etnaviv_domain = domain->priv;
 
-	pgtable_free(&vivante_domain->pgtable, PT_SIZE);
+	pgtable_free(&etnaviv_domain->pgtable, PT_SIZE);
 
-	kfree(vivante_domain);
+	kfree(etnaviv_domain);
 	domain->priv = NULL;
 }
 
-static int vivante_iommu_map(struct iommu_domain *domain, unsigned long iova,
+static int etnaviv_iommu_map(struct iommu_domain *domain, unsigned long iova,
 	   phys_addr_t paddr, size_t size, int prot)
 {
-	struct vivante_iommu_domain *vivante_domain = domain->priv;
+	struct etnaviv_iommu_domain *etnaviv_domain = domain->priv;
 
 	if (size != SZ_4K)
 		return -EINVAL;
 
-	spin_lock(&vivante_domain->map_lock);
-	pgtable_write(&vivante_domain->pgtable, iova, paddr);
-	spin_unlock(&vivante_domain->map_lock);
+	spin_lock(&etnaviv_domain->map_lock);
+	pgtable_write(&etnaviv_domain->pgtable, iova, paddr);
+	spin_unlock(&etnaviv_domain->map_lock);
 
 	return 0;
 }
 
-static size_t vivante_iommu_unmap(struct iommu_domain *domain, unsigned long iova,
+static size_t etnaviv_iommu_unmap(struct iommu_domain *domain, unsigned long iova,
 	     size_t size)
 {
-	struct vivante_iommu_domain *vivante_domain = domain->priv;
+	struct etnaviv_iommu_domain *etnaviv_domain = domain->priv;
 
 	if (size != SZ_4K)
 		return -EINVAL;
 
-	spin_lock(&vivante_domain->map_lock);
-	pgtable_write(&vivante_domain->pgtable, iova, ~0);
-	spin_unlock(&vivante_domain->map_lock);
+	spin_lock(&etnaviv_domain->map_lock);
+	pgtable_write(&etnaviv_domain->pgtable, iova, ~0);
+	spin_unlock(&etnaviv_domain->map_lock);
 
 	return 0;
 }
 
-phys_addr_t vivante_iommu_iova_to_phys(struct iommu_domain *domain, dma_addr_t iova)
+phys_addr_t etnaviv_iommu_iova_to_phys(struct iommu_domain *domain, dma_addr_t iova)
 {
-	struct vivante_iommu_domain *vivante_domain = domain->priv;
+	struct etnaviv_iommu_domain *etnaviv_domain = domain->priv;
 
-	return pgtable_read(&vivante_domain->pgtable, iova);
+	return pgtable_read(&etnaviv_domain->pgtable, iova);
 }
 
-static struct iommu_ops vivante_iommu_ops = {
-		.domain_init = vivante_iommu_domain_init,
-		.domain_destroy = vivante_iommu_domain_destroy,
-		.map = vivante_iommu_map,
-		.unmap = vivante_iommu_unmap,
-		.iova_to_phys = vivante_iommu_iova_to_phys,
+static struct iommu_ops etnaviv_iommu_ops = {
+		.domain_init = etnaviv_iommu_domain_init,
+		.domain_destroy = etnaviv_iommu_domain_destroy,
+		.map = etnaviv_iommu_map,
+		.unmap = etnaviv_iommu_unmap,
+		.iova_to_phys = etnaviv_iommu_iova_to_phys,
 		.pgsize_bitmap = SZ_4K,
 };
 
-struct iommu_domain *vivante_iommu_domain_alloc(struct vivante_gpu *gpu)
+struct iommu_domain *etnaviv_iommu_domain_alloc(struct etnaviv_gpu *gpu)
 {
 	struct iommu_domain *domain;
-	struct vivante_iommu_domain *vivante_domain;
+	struct etnaviv_iommu_domain *etnaviv_domain;
 	int ret;
 
 	domain = kzalloc(sizeof(*domain), GFP_KERNEL);
 	if (!domain)
 		return NULL;
 
-	domain->ops = &vivante_iommu_ops;
+	domain->ops = &etnaviv_iommu_ops;
 
 	ret = domain->ops->domain_init(domain);
 	if (ret)
 		goto out_free;
 
 	/* set page table address in MC */
-	vivante_domain = domain->priv;
+	etnaviv_domain = domain->priv;
 
-	gpu_write(gpu, VIVS_MC_MMU_FE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
-	gpu_write(gpu, VIVS_MC_MMU_TX_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
-	gpu_write(gpu, VIVS_MC_MMU_PE_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
-	gpu_write(gpu, VIVS_MC_MMU_PEZ_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
-	gpu_write(gpu, VIVS_MC_MMU_RA_PAGE_TABLE, (uint32_t)vivante_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_FE_PAGE_TABLE, (uint32_t)etnaviv_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_TX_PAGE_TABLE, (uint32_t)etnaviv_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_PE_PAGE_TABLE, (uint32_t)etnaviv_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_PEZ_PAGE_TABLE, (uint32_t)etnaviv_domain->pgtable.paddr);
+	gpu_write(gpu, VIVS_MC_MMU_RA_PAGE_TABLE, (uint32_t)etnaviv_domain->pgtable.paddr);
 
 	return domain;
 

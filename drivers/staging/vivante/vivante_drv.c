@@ -21,13 +21,13 @@
 #include "vivante_drv.h"
 #include "vivante_gpu.h"
 
-void vivante_register_mmu(struct drm_device *dev, struct vivante_iommu *mmu)
+void etnaviv_register_mmu(struct drm_device *dev, struct etnaviv_iommu *mmu)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
+	struct etnaviv_drm_private *priv = dev->dev_private;
 	priv->mmu = mmu;
 }
 
-#ifdef CONFIG_DRM_VIVANTE_REGISTER_LOGGING
+#ifdef CONFIG_DRM_ETNAVIV_REGISTER_LOGGING
 static bool reglog = false;
 MODULE_PARM_DESC(reglog, "Enable register read/write logging");
 module_param(reglog, bool, 0600);
@@ -35,7 +35,7 @@ module_param(reglog, bool, 0600);
 #define reglog 0
 #endif
 
-void __iomem *vivante_ioremap(struct platform_device *pdev, const char *name,
+void __iomem *etnaviv_ioremap(struct platform_device *pdev, const char *name,
 		const char *dbgname)
 {
 	struct resource *res;
@@ -66,14 +66,14 @@ void __iomem *vivante_ioremap(struct platform_device *pdev, const char *name,
 	return ptr;
 }
 
-void vivante_writel(u32 data, void __iomem *addr)
+void etnaviv_writel(u32 data, void __iomem *addr)
 {
 	if (reglog)
 		printk(KERN_DEBUG "IO:W %08x %08x\n", (u32)addr, data);
 	writel(data, addr);
 }
 
-u32 vivante_readl(const void __iomem *addr)
+u32 etnaviv_readl(const void __iomem *addr)
 {
 	u32 val = readl(addr);
 	if (reglog)
@@ -85,9 +85,9 @@ u32 vivante_readl(const void __iomem *addr)
  * DRM operations:
  */
 
-static int vivante_unload(struct drm_device *dev)
+static int etnaviv_unload(struct drm_device *dev)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
+	struct etnaviv_drm_private *priv = dev->dev_private;
 
 	flush_workqueue(priv->wq);
 	destroy_workqueue(priv->wq);
@@ -106,17 +106,17 @@ static int vivante_unload(struct drm_device *dev)
 
 static void load_gpu(struct drm_device *dev)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
+	struct etnaviv_drm_private *priv = dev->dev_private;
 	unsigned int i;
 
 	mutex_lock(&dev->struct_mutex);
 
-	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
-		struct vivante_gpu *g = priv->gpu[i];
+	for (i = 0; i < ETNA_MAX_PIPES; i++) {
+		struct etnaviv_gpu *g = priv->gpu[i];
 		if (g) {
 			int ret;
-			vivante_gpu_pm_resume(g);
-			ret = vivante_gpu_init(g);
+			etnaviv_gpu_pm_resume(g);
+			ret = etnaviv_gpu_init(g);
 			if (ret) {
 				dev_err(dev->dev, "%s hw init failed: %d\n", g->name, ret);
 				priv->gpu[i] = NULL;
@@ -127,10 +127,10 @@ static void load_gpu(struct drm_device *dev)
 	mutex_unlock(&dev->struct_mutex);
 }
 
-static int vivante_load(struct drm_device *dev, unsigned long flags)
+static int etnaviv_load(struct drm_device *dev, unsigned long flags)
 {
 	struct platform_device *pdev = dev->platformdev;
-	struct vivante_drm_private *priv;
+	struct etnaviv_drm_private *priv;
 	int err;
 
 	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
@@ -141,7 +141,7 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 
 	dev->dev_private = priv;
 
-	priv->wq = alloc_ordered_workqueue("vivante", 0);
+	priv->wq = alloc_ordered_workqueue("etnaviv", 0);
 	init_waitqueue_head(&priv->fence_event);
 
 	INIT_LIST_HEAD(&priv->inactive_list);
@@ -157,9 +157,9 @@ static int vivante_load(struct drm_device *dev, unsigned long flags)
 	return 0;
 }
 
-static int vivante_open(struct drm_device *dev, struct drm_file *file)
+static int etnaviv_open(struct drm_device *dev, struct drm_file *file)
 {
-	struct vivante_file_private *ctx;
+	struct etnaviv_file_private *ctx;
 
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
@@ -170,10 +170,10 @@ static int vivante_open(struct drm_device *dev, struct drm_file *file)
 	return 0;
 }
 
-static void vivante_preclose(struct drm_device *dev, struct drm_file *file)
+static void etnaviv_preclose(struct drm_device *dev, struct drm_file *file)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_file_private *ctx = file->driver_priv;
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct etnaviv_file_private *ctx = file->driver_priv;
 
 	mutex_lock(&dev->struct_mutex);
 	if (ctx == priv->lastctx)
@@ -188,30 +188,30 @@ static void vivante_preclose(struct drm_device *dev, struct drm_file *file)
  */
 
 #ifdef CONFIG_DEBUG_FS
-static int vivante_gpu_show(struct drm_device *dev, struct seq_file *m)
+static int etnaviv_gpu_show(struct drm_device *dev, struct seq_file *m)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_gpu *gpu;
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct etnaviv_gpu *gpu;
 	unsigned int i;
 
-	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
+	for (i = 0; i < ETNA_MAX_PIPES; i++) {
 		gpu = priv->gpu[i];
 		if (gpu) {
 			seq_printf(m, "%s Status:\n", gpu->name);
-			vivante_gpu_debugfs(gpu, m);
+			etnaviv_gpu_debugfs(gpu, m);
 		}
 	}
 
 	return 0;
 }
 
-static int vivante_gem_show(struct drm_device *dev, struct seq_file *m)
+static int etnaviv_gem_show(struct drm_device *dev, struct seq_file *m)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_gpu *gpu;
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct etnaviv_gpu *gpu;
 	unsigned int i;
 
-	for (i = 0; i < VIVANTE_MAX_PIPES; i++) {
+	for (i = 0; i < ETNA_MAX_PIPES; i++) {
 		gpu = priv->gpu[i];
 		if (gpu) {
 			seq_printf(m, "Active Objects (%s):\n", gpu->name);
@@ -225,7 +225,7 @@ static int vivante_gem_show(struct drm_device *dev, struct seq_file *m)
 	return 0;
 }
 
-static int vivante_mm_show(struct drm_device *dev, struct seq_file *m)
+static int etnaviv_mm_show(struct drm_device *dev, struct seq_file *m)
 {
 	return drm_mm_dump_table(m, &dev->vma_offset_manager->vm_addr_space_mm);
 }
@@ -249,47 +249,47 @@ static int show_locked(struct seq_file *m, void *arg)
 	return ret;
 }
 
-static struct drm_info_list vivante_debugfs_list[] = {
-		{"gpu", show_locked, 0, vivante_gpu_show},
-		{"gem", show_locked, 0, vivante_gem_show},
-		{ "mm", show_locked, 0, vivante_mm_show },
+static struct drm_info_list ETNAVIV_debugfs_list[] = {
+		{"gpu", show_locked, 0, etnaviv_gpu_show},
+		{"gem", show_locked, 0, etnaviv_gem_show},
+		{ "mm", show_locked, 0, etnaviv_mm_show },
 };
 
-static int vivante_debugfs_init(struct drm_minor *minor)
+static int etnaviv_debugfs_init(struct drm_minor *minor)
 {
 	struct drm_device *dev = minor->dev;
 	int ret;
 
-	ret = drm_debugfs_create_files(vivante_debugfs_list,
-			ARRAY_SIZE(vivante_debugfs_list),
+	ret = drm_debugfs_create_files(ETNAVIV_debugfs_list,
+			ARRAY_SIZE(ETNAVIV_debugfs_list),
 			minor->debugfs_root, minor);
 
 	if (ret) {
-		dev_err(dev->dev, "could not install vivante_debugfs_list\n");
+		dev_err(dev->dev, "could not install ETNAVIV_debugfs_list\n");
 		return ret;
 	}
 
 	return ret;
 }
 
-static void vivante_debugfs_cleanup(struct drm_minor *minor)
+static void etnaviv_debugfs_cleanup(struct drm_minor *minor)
 {
-	drm_debugfs_remove_files(vivante_debugfs_list,
-			ARRAY_SIZE(vivante_debugfs_list), minor);
+	drm_debugfs_remove_files(ETNAVIV_debugfs_list,
+			ARRAY_SIZE(ETNAVIV_debugfs_list), minor);
 }
 #endif
 
 /*
  * Fences:
  */
-int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
+int etnaviv_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
 		uint32_t fence, struct timespec *timeout)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_gpu *gpu;
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct etnaviv_gpu *gpu;
 	int ret;
 
-	if (pipe > VIVANTE_PIPE_VG)
+	if (pipe >= ETNA_MAX_PIPES)
 		return -EINVAL;
 
 	gpu = priv->gpu[pipe];
@@ -332,9 +332,9 @@ int vivante_wait_fence_interruptable(struct drm_device *dev, uint32_t pipe,
 }
 
 /* called from workqueue */
-void vivante_update_fence(struct drm_device *dev, uint32_t fence)
+void etnaviv_update_fence(struct drm_device *dev, uint32_t fence)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
+	struct etnaviv_drm_private *priv = dev->dev_private;
 
 	mutex_lock(&dev->struct_mutex);
 	priv->completed_fence = max(fence, priv->completed_fence);
@@ -347,37 +347,37 @@ void vivante_update_fence(struct drm_device *dev, uint32_t fence)
  * DRM ioctls:
  */
 
-static int vivante_ioctl_get_param(struct drm_device *dev, void *data,
+static int etnaviv_ioctl_get_param(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct drm_vivante_param *args = data;
-	struct vivante_gpu *gpu;
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct drm_etnaviv_param *args = data;
+	struct etnaviv_gpu *gpu;
 
-	if (args->pipe > VIVANTE_PIPE_VG)
+	if (args->pipe >= ETNA_MAX_PIPES)
 		return -EINVAL;
 
 	gpu = priv->gpu[args->pipe];
 	if (!gpu)
 		return -ENXIO;
 
-	return vivante_gpu_get_param(gpu, args->param, &args->value);
+	return etnaviv_gpu_get_param(gpu, args->param, &args->value);
 }
 
-static int vivante_ioctl_gem_new(struct drm_device *dev, void *data,
+static int etnaviv_ioctl_gem_new(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_vivante_gem_new *args = data;
-	return vivante_gem_new_handle(dev, file, args->size,
+	struct drm_etnaviv_gem_new *args = data;
+	return etnaviv_gem_new_handle(dev, file, args->size,
 			args->flags, &args->handle);
 }
 
 #define TS(t) ((struct timespec){ .tv_sec = (t).tv_sec, .tv_nsec = (t).tv_nsec })
 
-static int vivante_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
+static int etnaviv_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_vivante_gem_cpu_prep *args = data;
+	struct drm_etnaviv_gem_cpu_prep *args = data;
 	struct drm_gem_object *obj;
 	int ret;
 
@@ -385,17 +385,17 @@ static int vivante_ioctl_gem_cpu_prep(struct drm_device *dev, void *data,
 	if (!obj)
 		return -ENOENT;
 
-	ret = vivante_gem_cpu_prep(obj, args->op, &TS(args->timeout));
+	ret = etnaviv_gem_cpu_prep(obj, args->op, &TS(args->timeout));
 
 	drm_gem_object_unreference_unlocked(obj);
 
 	return ret;
 }
 
-static int vivante_ioctl_gem_cpu_fini(struct drm_device *dev, void *data,
+static int etnaviv_ioctl_gem_cpu_fini(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_vivante_gem_cpu_fini *args = data;
+	struct drm_etnaviv_gem_cpu_fini *args = data;
 	struct drm_gem_object *obj;
 	int ret;
 
@@ -403,17 +403,17 @@ static int vivante_ioctl_gem_cpu_fini(struct drm_device *dev, void *data,
 	if (!obj)
 		return -ENOENT;
 
-	ret = vivante_gem_cpu_fini(obj);
+	ret = etnaviv_gem_cpu_fini(obj);
 
 	drm_gem_object_unreference_unlocked(obj);
 
 	return ret;
 }
 
-static int vivante_ioctl_gem_info(struct drm_device *dev, void *data,
+static int etnaviv_ioctl_gem_info(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_vivante_gem_info *args = data;
+	struct drm_etnaviv_gem_info *args = data;
 	struct drm_gem_object *obj;
 	int ret = 0;
 
@@ -431,25 +431,25 @@ static int vivante_ioctl_gem_info(struct drm_device *dev, void *data,
 	return ret;
 }
 
-static int vivante_ioctl_wait_fence(struct drm_device *dev, void *data,
+static int etnaviv_ioctl_wait_fence(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct drm_vivante_wait_fence *args = data;
-	return vivante_wait_fence_interruptable(dev, args->pipe, args->fence, &TS(args->timeout));
+	struct drm_etnaviv_wait_fence *args = data;
+	return etnaviv_wait_fence_interruptable(dev, args->pipe, args->fence, &TS(args->timeout));
 }
 
-static const struct drm_ioctl_desc vivante_ioctls[] = {
-	DRM_IOCTL_DEF_DRV(VIVANTE_GET_PARAM,    vivante_ioctl_get_param,    DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_NEW,      vivante_ioctl_gem_new,      DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_INFO,     vivante_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_CPU_PREP, vivante_ioctl_gem_cpu_prep, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_CPU_FINI, vivante_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(VIVANTE_GEM_SUBMIT,   vivante_ioctl_gem_submit,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(VIVANTE_WAIT_FENCE,   vivante_ioctl_wait_fence,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+static const struct drm_ioctl_desc etnaviv_ioctls[] = {
+	DRM_IOCTL_DEF_DRV(ETNAVIV_GET_PARAM,    etnaviv_ioctl_get_param,    DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(ETNAVIV_GEM_NEW,      etnaviv_ioctl_gem_new,      DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(ETNAVIV_GEM_INFO,     etnaviv_ioctl_gem_info,     DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(ETNAVIV_GEM_CPU_PREP, etnaviv_ioctl_gem_cpu_prep, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(ETNAVIV_GEM_CPU_FINI, etnaviv_ioctl_gem_cpu_fini, DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(ETNAVIV_GEM_SUBMIT,   etnaviv_ioctl_gem_submit,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(ETNAVIV_WAIT_FENCE,   etnaviv_ioctl_wait_fence,   DRM_UNLOCKED|DRM_AUTH|DRM_RENDER_ALLOW),
 };
 
 static const struct vm_operations_struct vm_ops = {
-	.fault = vivante_gem_fault,
+	.fault = etnaviv_gem_fault,
 	.open = drm_gem_vm_open,
 	.close = drm_gem_vm_close,
 };
@@ -465,19 +465,19 @@ static const struct file_operations fops = {
 	.poll               = drm_poll,
 	.read               = drm_read,
 	.llseek             = no_llseek,
-	.mmap               = vivante_gem_mmap,
+	.mmap               = etnaviv_gem_mmap,
 };
 
-static struct drm_driver vivante_drm_driver = {
+static struct drm_driver etnaviv_drm_driver = {
 	.driver_features    = DRIVER_HAVE_IRQ |
 				DRIVER_GEM |
 				DRIVER_PRIME |
 				DRIVER_RENDER,
-	.load               = vivante_load,
-	.unload             = vivante_unload,
-	.open               = vivante_open,
-	.preclose           = vivante_preclose,
-	.gem_free_object    = vivante_gem_free_object,
+	.load               = etnaviv_load,
+	.unload             = etnaviv_unload,
+	.open               = etnaviv_open,
+	.preclose           = etnaviv_preclose,
+	.gem_free_object    = etnaviv_gem_free_object,
 	.gem_vm_ops         = &vm_ops,
 	.dumb_create        = msm_gem_dumb_create,
 	.dumb_map_offset    = msm_gem_dumb_map_offset,
@@ -493,14 +493,14 @@ static struct drm_driver vivante_drm_driver = {
 	.gem_prime_vmap     = msm_gem_prime_vmap,
 	.gem_prime_vunmap   = msm_gem_prime_vunmap,
 #ifdef CONFIG_DEBUG_FS
-	.debugfs_init       = vivante_debugfs_init,
-	.debugfs_cleanup    = vivante_debugfs_cleanup,
+	.debugfs_init       = etnaviv_debugfs_init,
+	.debugfs_cleanup    = etnaviv_debugfs_cleanup,
 #endif
-	.ioctls             = vivante_ioctls,
-	.num_ioctls         = DRM_VIVANTE_NUM_IOCTLS,
+	.ioctls             = etnaviv_ioctls,
+	.num_ioctls         = DRM_ETNAVIV_NUM_IOCTLS,
 	.fops               = &fops,
-	.name               = "vivante",
-	.desc               = "Vivante DRM",
+	.name               = "etnaviv",
+	.desc               = "etnaviv DRM",
 	.date               = "20130625",
 	.major              = 1,
 	.minor              = 0,
@@ -510,14 +510,14 @@ static struct drm_driver vivante_drm_driver = {
  * Platform driver:
  */
 
-static int vivante_compare(struct device *dev, void *data)
+static int etnaviv_compare(struct device *dev, void *data)
 {
 	struct device_node *np = data;
 
 	return dev->of_node == np;
 }
 
-static int vivante_add_components(struct device *master, struct master *m)
+static int etnaviv_add_components(struct device *master, struct master *m)
 {
 	struct device_node *np	= master->of_node;
 	struct device_node *child_np;
@@ -526,7 +526,7 @@ static int vivante_add_components(struct device *master, struct master *m)
 
 	while (child_np) {
 		DRM_INFO("add child %s\n", child_np->name);
-		component_master_add_child(m, vivante_compare, child_np);
+		component_master_add_child(m, etnaviv_compare, child_np);
 		of_node_put(child_np);
 		child_np = of_get_next_available_child(np, child_np);
 	}
@@ -534,23 +534,23 @@ static int vivante_add_components(struct device *master, struct master *m)
 	return 0;
 }
 
-static int vivante_bind(struct device *dev)
+static int etnaviv_bind(struct device *dev)
 {
-	return drm_platform_init(&vivante_drm_driver, to_platform_device(dev));
+	return drm_platform_init(&etnaviv_drm_driver, to_platform_device(dev));
 }
 
-static void vivante_unbind(struct device *dev)
+static void etnaviv_unbind(struct device *dev)
 {
 	drm_put_dev(dev_get_drvdata(dev));
 }
 
-static const struct component_master_ops vivante_master_ops = {
-	.add_components = vivante_add_components,
-	.bind = vivante_bind,
-	.unbind = vivante_unbind,
+static const struct component_master_ops etnaviv_master_ops = {
+	.add_components = etnaviv_add_components,
+	.bind = etnaviv_bind,
+	.unbind = etnaviv_unbind,
 };
 
-static int vivante_pdev_probe(struct platform_device *pdev)
+static int etnaviv_pdev_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct device_node *node = dev->of_node;
@@ -559,12 +559,12 @@ static int vivante_pdev_probe(struct platform_device *pdev)
 
 	dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
 
-	return component_master_add(&pdev->dev, &vivante_master_ops);
+	return component_master_add(&pdev->dev, &etnaviv_master_ops);
 }
 
-static int vivante_pdev_remove(struct platform_device *pdev)
+static int etnaviv_pdev_remove(struct platform_device *pdev)
 {
-	component_master_del(&pdev->dev, &vivante_master_ops);
+	component_master_del(&pdev->dev, &etnaviv_master_ops);
 
 	return 0;
 }
@@ -575,9 +575,9 @@ static const struct of_device_id dt_match[] = {
 };
 MODULE_DEVICE_TABLE(of, dt_match);
 
-static struct platform_driver vivante_platform_driver = {
-	.probe      = vivante_pdev_probe,
-	.remove     = vivante_pdev_remove,
+static struct platform_driver etnaviv_platform_driver = {
+	.probe      = etnaviv_pdev_probe,
+	.remove     = etnaviv_pdev_remove,
 	.driver     = {
 		.owner  = THIS_MODULE,
 		.name   = "vivante",
@@ -585,29 +585,29 @@ static struct platform_driver vivante_platform_driver = {
 	},
 };
 
-static int __init vivante_init(void)
+static int __init etnaviv_init(void)
 {
 	int ret;
 
-	ret = platform_driver_register(&vivante_gpu_driver);
+	ret = platform_driver_register(&etnaviv_gpu_driver);
 	if (ret != 0)
 		return ret;
 
-	ret = platform_driver_register(&vivante_platform_driver);
+	ret = platform_driver_register(&etnaviv_platform_driver);
 	if (ret != 0)
-		platform_driver_unregister(&vivante_gpu_driver);
+		platform_driver_unregister(&etnaviv_gpu_driver);
 
 	return ret;
 }
-module_init(vivante_init);
+module_init(etnaviv_init);
 
-static void __exit vivante_exit(void)
+static void __exit etnaviv_exit(void)
 {
-	platform_driver_unregister(&vivante_gpu_driver);
-	platform_driver_unregister(&vivante_platform_driver);
+	platform_driver_unregister(&etnaviv_gpu_driver);
+	platform_driver_unregister(&etnaviv_platform_driver);
 }
-module_exit(vivante_exit);
+module_exit(etnaviv_exit);
 
 MODULE_AUTHOR("Rob Clark <robdclark@gmail.com");
-MODULE_DESCRIPTION("Vivante DRM Driver");
+MODULE_DESCRIPTION("etnaviv DRM Driver");
 MODULE_LICENSE("GPL");

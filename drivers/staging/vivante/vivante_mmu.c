@@ -18,14 +18,14 @@
 #include "vivante_drv.h"
 #include "vivante_mmu.h"
 
-static int vivante_fault_handler(struct iommu_domain *iommu, struct device *dev,
+static int etnaviv_fault_handler(struct iommu_domain *iommu, struct device *dev,
 		unsigned long iova, int flags, void *arg)
 {
 	DBG("*** fault: iova=%08lx, flags=%d", iova, flags);
 	return 0;
 }
 
-int vivante_iommu_map(struct vivante_iommu *iommu, uint32_t iova,
+int etnaviv_iommu_map(struct etnaviv_iommu *iommu, uint32_t iova,
 		struct sg_table *sgt, unsigned len, int prot)
 {
 	struct iommu_domain *domain = iommu->domain;
@@ -63,7 +63,7 @@ fail:
 	return ret;
 }
 
-int vivante_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova,
+int etnaviv_iommu_unmap(struct etnaviv_iommu *iommu, uint32_t iova,
 		struct sg_table *sgt, unsigned len)
 {
 	struct iommu_domain *domain = iommu->domain;
@@ -89,15 +89,15 @@ int vivante_iommu_unmap(struct vivante_iommu *iommu, uint32_t iova,
 	return 0;
 }
 
-void vivante_iommu_destroy(struct vivante_iommu *mmu)
+void etnaviv_iommu_destroy(struct etnaviv_iommu *mmu)
 {
 	iommu_domain_free(mmu->domain);
 	kfree(mmu);
 }
 
-struct vivante_iommu *vivante_iommu_new(struct drm_device *dev, struct iommu_domain *domain)
+struct etnaviv_iommu *etnaviv_iommu_new(struct drm_device *dev, struct iommu_domain *domain)
 {
-	struct vivante_iommu *mmu;
+	struct etnaviv_iommu *mmu;
 
 	mmu = kzalloc(sizeof(*mmu), GFP_KERNEL);
 	if (!mmu)
@@ -105,7 +105,7 @@ struct vivante_iommu *vivante_iommu_new(struct drm_device *dev, struct iommu_dom
 
 	mmu->domain = domain;
 	mmu->dev = dev;
-	iommu_set_fault_handler(domain, vivante_fault_handler, dev);
+	iommu_set_fault_handler(domain, etnaviv_fault_handler, dev);
 
 	return mmu;
 }

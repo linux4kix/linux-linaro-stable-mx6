@@ -34,10 +34,10 @@ static inline void __user *to_user_ptr(u64 address)
 	return (void __user *)(uintptr_t)address;
 }
 
-static struct vivante_gem_submit *submit_create(struct drm_device *dev,
-		struct vivante_gpu *gpu, int nr)
+static struct etnaviv_gem_submit *submit_create(struct drm_device *dev,
+		struct etnaviv_gpu *gpu, int nr)
 {
-	struct vivante_gem_submit *submit;
+	struct etnaviv_gem_submit *submit;
 	int sz = sizeof(*submit) + (nr * sizeof(submit->bos[0]));
 
 	submit = kmalloc(sz, GFP_TEMPORARY | __GFP_NOWARN | __GFP_NORETRY);
@@ -56,8 +56,8 @@ static struct vivante_gem_submit *submit_create(struct drm_device *dev,
 	return submit;
 }
 
-static int submit_lookup_objects(struct vivante_gem_submit *submit,
-		struct drm_vivante_gem_submit *args, struct drm_file *file)
+static int submit_lookup_objects(struct etnaviv_gem_submit *submit,
+		struct drm_etnaviv_gem_submit *args, struct drm_file *file)
 {
 	unsigned i;
 	int ret = 0;
@@ -65,9 +65,9 @@ static int submit_lookup_objects(struct vivante_gem_submit *submit,
 	spin_lock(&file->table_lock);
 
 	for (i = 0; i < args->nr_bos; i++) {
-		struct drm_vivante_gem_submit_bo submit_bo;
+		struct drm_etnaviv_gem_submit_bo submit_bo;
 		struct drm_gem_object *obj;
-		struct vivante_gem_object *vivante_obj;
+		struct etnaviv_gem_object *etnaviv_obj;
 		void __user *userptr =
 			to_user_ptr(args->bos + (i * sizeof(submit_bo)));
 
@@ -97,9 +97,9 @@ static int submit_lookup_objects(struct vivante_gem_submit *submit,
 			goto out_unlock;
 		}
 
-		vivante_obj = to_vivante_bo(obj);
+		etnaviv_obj = to_etnaviv_bo(obj);
 
-		if (!list_empty(&vivante_obj->submit_entry)) {
+		if (!list_empty(&etnaviv_obj->submit_entry)) {
 			DRM_ERROR("handle %u at index %u already on submit list\n",
 					submit_bo.handle, i);
 			ret = -EINVAL;
@@ -108,9 +108,9 @@ static int submit_lookup_objects(struct vivante_gem_submit *submit,
 
 		drm_gem_object_reference(obj);
 
-		submit->bos[i].obj = vivante_obj;
+		submit->bos[i].obj = etnaviv_obj;
 
-		list_add_tail(&vivante_obj->submit_entry, &submit->bo_list);
+		list_add_tail(&etnaviv_obj->submit_entry, &submit->bo_list);
 	}
 
 out_unlock:
@@ -120,15 +120,15 @@ out_unlock:
 	return ret;
 }
 
-static void submit_unlock_unpin_bo(struct vivante_gem_submit *submit, int i)
+static void submit_unlock_unpin_bo(struct etnaviv_gem_submit *submit, int i)
 {
-	struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
+	struct etnaviv_gem_object *etnaviv_obj = submit->bos[i].obj;
 
 	if (submit->bos[i].flags & BO_PINNED)
-		vivante_gem_put_iova(&vivante_obj->base);
+		etnaviv_gem_put_iova(&etnaviv_obj->base);
 
 	if (submit->bos[i].flags & BO_LOCKED)
-		ww_mutex_unlock(&vivante_obj->resv->lock);
+		ww_mutex_unlock(&etnaviv_obj->resv->lock);
 
 	if (!(submit->bos[i].flags & BO_VALID))
 		submit->bos[i].iova = 0;
@@ -137,7 +137,7 @@ static void submit_unlock_unpin_bo(struct vivante_gem_submit *submit, int i)
 }
 
 /* This is where we make sure all the bo's are reserved and pin'd: */
-static int submit_validate_objects(struct vivante_gem_submit *submit)
+static int submit_validate_objects(struct etnaviv_gem_submit *submit)
 {
 	int contended, slow_locked = -1, i, ret = 0;
 
@@ -145,7 +145,7 @@ retry:
 	submit->valid = true;
 
 	for (i = 0; i < submit->nr_bos; i++) {
-		struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
+		struct etnaviv_gem_object *etnaviv_obj = submit->bos[i].obj;
 		uint32_t iova;
 
 		if (slow_locked == i)
@@ -154,7 +154,7 @@ retry:
 		contended = i;
 
 		if (!(submit->bos[i].flags & BO_LOCKED)) {
-			ret = ww_mutex_lock_interruptible(&vivante_obj->resv->lock,
+			ret = ww_mutex_lock_interruptible(&etnaviv_obj->resv->lock,
 					&submit->ticket);
 			if (ret)
 				goto fail;
@@ -163,7 +163,7 @@ retry:
 
 
 		/* if locking succeeded, pin bo: */
-		ret = vivante_gem_get_iova_locked(submit->gpu, &vivante_obj->base, &iova);
+		ret = etnaviv_gem_get_iova_locked(submit->gpu, &etnaviv_obj->base, &iova);
 
 		/* this would break the logic in the fail path.. there is no
 		 * reason for this to happen, but just to be on the safe side
@@ -197,9 +197,9 @@ fail:
 		submit_unlock_unpin_bo(submit, slow_locked);
 
 	if (ret == -EDEADLK) {
-		struct vivante_gem_object *vivante_obj = submit->bos[contended].obj;
+		struct etnaviv_gem_object *etnaviv_obj = submit->bos[contended].obj;
 		/* we lost out in a seqno race, lock and retry.. */
-		ret = ww_mutex_lock_slow_interruptible(&vivante_obj->resv->lock,
+		ret = ww_mutex_lock_slow_interruptible(&etnaviv_obj->resv->lock,
 				&submit->ticket);
 		if (!ret) {
 			submit->bos[contended].flags |= BO_LOCKED;
@@ -211,8 +211,8 @@ fail:
 	return ret;
 }
 
-static int submit_bo(struct vivante_gem_submit *submit, uint32_t idx,
-		struct vivante_gem_object **obj, uint32_t *iova, bool *valid)
+static int submit_bo(struct etnaviv_gem_submit *submit, uint32_t idx,
+		struct etnaviv_gem_object **obj, uint32_t *iova, bool *valid)
 {
 	if (idx >= submit->nr_bos) {
 		DRM_ERROR("invalid buffer index: %u (out of %u)\n",
@@ -231,7 +231,7 @@ static int submit_bo(struct vivante_gem_submit *submit, uint32_t idx,
 }
 
 /* process the reloc's and patch up the cmdstream as needed: */
-static int submit_reloc(struct vivante_gem_submit *submit, struct vivante_gem_object *obj,
+static int submit_reloc(struct etnaviv_gem_submit *submit, struct etnaviv_gem_object *obj,
 		uint32_t offset, uint32_t nr_relocs, uint64_t relocs)
 {
 	uint32_t i, last_offset = 0;
@@ -244,7 +244,7 @@ static int submit_reloc(struct vivante_gem_submit *submit, struct vivante_gem_ob
 	}
 
 	for (i = 0; i < nr_relocs; i++) {
-		struct drm_vivante_gem_submit_reloc submit_reloc;
+		struct drm_etnaviv_gem_submit_reloc submit_reloc;
 		void __user *userptr =
 			to_user_ptr(relocs + (i * sizeof(submit_reloc)));
 		uint32_t iova, off;
@@ -291,33 +291,33 @@ static int submit_reloc(struct vivante_gem_submit *submit, struct vivante_gem_ob
 	return 0;
 }
 
-static void submit_cleanup(struct vivante_gem_submit *submit, bool fail)
+static void submit_cleanup(struct etnaviv_gem_submit *submit, bool fail)
 {
 	unsigned i;
 
 	for (i = 0; i < submit->nr_bos; i++) {
-		struct vivante_gem_object *vivante_obj = submit->bos[i].obj;
+		struct etnaviv_gem_object *etnaviv_obj = submit->bos[i].obj;
 		submit_unlock_unpin_bo(submit, i);
-		list_del_init(&vivante_obj->submit_entry);
-		drm_gem_object_unreference(&vivante_obj->base);
+		list_del_init(&etnaviv_obj->submit_entry);
+		drm_gem_object_unreference(&etnaviv_obj->base);
 	}
 
 	ww_acquire_fini(&submit->ticket);
 	kfree(submit);
 }
 
-int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
+int etnaviv_ioctl_gem_submit(struct drm_device *dev, void *data,
 		struct drm_file *file)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct drm_vivante_gem_submit *args = data;
-	struct vivante_file_private *ctx = file->driver_priv;
-	struct vivante_gem_submit *submit;
-	struct vivante_gpu *gpu;
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct drm_etnaviv_gem_submit *args = data;
+	struct etnaviv_file_private *ctx = file->driver_priv;
+	struct etnaviv_gem_submit *submit;
+	struct etnaviv_gpu *gpu;
 	unsigned i;
 	int ret;
 
-	if (args->pipe > VIVANTE_PIPE_VG)
+	if (args->pipe >= ETNA_MAX_PIPES)
 		return -EINVAL;
 
 	gpu = priv->gpu[args->pipe];
@@ -344,10 +344,10 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		goto out;
 
 	for (i = 0; i < args->nr_cmds; i++) {
-		struct drm_vivante_gem_submit_cmd submit_cmd;
+		struct drm_etnaviv_gem_submit_cmd submit_cmd;
 		void __user *userptr =
 			to_user_ptr(args->cmds + (i * sizeof(submit_cmd)));
-		struct vivante_gem_object *vivante_obj;
+		struct etnaviv_gem_object *etnaviv_obj;
 
 		ret = copy_from_user(&submit_cmd, userptr, sizeof(submit_cmd));
 		if (ret) {
@@ -356,11 +356,11 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		}
 
 		ret = submit_bo(submit, submit_cmd.submit_idx,
-				&vivante_obj, NULL, NULL);
+				&etnaviv_obj, NULL, NULL);
 		if (ret)
 			goto out;
 
-		if (!(vivante_obj->flags & ETNA_BO_CMDSTREAM)) {
+		if (!(etnaviv_obj->flags & ETNA_BO_CMDSTREAM)) {
 			DRM_ERROR("cmdstream bo has flag ETNA_BO_CMDSTREAM not set\n");
 			ret = -EINVAL;
 			goto out;
@@ -374,7 +374,7 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 		}
 
 		if ((submit_cmd.size + submit_cmd.submit_offset) >=
-				vivante_obj->base.size) {
+				etnaviv_obj->base.size) {
 			DRM_ERROR("invalid cmdstream size: %u\n", submit_cmd.size);
 			ret = -EINVAL;
 			goto out;
@@ -382,12 +382,12 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 
 		submit->cmd[i].type = submit_cmd.type;
 		submit->cmd[i].size = submit_cmd.size / 4;
-		submit->cmd[i].obj = vivante_obj;
+		submit->cmd[i].obj = etnaviv_obj;
 
 		if (submit->valid)
 			continue;
 
-		ret = submit_reloc(submit, vivante_obj, submit_cmd.submit_offset,
+		ret = submit_reloc(submit, etnaviv_obj, submit_cmd.submit_offset,
 				submit_cmd.nr_relocs, submit_cmd.relocs);
 		if (ret)
 			goto out;
@@ -395,7 +395,7 @@ int vivante_ioctl_gem_submit(struct drm_device *dev, void *data,
 
 	submit->nr_cmds = i;
 
-	ret = vivante_gpu_submit(gpu, submit, ctx);
+	ret = etnaviv_gpu_submit(gpu, submit, ctx);
 
 	args->fence = submit->fence;
 

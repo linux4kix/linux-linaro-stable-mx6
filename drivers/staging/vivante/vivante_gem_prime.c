@@ -21,9 +21,9 @@
 
 struct sg_table *msm_gem_prime_get_sg_table(struct drm_gem_object *obj)
 {
-	struct vivante_gem_object *msm_obj = to_vivante_bo(obj);
-	BUG_ON(!msm_obj->sgt);  /* should have already pinned! */
-	return msm_obj->sgt;
+	struct etnaviv_gem_object *etnaviv_obj= to_etnaviv_bo(obj);
+	BUG_ON(!etnaviv_obj->sgt);  /* should have already pinned! */
+	return etnaviv_obj->sgt;
 }
 
 void *msm_gem_prime_vmap(struct drm_gem_object *obj)
@@ -45,7 +45,7 @@ struct drm_gem_object *msm_gem_prime_import_sg_table(struct drm_device *dev,
 int msm_gem_prime_pin(struct drm_gem_object *obj)
 {
 	if (!obj->import_attach)
-		vivante_gem_get_pages(obj);
+		etnaviv_gem_get_pages(obj);
 	return 0;
 }
 

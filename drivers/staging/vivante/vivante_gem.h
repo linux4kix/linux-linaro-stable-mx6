@@ -21,7 +21,7 @@
 #include <linux/reservation.h>
 #include "vivante_drv.h"
 
-struct vivante_gem_object {
+struct etnaviv_gem_object {
 	struct drm_gem_object base;
 
 	uint32_t flags;
@@ -35,7 +35,7 @@ struct vivante_gem_object {
 	 *
 	 */
 	struct list_head mm_list;
-	struct vivante_gpu *gpu;     /* non-null if active */
+	struct etnaviv_gpu *gpu;     /* non-null if active */
 	uint32_t read_fence, write_fence;
 
 	/* Transiently in the process of submit ioctl, objects associated
@@ -62,11 +62,11 @@ struct vivante_gem_object {
 	/* for buffer manipulation during submit */
 	u32 offset;
 };
-#define to_vivante_bo(x) container_of(x, struct vivante_gem_object, base)
+#define to_etnaviv_bo(x) container_of(x, struct etnaviv_gem_object, base)
 
-static inline bool is_active(struct vivante_gem_object *vivante_obj)
+static inline bool is_active(struct etnaviv_gem_object *etnaviv_obj)
 {
-	return vivante_obj->gpu != NULL;
+	return etnaviv_obj->gpu != NULL;
 }
 
 #define MAX_CMDS 4
@@ -76,9 +76,9 @@ static inline bool is_active(struct vivante_gem_object *vivante_obj)
  * make it easier to unwind when things go wrong, etc).  This only
  * lasts for the duration of the submit-ioctl.
  */
-struct vivante_gem_submit {
+struct etnaviv_gem_submit {
 	struct drm_device *dev;
-	struct vivante_gpu *gpu;
+	struct etnaviv_gpu *gpu;
 	struct list_head bo_list;
 	struct ww_acquire_ctx ticket;
 	uint32_t fence;
@@ -88,11 +88,11 @@ struct vivante_gem_submit {
 	struct {
 		uint32_t type;
 		uint32_t size;  /* in dwords */
-		struct vivante_gem_object *obj;
+		struct etnaviv_gem_object *obj;
 	} cmd[MAX_CMDS];
 	struct {
 		uint32_t flags;
-		struct vivante_gem_object *obj;
+		struct etnaviv_gem_object *obj;
 		uint32_t iova;
 	} bos[0];
 };

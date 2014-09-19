@@ -27,9 +27,9 @@
 /* called with dev->struct_mutex held */
 static struct page **get_pages(struct drm_gem_object *obj)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 
-	if (!vivante_obj->pages) {
+	if (!etnaviv_obj->pages) {
 		struct drm_device *dev = obj->dev;
 		struct page **p;
 		int npages = obj->size >> PAGE_SHIFT;
@@ -42,46 +42,46 @@ static struct page **get_pages(struct drm_gem_object *obj)
 			return p;
 		}
 
-		vivante_obj->sgt = drm_prime_pages_to_sg(p, npages);
-		if (IS_ERR(vivante_obj->sgt)) {
+		etnaviv_obj->sgt = drm_prime_pages_to_sg(p, npages);
+		if (IS_ERR(etnaviv_obj->sgt)) {
 			dev_err(dev->dev, "failed to allocate sgt\n");
-			return ERR_CAST(vivante_obj->sgt);
+			return ERR_CAST(etnaviv_obj->sgt);
 		}
 
-		vivante_obj->pages = p;
+		etnaviv_obj->pages = p;
 
 		/* For non-cached buffers, ensure the new pages are clean
 		 * because display controller, GPU, etc. are not coherent:
 		 */
-		if (vivante_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
-			dma_map_sg(dev->dev, vivante_obj->sgt->sgl,
-					vivante_obj->sgt->nents, DMA_BIDIRECTIONAL);
+		if (etnaviv_obj->flags & (ETNA_BO_WC|ETNA_BO_UNCACHED))
+			dma_map_sg(dev->dev, etnaviv_obj->sgt->sgl,
+					etnaviv_obj->sgt->nents, DMA_BIDIRECTIONAL);
 	}
 
-	return vivante_obj->pages;
+	return etnaviv_obj->pages;
 }
 
 static void put_pages(struct drm_gem_object *obj)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 
-	if (vivante_obj->pages) {
+	if (etnaviv_obj->pages) {
 		/* For non-cached buffers, ensure the new pages are clean
 		 * because display controller, GPU, etc. are not coherent:
 		 */
-		if (vivante_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED))
-			dma_unmap_sg(obj->dev->dev, vivante_obj->sgt->sgl,
-					vivante_obj->sgt->nents, DMA_BIDIRECTIONAL);
-		sg_free_table(vivante_obj->sgt);
-		kfree(vivante_obj->sgt);
+		if (etnaviv_obj->flags & (ETNA_BO_WC|ETNA_BO_UNCACHED))
+			dma_unmap_sg(obj->dev->dev, etnaviv_obj->sgt->sgl,
+					etnaviv_obj->sgt->nents, DMA_BIDIRECTIONAL);
+		sg_free_table(etnaviv_obj->sgt);
+		kfree(etnaviv_obj->sgt);
 
-		drm_gem_put_pages(obj, vivante_obj->pages, true, false);
+		drm_gem_put_pages(obj, etnaviv_obj->pages, true, false);
 
-		vivante_obj->pages = NULL;
+		etnaviv_obj->pages = NULL;
 	}
 }
 
-struct page **vivante_gem_get_pages(struct drm_gem_object *obj)
+struct page **etnaviv_gem_get_pages(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
 	struct page **p;
@@ -96,10 +96,10 @@ void msm_gem_put_pages(struct drm_gem_object *obj)
 	/* when we start tracking the pin count, then do something here */
 }
 
-static int vivante_gem_mmap_cmd(struct drm_gem_object *obj,
+static int etnaviv_gem_mmap_cmd(struct drm_gem_object *obj,
 	struct vm_area_struct *vma)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 	int ret;
 
 	/*
@@ -111,23 +111,23 @@ static int vivante_gem_mmap_cmd(struct drm_gem_object *obj,
 	vma->vm_pgoff = 0;
 
 	ret = dma_mmap_coherent(obj->dev->dev, vma,
-				vivante_obj->vaddr, vivante_obj->paddr,
+				etnaviv_obj->vaddr, etnaviv_obj->paddr,
 				vma->vm_end - vma->vm_start);
 
 	return ret;
 }
 
-static int vivante_gem_mmap_obj(struct drm_gem_object *obj,
+static int etnaviv_gem_mmap_obj(struct drm_gem_object *obj,
 		struct vm_area_struct *vma)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 
 	vma->vm_flags &= ~VM_PFNMAP;
 	vma->vm_flags |= VM_MIXEDMAP;
 
-	if (vivante_obj->flags & MSM_BO_WC) {
+	if (etnaviv_obj->flags & ETNA_BO_WC) {
 		vma->vm_page_prot = pgprot_writecombine(vm_get_page_prot(vma->vm_flags));
-	} else if (vivante_obj->flags & MSM_BO_UNCACHED) {
+	} else if (etnaviv_obj->flags & ETNA_BO_UNCACHED) {
 		vma->vm_page_prot = pgprot_noncached(vm_get_page_prot(vma->vm_flags));
 	} else {
 		/*
@@ -146,9 +146,9 @@ static int vivante_gem_mmap_obj(struct drm_gem_object *obj,
 	return 0;
 }
 
-int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma)
+int etnaviv_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 {
-	struct vivante_gem_object *obj;
+	struct etnaviv_gem_object *obj;
 	int ret;
 
 	ret = drm_gem_mmap(filp, vma);
@@ -157,16 +157,16 @@ int vivante_gem_mmap(struct file *filp, struct vm_area_struct *vma)
 		return ret;
 	}
 
-	obj = to_vivante_bo(vma->vm_private_data);
+	obj = to_etnaviv_bo(vma->vm_private_data);
 	if (obj->flags & ETNA_BO_CMDSTREAM)
-		ret = vivante_gem_mmap_cmd(vma->vm_private_data, vma);
+		ret = etnaviv_gem_mmap_cmd(vma->vm_private_data, vma);
 	else
-		ret = vivante_gem_mmap_obj(vma->vm_private_data, vma);
+		ret = etnaviv_gem_mmap_obj(vma->vm_private_data, vma);
 
 	return ret;
 }
 
-int vivante_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+int etnaviv_gem_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct drm_gem_object *obj = vma->vm_private_data;
 	struct drm_device *dev = obj->dev;
@@ -256,15 +256,15 @@ uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj)
  * That means when I do eventually need to add support for unpinning
  * the refcnt counter needs to be atomic_t.
  */
-int vivante_gem_get_iova_locked(struct vivante_gpu * gpu, struct drm_gem_object *obj,
+int etnaviv_gem_get_iova_locked(struct etnaviv_gpu * gpu, struct drm_gem_object *obj,
 		uint32_t *iova)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 	int ret = 0;
 
-	if (!vivante_obj->iova  && !(vivante_obj->flags & ETNA_BO_CMDSTREAM)) {
-		struct vivante_drm_private *priv = obj->dev->dev_private;
-		struct vivante_iommu *mmu = priv->mmu;
+	if (!etnaviv_obj->iova  && !(etnaviv_obj->flags & ETNA_BO_CMDSTREAM)) {
+		struct etnaviv_drm_private *priv = obj->dev->dev_private;
+		struct etnaviv_iommu *mmu = priv->mmu;
 		struct page **pages = get_pages(obj);
 		uint32_t offset;
 		struct drm_mm_node *node = NULL;
@@ -281,41 +281,41 @@ int vivante_gem_get_iova_locked(struct vivante_gpu * gpu, struct drm_gem_object 
 
 		if (!ret) {
 			offset = node->start;
-			vivante_obj->iova = offset;
-			vivante_obj->gpu_vram_node = node;
+			etnaviv_obj->iova = offset;
+			etnaviv_obj->gpu_vram_node = node;
 
-			ret = vivante_iommu_map(mmu, offset, vivante_obj->sgt,
+			ret = etnaviv_iommu_map(mmu, offset, etnaviv_obj->sgt,
 					obj->size, IOMMU_READ | IOMMU_WRITE);
 		} else
 			kfree(node);
 	}
 
 	if (!ret)
-		*iova = vivante_obj->iova;
+		*iova = etnaviv_obj->iova;
 
 	return ret;
 }
 
-int vivante_gem_get_iova(struct vivante_gpu *gpu, struct drm_gem_object *obj, int id, uint32_t *iova)
+int etnaviv_gem_get_iova(struct etnaviv_gpu *gpu, struct drm_gem_object *obj, int id, uint32_t *iova)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 	int ret;
 
 	/* this is safe right now because we don't unmap until the
 	 * bo is deleted:
 	 */
-	if (vivante_obj->iova) {
-		*iova = vivante_obj->iova;
+	if (etnaviv_obj->iova) {
+		*iova = etnaviv_obj->iova;
 		return 0;
 	}
 
 	mutex_lock(&obj->dev->struct_mutex);
-	ret = vivante_gem_get_iova_locked(gpu, obj, iova);
+	ret = etnaviv_gem_get_iova_locked(gpu, obj, iova);
 	mutex_unlock(&obj->dev->struct_mutex);
 	return ret;
 }
 
-void vivante_gem_put_iova(struct drm_gem_object *obj)
+void etnaviv_gem_put_iova(struct drm_gem_object *obj)
 {
 	// XXX TODO ..
 	// NOTE: probably don't need a _locked() version.. we wouldn't
@@ -331,8 +331,8 @@ int msm_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
 	args->pitch = align_pitch(args->width, args->bpp);
 	args->size  = PAGE_ALIGN(args->pitch * args->height);
 	/* TODO: re-check flags */
-	return vivante_gem_new_handle(dev, file, args->size,
-			MSM_BO_WC, &args->handle);
+	return etnaviv_gem_new_handle(dev, file, args->size,
+			ETNA_BO_WC, &args->handle);
 }
 
 int msm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
@@ -356,86 +356,86 @@ fail:
 	return ret;
 }
 
-void *vivante_gem_vaddr_locked(struct drm_gem_object *obj)
+void *etnaviv_gem_vaddr_locked(struct drm_gem_object *obj)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 	WARN_ON(!mutex_is_locked(&obj->dev->struct_mutex));
-	if (!vivante_obj->vaddr) {
+	if (!etnaviv_obj->vaddr) {
 		struct page **pages = get_pages(obj);
 		if (IS_ERR(pages))
 			return ERR_CAST(pages);
-		vivante_obj->vaddr = vmap(pages, obj->size >> PAGE_SHIFT,
+		etnaviv_obj->vaddr = vmap(pages, obj->size >> PAGE_SHIFT,
 				VM_MAP, pgprot_writecombine(PAGE_KERNEL));
 	}
-	return vivante_obj->vaddr;
+	return etnaviv_obj->vaddr;
 }
 
 void *msm_gem_vaddr(struct drm_gem_object *obj)
 {
 	void *ret;
 	mutex_lock(&obj->dev->struct_mutex);
-	ret = vivante_gem_vaddr_locked(obj);
+	ret = etnaviv_gem_vaddr_locked(obj);
 	mutex_unlock(&obj->dev->struct_mutex);
 	return ret;
 }
 
-dma_addr_t vivante_gem_paddr_locked(struct drm_gem_object *obj)
+dma_addr_t etnaviv_gem_paddr_locked(struct drm_gem_object *obj)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 	WARN_ON(!mutex_is_locked(&obj->dev->struct_mutex));
 
-	return vivante_obj->paddr;
+	return etnaviv_obj->paddr;
 }
 
-void vivante_gem_move_to_active(struct drm_gem_object *obj,
-		struct vivante_gpu *gpu, bool write, uint32_t fence)
+void etnaviv_gem_move_to_active(struct drm_gem_object *obj,
+		struct etnaviv_gpu *gpu, bool write, uint32_t fence)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
-	vivante_obj->gpu = gpu;
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
+	etnaviv_obj->gpu = gpu;
 	if (write)
-		vivante_obj->write_fence = fence;
+		etnaviv_obj->write_fence = fence;
 	else
-		vivante_obj->read_fence = fence;
-	list_del_init(&vivante_obj->mm_list);
-	list_add_tail(&vivante_obj->mm_list, &gpu->active_list);
+		etnaviv_obj->read_fence = fence;
+	list_del_init(&etnaviv_obj->mm_list);
+	list_add_tail(&etnaviv_obj->mm_list, &gpu->active_list);
 }
 
-void vivante_gem_move_to_inactive(struct drm_gem_object *obj)
+void etnaviv_gem_move_to_inactive(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 
-	vivante_obj->gpu = NULL;
-	vivante_obj->read_fence = 0;
-	vivante_obj->write_fence = 0;
-	list_del_init(&vivante_obj->mm_list);
-	list_add_tail(&vivante_obj->mm_list, &priv->inactive_list);
+	etnaviv_obj->gpu = NULL;
+	etnaviv_obj->read_fence = 0;
+	etnaviv_obj->write_fence = 0;
+	list_del_init(&etnaviv_obj->mm_list);
+	list_add_tail(&etnaviv_obj->mm_list, &priv->inactive_list);
 }
 
-int vivante_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
+int etnaviv_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 		struct timespec *timeout)
 {
 /*
 	struct drm_device *dev = obj->dev;
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 */
 	int ret = 0;
 	/* TODO */
 #if 0
-	if (is_active(vivante_obj)) {
+	if (is_active(etnaviv_obj)) {
 		uint32_t fence = 0;
 
 		if (op & MSM_PREP_READ)
-			fence = vivante_obj->write_fence;
+			fence = etnaviv_obj->write_fence;
 		if (op & MSM_PREP_WRITE)
-			fence = max(fence, vivante_obj->read_fence);
+			fence = max(fence, etnaviv_obj->read_fence);
 		if (op & MSM_PREP_NOSYNC)
 			timeout = NULL;
 
-		ret = vivante_wait_fence_interruptable(dev, fence, timeout);
+		ret = etnaviv_wait_fence_interruptable(dev, fence, timeout);
 	}
 
 	/* TODO cache maintenance */
@@ -443,7 +443,7 @@ int vivante_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op,
 	return ret;
 }
 
-int vivante_gem_cpu_fini(struct drm_gem_object *obj)
+int etnaviv_gem_cpu_fini(struct drm_gem_object *obj)
 {
 	/* TODO cache maintenance */
 	return 0;
@@ -453,25 +453,25 @@ int vivante_gem_cpu_fini(struct drm_gem_object *obj)
 void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m)
 {
 	struct drm_device *dev = obj->dev;
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 	uint64_t off = drm_vma_node_start(&obj->vma_node);
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 	seq_printf(m, "%08x: %c(r=%u,w=%u) %2d (%2d) %08llx %p %d\n",
-			vivante_obj->flags, is_active(vivante_obj) ? 'A' : 'I',
-			vivante_obj->read_fence, vivante_obj->write_fence,
+			etnaviv_obj->flags, is_active(etnaviv_obj) ? 'A' : 'I',
+			etnaviv_obj->read_fence, etnaviv_obj->write_fence,
 			obj->name, obj->refcount.refcount.counter,
-			off, vivante_obj->vaddr, obj->size);
+			off, etnaviv_obj->vaddr, obj->size);
 }
 
 void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 {
-	struct vivante_gem_object *vivante_obj;
+	struct etnaviv_gem_object *etnaviv_obj;
 	int count = 0;
 	size_t size = 0;
 
-	list_for_each_entry(vivante_obj, list, mm_list) {
-		struct drm_gem_object *obj = &vivante_obj->base;
+	list_for_each_entry(etnaviv_obj, list, mm_list) {
+		struct drm_gem_object *obj = &etnaviv_obj->base;
 		seq_puts(m, "   ");
 		msm_gem_describe(obj, m);
 		count++;
@@ -482,77 +482,77 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 }
 #endif
 
-static void vivante_free_cmd(struct drm_gem_object *obj)
+static void etnaviv_free_cmd(struct drm_gem_object *obj)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 
 	drm_gem_free_mmap_offset(obj);
 
 	dma_free_coherent(obj->dev->dev, obj->size,
-		vivante_obj->vaddr, vivante_obj->paddr);
+		etnaviv_obj->vaddr, etnaviv_obj->paddr);
 
 	drm_gem_object_release(obj);
 }
 
-static void vivante_free_obj(struct drm_gem_object *obj)
+static void etnaviv_free_obj(struct drm_gem_object *obj)
 {
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
-	struct vivante_drm_private *priv = obj->dev->dev_private;
-	struct vivante_iommu *mmu = priv->mmu;
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
+	struct etnaviv_drm_private *priv = obj->dev->dev_private;
+	struct etnaviv_iommu *mmu = priv->mmu;
 
-	if (mmu && vivante_obj->iova) {
-		uint32_t offset = vivante_obj->gpu_vram_node->start;
-		vivante_iommu_unmap(mmu, offset, vivante_obj->sgt, obj->size);
-		drm_mm_remove_node(vivante_obj->gpu_vram_node);
-		kfree(vivante_obj->gpu_vram_node);
+	if (mmu && etnaviv_obj->iova) {
+		uint32_t offset = etnaviv_obj->gpu_vram_node->start;
+		etnaviv_iommu_unmap(mmu, offset, etnaviv_obj->sgt, obj->size);
+		drm_mm_remove_node(etnaviv_obj->gpu_vram_node);
+		kfree(etnaviv_obj->gpu_vram_node);
 	}
 
 	drm_gem_free_mmap_offset(obj);
 
 	if (obj->import_attach) {
-		if (vivante_obj->vaddr)
-			dma_buf_vunmap(obj->import_attach->dmabuf, vivante_obj->vaddr);
+		if (etnaviv_obj->vaddr)
+			dma_buf_vunmap(obj->import_attach->dmabuf, etnaviv_obj->vaddr);
 
 		/* Don't drop the pages for imported dmabuf, as they are not
 		 * ours, just free the array we allocated:
 		 */
-		if (vivante_obj->pages)
-			drm_free_large(vivante_obj->pages);
+		if (etnaviv_obj->pages)
+			drm_free_large(etnaviv_obj->pages);
 
 	} else {
-		if (vivante_obj->vaddr)
-			vunmap(vivante_obj->vaddr);
+		if (etnaviv_obj->vaddr)
+			vunmap(etnaviv_obj->vaddr);
 		put_pages(obj);
 	}
 
-	if (vivante_obj->resv == &vivante_obj->_resv)
-		reservation_object_fini(vivante_obj->resv);
+	if (etnaviv_obj->resv == &etnaviv_obj->_resv)
+		reservation_object_fini(etnaviv_obj->resv);
 
 	drm_gem_object_release(obj);
 }
 
-void vivante_gem_free_object(struct drm_gem_object *obj)
+void etnaviv_gem_free_object(struct drm_gem_object *obj)
 {
 	struct drm_device *dev = obj->dev;
-	struct vivante_gem_object *vivante_obj = to_vivante_bo(obj);
+	struct etnaviv_gem_object *etnaviv_obj = to_etnaviv_bo(obj);
 
 	WARN_ON(!mutex_is_locked(&dev->struct_mutex));
 
 	/* object should not be on active list: */
-	WARN_ON(is_active(vivante_obj));
+	WARN_ON(is_active(etnaviv_obj));
 
-	list_del(&vivante_obj->mm_list);
+	list_del(&etnaviv_obj->mm_list);
 
-	if (vivante_obj->flags & ETNA_BO_CMDSTREAM)
-		vivante_free_cmd(obj);
+	if (etnaviv_obj->flags & ETNA_BO_CMDSTREAM)
+		etnaviv_free_cmd(obj);
 	else
-		vivante_free_obj(obj);
+		etnaviv_free_obj(obj);
 
-	kfree(vivante_obj);
+	kfree(etnaviv_obj);
 }
 
 /* convenience method to construct a GEM buffer object, and userspace handle */
-int vivante_gem_new_handle(struct drm_device *dev, struct drm_file *file,
+int etnaviv_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 		uint32_t size, uint32_t flags, uint32_t *handle)
 {
 	struct drm_gem_object *obj;
@@ -562,7 +562,7 @@ int vivante_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 	if (ret)
 		return ret;
 
-	obj = vivante_gem_new(dev, size, flags);
+	obj = etnaviv_gem_new(dev, size, flags);
 
 	mutex_unlock(&dev->struct_mutex);
 
@@ -577,24 +577,24 @@ int vivante_gem_new_handle(struct drm_device *dev, struct drm_file *file,
 	return ret;
 }
 
-static int vivante_gem_new_impl(struct drm_device *dev,
+static int etnaviv_gem_new_impl(struct drm_device *dev,
 		uint32_t size, uint32_t flags,
 		struct drm_gem_object **obj)
 {
-	struct vivante_drm_private *priv = dev->dev_private;
-	struct vivante_gem_object *vivante_obj;
-	unsigned sz = sizeof(*vivante_obj);
+	struct etnaviv_drm_private *priv = dev->dev_private;
+	struct etnaviv_gem_object *etnaviv_obj;
+	unsigned sz = sizeof(*etnaviv_obj);
 	bool valid = true;
 
 	/* validate flags */
 	if (flags & ETNA_BO_CMDSTREAM) {
-		if ((flags & MSM_BO_CACHE_MASK) != 0)
+		if ((flags & ETNA_BO_CACHE_MASK) != 0)
 			valid = false;
 	} else {
-		switch (flags & MSM_BO_CACHE_MASK) {
-		case MSM_BO_UNCACHED:
-		case MSM_BO_CACHED:
-		case MSM_BO_WC:
+		switch (flags & ETNA_BO_CACHE_MASK) {
+		case ETNA_BO_UNCACHED:
+		case ETNA_BO_CACHED:
+		case ETNA_BO_WC:
 			break;
 		default:
 			valid = false;
@@ -603,39 +603,39 @@ static int vivante_gem_new_impl(struct drm_device *dev,
 
 	if (!valid) {
 		dev_err(dev->dev, "invalid cache flag: %x (cmd: %d)\n",
-				(flags & MSM_BO_CACHE_MASK),
+				(flags & ETNA_BO_CACHE_MASK),
 				(flags & ETNA_BO_CMDSTREAM));
 		return -EINVAL;
 	}
 
-	vivante_obj = kzalloc(sz, GFP_KERNEL);
-	if (!vivante_obj)
+	etnaviv_obj = kzalloc(sz, GFP_KERNEL);
+	if (!etnaviv_obj)
 		return -ENOMEM;
 
 	if (flags & ETNA_BO_CMDSTREAM) {
-		vivante_obj->vaddr = dma_alloc_coherent(dev->dev, size,
-				&vivante_obj->paddr, GFP_KERNEL);
+		etnaviv_obj->vaddr = dma_alloc_coherent(dev->dev, size,
+				&etnaviv_obj->paddr, GFP_KERNEL);
 
-		if (!vivante_obj->vaddr) {
-			kfree(vivante_obj);
+		if (!etnaviv_obj->vaddr) {
+			kfree(etnaviv_obj);
 			return -ENOMEM;
 		}
 	}
 
-	vivante_obj->flags = flags;
+	etnaviv_obj->flags = flags;
 
-	vivante_obj->resv = &vivante_obj->_resv;
-	reservation_object_init(vivante_obj->resv);
+	etnaviv_obj->resv = &etnaviv_obj->_resv;
+	reservation_object_init(etnaviv_obj->resv);
 
-	INIT_LIST_HEAD(&vivante_obj->submit_entry);
-	list_add_tail(&vivante_obj->mm_list, &priv->inactive_list);
+	INIT_LIST_HEAD(&etnaviv_obj->submit_entry);
+	list_add_tail(&etnaviv_obj->mm_list, &priv->inactive_list);
 
-	*obj = &vivante_obj->base;
+	*obj = &etnaviv_obj->base;
 
 	return 0;
 }
 
-struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
+struct drm_gem_object *etnaviv_gem_new(struct drm_device *dev,
 		uint32_t size, uint32_t flags)
 {
 	struct drm_gem_object *obj = NULL;
@@ -645,7 +645,7 @@ struct drm_gem_object *vivante_gem_new(struct drm_device *dev,
 
 	size = PAGE_ALIGN(size);
 
-	ret = vivante_gem_new_impl(dev, size, flags, &obj);
+	ret = etnaviv_gem_new_impl(dev, size, flags, &obj);
 	if (ret)
 		goto fail;
 
@@ -670,13 +670,13 @@ fail:
 struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 		uint32_t size, struct sg_table *sgt)
 {
-	struct vivante_gem_object *vivante_obj;
+	struct etnaviv_gem_object *etnaviv_obj;
 	struct drm_gem_object *obj;
 	int ret, npages;
 
 	size = PAGE_ALIGN(size);
 
-	ret = vivante_gem_new_impl(dev, size, MSM_BO_WC, &obj);
+	ret = etnaviv_gem_new_impl(dev, size, ETNA_BO_WC, &obj);
 	if (ret)
 		goto fail;
 
@@ -684,15 +684,15 @@ struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 
 	npages = size / PAGE_SIZE;
 
-	vivante_obj = to_vivante_bo(obj);
-	vivante_obj->sgt = sgt;
-	vivante_obj->pages = drm_malloc_ab(npages, sizeof(struct page *));
-	if (!vivante_obj->pages) {
+	etnaviv_obj = to_etnaviv_bo(obj);
+	etnaviv_obj->sgt = sgt;
+	etnaviv_obj->pages = drm_malloc_ab(npages, sizeof(struct page *));
+	if (!etnaviv_obj->pages) {
 		ret = -ENOMEM;
 		goto fail;
 	}
 
-	ret = drm_prime_sg_to_page_addr_arrays(sgt, vivante_obj->pages, NULL, npages);
+	ret = drm_prime_sg_to_page_addr_arrays(sgt, etnaviv_obj->pages, NULL, npages);
 	if (ret)
 		goto fail;
 

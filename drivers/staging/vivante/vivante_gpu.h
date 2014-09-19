@@ -23,9 +23,9 @@
 
 #include "vivante_drv.h"
 
-struct vivante_gem_submit;
+struct etnaviv_gem_submit;
 
-struct vivante_chip_identity {
+struct etnaviv_chip_identity {
 	/* Chip model. */
 	uint32_t model;
 
@@ -78,10 +78,10 @@ struct vivante_chip_identity {
 	uint32_t buffer_size;
 };
 
-struct vivante_gpu {
+struct etnaviv_gpu {
 	const char *name;
 	struct drm_device *dev;
-	struct vivante_chip_identity identity;
+	struct etnaviv_chip_identity identity;
 	int pipe;
 
 	/* 'ring'-buffer: */
@@ -105,7 +105,7 @@ struct vivante_gpu {
 	void __iomem *mmio;
 	int irq;
 
-	struct vivante_iommu *mmu;
+	struct etnaviv_iommu *mmu;
 
 	/* memory manager for GPU address area */
 	struct drm_mm mm;
@@ -126,30 +126,30 @@ struct vivante_gpu {
 	struct work_struct recover_work;
 };
 
-static inline void gpu_write(struct vivante_gpu *gpu, u32 reg, u32 data)
+static inline void gpu_write(struct etnaviv_gpu *gpu, u32 reg, u32 data)
 {
-	vivante_writel(data, gpu->mmio + reg);
+	etnaviv_writel(data, gpu->mmio + reg);
 }
 
-static inline u32 gpu_read(struct vivante_gpu *gpu, u32 reg)
+static inline u32 gpu_read(struct etnaviv_gpu *gpu, u32 reg)
 {
-	return vivante_readl(gpu->mmio + reg);
+	return etnaviv_readl(gpu->mmio + reg);
 }
 
-int vivante_gpu_get_param(struct vivante_gpu *gpu, uint32_t param, uint64_t *value);
+int etnaviv_gpu_get_param(struct etnaviv_gpu *gpu, uint32_t param, uint64_t *value);
 
-int vivante_gpu_init(struct vivante_gpu *gpu);
-int vivante_gpu_pm_suspend(struct vivante_gpu *gpu);
-int vivante_gpu_pm_resume(struct vivante_gpu *gpu);
+int etnaviv_gpu_init(struct etnaviv_gpu *gpu);
+int etnaviv_gpu_pm_suspend(struct etnaviv_gpu *gpu);
+int etnaviv_gpu_pm_resume(struct etnaviv_gpu *gpu);
 
 #ifdef CONFIG_DEBUG_FS
-void vivante_gpu_debugfs(struct vivante_gpu *gpu, struct seq_file *m);
+void etnaviv_gpu_debugfs(struct etnaviv_gpu *gpu, struct seq_file *m);
 #endif
 
-void vivante_gpu_retire(struct vivante_gpu *gpu);
-int vivante_gpu_submit(struct vivante_gpu *gpu, struct vivante_gem_submit *submit,
-		struct vivante_file_private *ctx);
+void etnaviv_gpu_retire(struct etnaviv_gpu *gpu);
+int etnaviv_gpu_submit(struct etnaviv_gpu *gpu, struct etnaviv_gem_submit *submit,
+		struct etnaviv_file_private *ctx);
 
-extern struct platform_driver vivante_gpu_driver;
+extern struct platform_driver etnaviv_gpu_driver;
 
 #endif /* __VIVANTE_GPU_H__ */
