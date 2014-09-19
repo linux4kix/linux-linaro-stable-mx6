@@ -219,7 +219,7 @@ static int vivante_gem_show(struct drm_device *dev, struct seq_file *m)
 		}
 	}
 
-	seq_printf(m, "Inactive Objects:\n");
+	seq_puts(m, "Inactive Objects:\n");
 	msm_gem_describe_objects(&priv->inactive_list, m);
 
 	return 0;

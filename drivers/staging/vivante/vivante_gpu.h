@@ -25,8 +25,7 @@
 
 struct vivante_gem_submit;
 
-struct vivante_chip_identity
-{
+struct vivante_chip_identity {
 	/* Chip model. */
 	uint32_t model;
 

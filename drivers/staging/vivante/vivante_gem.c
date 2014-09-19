@@ -472,7 +472,7 @@ void msm_gem_describe_objects(struct list_head *list, struct seq_file *m)
 
 	list_for_each_entry(vivante_obj, list, mm_list) {
 		struct drm_gem_object *obj = &vivante_obj->base;
-		seq_printf(m, "   ");
+		seq_puts(m, "   ");
 		msm_gem_describe(obj, m);
 		count++;
 		size += obj->size;

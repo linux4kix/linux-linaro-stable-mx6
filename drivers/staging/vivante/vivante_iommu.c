@@ -24,7 +24,7 @@
 #include "vivante_gpu.h"
 #include "state_hi.xml.h"
 
-#define PT_SIZE 	SZ_256K
+#define PT_SIZE		SZ_256K
 #define PT_ENTRIES	(PT_SIZE / sizeof(uint32_t))
 
 #define GPU_MEM_START	0x80000000
