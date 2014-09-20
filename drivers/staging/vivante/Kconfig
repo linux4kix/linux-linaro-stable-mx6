@@ -1,6 +1,6 @@
 
-config DRM_VIVANTE
-	tristate "Vivante DRM"
+config DRM_ETNAVIV
+	tristate "etnaviv DRM"
 	depends on DRM
 	select SHMEM
 	select TMPFS
@@ -9,11 +9,11 @@ config DRM_VIVANTE
 	help
 	  DRM driver for Vivante GPUs.
 
-config DRM_VIVANTE_REGISTER_LOGGING
-	bool "Vivante DRM register logging"
-	depends on DRM_VIVANTE
+config DRM_ETNAVIV_REGISTER_LOGGING
+	bool "etnaviv DRM register logging"
+	depends on DRM_ETNAVIV
 	default n
 	help
 	  Compile in support for logging register reads/writes in a format
 	  that can be parsed by envytools demsm tool.  If enabled, register
-	  logging can be switched on via vivante.reglog=y module param.
+	  logging can be switched on via etnaviv.reglog=y module param.

@@ -3,14 +3,14 @@ ifeq (, $(findstring -W,$(EXTRA_CFLAGS)))
 	ccflags-y += -Werror
 endif
 
-vivante-y := \
-	vivante_drv.o \
-	vivante_gem.o \
-	vivante_gem_prime.o \
-	vivante_gem_submit.o \
-	vivante_gpu.o \
-	vivante_iommu.o \
-	vivante_mmu.o \
-	vivante_buffer.o
+etnaviv-y := \
+	etnaviv_drv.o \
+	etnaviv_gem.o \
+	etnaviv_gem_prime.o \
+	etnaviv_gem_submit.o \
+	etnaviv_gpu.o \
+	etnaviv_iommu.o \
+	etnaviv_mmu.o \
+	etnaviv_buffer.o
 
-obj-$(CONFIG_DRM_VIVANTE)	+= vivante.o
+obj-$(CONFIG_DRM_ETNAVIV)	+= etnaviv.o
