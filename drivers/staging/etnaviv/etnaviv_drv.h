@@ -34,7 +34,7 @@
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_fb_helper.h>
-#include <drm/vivante_drm.h>
+#include <drm/etnaviv_drm.h>
 
 struct etnaviv_gpu;
 struct etnaviv_mmu;
