@@ -88,13 +88,20 @@ u32 etnaviv_readl(const void __iomem *addr)
 static int etnaviv_unload(struct drm_device *dev)
 {
 	struct etnaviv_drm_private *priv = dev->dev_private;
+	unsigned int i;
 
 	flush_workqueue(priv->wq);
 	destroy_workqueue(priv->wq);
 
 	mutex_lock(&dev->struct_mutex);
-	component_unbind_all(dev->dev, dev);
+	for (i = 0; i < ETNA_MAX_PIPES; i++) {
+		struct etnaviv_gpu *g = priv->gpu[i];
+		if (g)
+			etnaviv_gpu_pm_suspend(g);
+	}
 	mutex_unlock(&dev->struct_mutex);
+
+	component_unbind_all(dev->dev, dev);
 
 	dev->dev_private = NULL;
 
