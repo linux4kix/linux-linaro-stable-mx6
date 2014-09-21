@@ -139,16 +139,4 @@ static inline int align_pitch(int width, int bpp)
 	return bytespp * ALIGN(width, 32);
 }
 
-/* for the generated headers: */
-#define INVALID_IDX(idx) ({BUG(); 0;})
-#define fui(x)                ({BUG(); 0;})
-#define util_float_to_half(x) ({BUG(); 0;})
-
-
-#define FIELD(val, name) (((val) & name ## __MASK) >> name ## __SHIFT)
-
-/* for conditionally setting boolean flag(s): */
-#define COND(bool, val) ((bool) ? (val) : 0)
-
-
 #endif /* __ETNAVIV_DRV_H__ */
