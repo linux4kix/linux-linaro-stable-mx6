@@ -47,7 +47,7 @@ int etnaviv_gpu_get_param(struct etnaviv_gpu *gpu, uint32_t param, uint64_t *val
 		break;
 
 	case ETNAVIV_PARAM_GPU_FEATURES_1:
-		*value = gpu->identity.minor_features;
+		*value = gpu->identity.minor_features0;
 		break;
 
 	case ETNAVIV_PARAM_GPU_FEATURES_2:
@@ -112,7 +112,7 @@ int etnaviv_gpu_get_param(struct etnaviv_gpu *gpu, uint32_t param, uint64_t *val
 
 static void etnaviv_hw_specs(struct etnaviv_gpu *gpu)
 {
-	if (gpu->identity.minor_features & chipMinorFeatures0_MORE_MINOR_FEATURES) {
+	if (gpu->identity.minor_features0 & chipMinorFeatures0_MORE_MINOR_FEATURES) {
 		u32 specs[2];
 
 		specs[0] = gpu_read(gpu, VIVS_HI_CHIP_SPECS);
@@ -227,20 +227,20 @@ static void etnaviv_hw_identify(struct etnaviv_gpu *gpu)
 	||  ((gpu->identity.model == 0x300) && (gpu->identity.revision < 0x2000))) {
 
 		/* GC500 rev 1.x and GC300 rev < 2.0 doesn't have these registers. */
-		gpu->identity.minor_features  = 0;
+		gpu->identity.minor_features0 = 0;
 		gpu->identity.minor_features1 = 0;
 		gpu->identity.minor_features2 = 0;
 		gpu->identity.minor_features3 = 0;
 	} else
-		gpu->identity.minor_features = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_0);
+		gpu->identity.minor_features0 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_0);
 
-	if (gpu->identity.minor_features & BIT(21)) {
+	if (gpu->identity.minor_features0 & BIT(21)) {
 		gpu->identity.minor_features1 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_1);
 		gpu->identity.minor_features2 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_2);
 		gpu->identity.minor_features3 = gpu_read(gpu, VIVS_HI_CHIP_MINOR_FEATURE_3);
 	}
 
-	dev_info(gpu->dev->dev, "minor_features:  %x\n", gpu->identity.minor_features);
+	dev_info(gpu->dev->dev, "minor_features:  %x\n", gpu->identity.minor_features0);
 	dev_info(gpu->dev->dev, "minor_features1: %x\n", gpu->identity.minor_features1);
 	dev_info(gpu->dev->dev, "minor_features2: %x\n", gpu->identity.minor_features2);
 	dev_info(gpu->dev->dev, "minor_features3: %x\n", gpu->identity.minor_features3);

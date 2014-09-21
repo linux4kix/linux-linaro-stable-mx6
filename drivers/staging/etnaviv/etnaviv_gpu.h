@@ -36,7 +36,7 @@ struct etnaviv_chip_identity {
 	uint32_t features;
 
 	/* Supported minor feature fields. */
-	uint32_t minor_features;
+	uint32_t minor_features0;
 
 	/* Supported minor feature 1 fields. */
 	uint32_t minor_features1;
