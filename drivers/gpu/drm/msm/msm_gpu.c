@@ -152,7 +152,7 @@ static int disable_axi(struct msm_gpu *gpu)
 	return 0;
 }
 
-int vivante_gpu_pm_resume(struct msm_gpu *gpu)
+int msm_gpu_pm_resume(struct msm_gpu *gpu)
 {
 	int ret;
 
@@ -173,7 +173,7 @@ int vivante_gpu_pm_resume(struct msm_gpu *gpu)
 	return 0;
 }
 
-int vivante_gpu_pm_suspend(struct msm_gpu *gpu)
+int msm_gpu_pm_suspend(struct msm_gpu *gpu)
 {
 	int ret;
 
@@ -427,7 +427,7 @@ int msm_gpu_init(struct drm_device *drm, struct platform_device *pdev,
 	gpu->id = msm_register_mmu(drm, gpu->mmu);
 
 	/* Create ringbuffer: */
-	gpu->rb = vivante_ringbuffer_new(gpu, ringsz);
+	gpu->rb = msm_ringbuffer_new(gpu, ringsz);
 	if (IS_ERR(gpu->rb)) {
 		ret = PTR_ERR(gpu->rb);
 		gpu->rb = NULL;
@@ -461,7 +461,7 @@ void msm_gpu_cleanup(struct msm_gpu *gpu)
 	if (gpu->rb) {
 		if (gpu->rb_iova)
 			msm_gem_put_iova(gpu->rb->bo, gpu->id);
-		vivante_ringbuffer_destroy(gpu->rb);
+		msm_ringbuffer_destroy(gpu->rb);
 	}
 
 	if (gpu->mmu)
