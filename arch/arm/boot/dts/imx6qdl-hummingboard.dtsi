@@ -153,8 +153,8 @@
 	sgtl5000: sgtl5000@0a {
 		clocks = <&clks 201>;
 		compatible = "fsl,sgtl5000";
-		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_hummingboard_sgtl5000>;
+		pinctrl-names = "default";
 		reg = <0x0a>;
 		VDDA-supply = <&reg_3p3v>;
 		VDDIO-supply = <&reg_3p3v>;
@@ -336,4 +336,6 @@
 	>;
 	reset-gpio = <&gpio3 4 0>;
 	status = "okay";
+	no-msi;
 };
+
