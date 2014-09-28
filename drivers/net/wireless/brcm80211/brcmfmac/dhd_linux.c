@@ -514,7 +514,7 @@ netif_rx:
 
 void brcmf_rx_frame(struct device *dev, struct sk_buff *skb)
 {
-	struct brcmf_if *ifp;
+	struct brcmf_if *ifp = NULL;
 	struct brcmf_bus *bus_if = dev_get_drvdata(dev);
 	struct brcmf_pub *drvr = bus_if->drvr;
 	struct brcmf_skb_reorder_data *rd;
@@ -525,7 +525,7 @@ void brcmf_rx_frame(struct device *dev, struct sk_buff *skb)
 
 	/* process and remove protocol-specific header */
 	ret = brcmf_proto_hdrpull(drvr, true, &ifidx, skb);
-	ifp = drvr->iflist[ifidx];
+	if (!ret) ifp = drvr->iflist[ifidx];
 
 	if (ret || !ifp || !ifp->ndev) {
 		if ((ret != -ENODATA) && ifp)
