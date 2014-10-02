@@ -352,6 +352,7 @@ static u16 chandef_to_chanspec(struct brcmu_d11inf *d11inf,
 	ch_inf.chnum = ieee80211_frequency_to_channel(ch->center_freq1);
 	primary_offset = ch->center_freq1 - ch->chan->center_freq;
 	switch (ch->width) {
+	case NL80211_CHAN_WIDTH_20_NOHT:
 	case NL80211_CHAN_WIDTH_20:
 		ch_inf.bw = BRCMU_CHAN_BW_20;
 		WARN_ON(primary_offset != 0);
