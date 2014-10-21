@@ -2704,6 +2704,8 @@ failed_irq:
 failed_init:
 	if (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
+	if (fep->ptp_clock)
+		ptp_clock_unregister(fep->ptp_clock);
 failed_regulator:
 	fec_enet_clk_enable(ndev, false);
 failed_clk:
