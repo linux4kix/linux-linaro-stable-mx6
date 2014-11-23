@@ -2042,11 +2042,12 @@ static void mxc_hdmi_cable_disconnected(struct mxc_hdmi *hdmi)
 	clkdis |= ~HDMI_MC_CLKDIS_CECCLK_DISABLE;
 
 	/* Disable All HDMI clock */
-	hdmi_writeb(0xff & clkdis, HDMI_MC_CLKDIS);
+	hdmi_writeb(0xff, HDMI_MC_CLKDIS);
 
 	mxc_hdmi_phy_disable(hdmi);
 
 	hdmi_disable_overflow_interrupts();
+	hdmi_writeb(clkdis, HDMI_MC_CLKDIS);
 
 	hdmi->cable_plugin = false;
 }
