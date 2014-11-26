@@ -516,9 +516,9 @@ static int imx_thermal_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	data->cdev[1] = devfreq_cooling_register();
 	data->cdev[0]->ops->get_max_state(data->cdev[0], &data->num_passive_trips);
 
+	data->cdev[1] = devfreq_cooling_register(data->num_passive_trips + 1);
 	if (IS_ERR(data->cdev[1])) {
 		ret = PTR_ERR(data->cdev[1]);
 		dev_err(&pdev->dev,
