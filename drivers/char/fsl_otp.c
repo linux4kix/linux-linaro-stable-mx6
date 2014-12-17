@@ -151,6 +151,7 @@ out:
 	return ret ? 0 : sprintf(buf, "0x%x\n", value);
 }
 
+#ifdef CONFIG_FSL_OTP_WRITE_ENABLE
 static int otp_write_bits(int addr, u32 data, u32 magic)
 {
 	u32 c; /* for control register */
@@ -204,6 +205,7 @@ out:
 	clk_disable_unprepare(otp_clk);
 	return ret ? 0 : count;
 }
+#endif
 
 static int fsl_otp_probe(struct platform_device *pdev)
 {
@@ -244,9 +246,13 @@ static int fsl_otp_probe(struct platform_device *pdev)
 	for (i = 0; i < num; i++) {
 		sysfs_attr_init(&otp_kattr[i].attr);
 		otp_kattr[i].attr.name = desc[i];
+#ifdef CONFIG_FSL_OTP_WRITE_ENABLE
 		otp_kattr[i].attr.mode = 0600;
-		otp_kattr[i].show = fsl_otp_show;
 		otp_kattr[i].store = fsl_otp_store;
+#else
+		otp_kattr[i].attr.mode = 0400;
+#endif
+		otp_kattr[i].show = fsl_otp_show;
 		attrs[i] = &otp_kattr[i].attr;
 	}
 	otp_attr_group->attrs = attrs;
