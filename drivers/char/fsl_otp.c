@@ -30,6 +30,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/sysfs.h>
+#include <linux/fsl_otp.h>
 
 #define HW_OCOTP_CTRL			0x00000000
 #define HW_OCOTP_CTRL_SET		0x00000004
@@ -125,16 +126,13 @@ static int otp_wait_busy(u32 flags)
 	return 0;
 }
 
-static ssize_t fsl_otp_show(struct kobject *kobj, struct kobj_attribute *attr,
-			    char *buf)
+int fsl_otp_readl(unsigned long offset, u32 *value)
 {
-	unsigned int index = attr - otp_kattr;
-	u32 value = 0;
-	int ret;
+	int ret = 0;
 
 	ret = clk_prepare_enable(otp_clk);
 	if (ret)
-		return 0;
+		return ret;
 
 	mutex_lock(&otp_mutex);
 
@@ -143,11 +141,24 @@ static ssize_t fsl_otp_show(struct kobject *kobj, struct kobj_attribute *attr,
 	if (ret)
 		goto out;
 
-	value = __raw_readl(otp_base + HW_OCOTP_CUST_N(index));
+        *value = __raw_readl(otp_base + offset);
 
 out:
 	mutex_unlock(&otp_mutex);
 	clk_disable_unprepare(otp_clk);
+        return ret;
+}
+EXPORT_SYMBOL(fsl_otp_readl);
+
+static ssize_t fsl_otp_show(struct kobject *kobj, struct kobj_attribute *attr,
+			    char *buf)
+{
+	unsigned int index = attr - otp_kattr;
+	u32 value = 0;
+	int ret;
+
+	ret = fsl_otp_readl(HW_OCOTP_CUST_N(index), &value);
+
 	return ret ? 0 : sprintf(buf, "0x%x\n", value);
 }
 
