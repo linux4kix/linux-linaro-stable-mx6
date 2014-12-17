@@ -2,19 +2,35 @@
  * CAAM descriptor composition header
  * Definitions to support CAAM descriptor instruction generation
  *
- * Copyright 2008-2011 Freescale Semiconductor, Inc.
+ * Copyright (C) 2008-2013 Freescale Semiconductor, Inc.
  */
 
 #ifndef DESC_H
 #define DESC_H
 
+/*
+ * 16-byte hardware scatter/gather table
+ * An 8-byte table exists in the hardware spec, but has never been
+ * implemented to date. The 8/16 option is selected at RTL-compile-time.
+ * and this selection is visible in the Compile Time Parameters Register
+ */
+
+#define SEC4_SG_LEN_EXT		0x80000000	/* Entry points to table */
+#define SEC4_SG_LEN_FIN		0x40000000	/* Last ent in table */
+#define SEC4_SG_BPID_MASK	0x000000ff
+#define SEC4_SG_BPID_SHIFT	16
+#define SEC4_SG_LEN_MASK	0x3fffffff	/* Excludes EXT and FINAL */
+#define SEC4_SG_OFFS_MASK	0x00001fff
+
 struct sec4_sg_entry {
+#ifdef CONFIG_64BIT
 	u64 ptr;
-#define SEC4_SG_LEN_FIN 0x40000000
-#define SEC4_SG_LEN_EXT 0x80000000
+#else
+	u32 reserved;
+	u32 ptr;
+#endif
 	u32 len;
-	u8 reserved;
-	u8 buf_pool_id;
+	u16 buf_pool_id;
 	u16 offset;
 };
 
@@ -231,12 +247,7 @@ struct sec4_sg_entry {
 #define LDST_SRCDST_WORD_PKHA_B_SZ	(0x11 << LDST_SRCDST_SHIFT)
 #define LDST_SRCDST_WORD_PKHA_N_SZ	(0x12 << LDST_SRCDST_SHIFT)
 #define LDST_SRCDST_WORD_PKHA_E_SZ	(0x13 << LDST_SRCDST_SHIFT)
-#define LDST_SRCDST_WORD_CLASS_CTX	(0x20 << LDST_SRCDST_SHIFT)
 #define LDST_SRCDST_WORD_DESCBUF	(0x40 << LDST_SRCDST_SHIFT)
-#define LDST_SRCDST_WORD_DESCBUF_JOB	(0x41 << LDST_SRCDST_SHIFT)
-#define LDST_SRCDST_WORD_DESCBUF_SHARED	(0x42 << LDST_SRCDST_SHIFT)
-#define LDST_SRCDST_WORD_DESCBUF_JOB_WE	(0x45 << LDST_SRCDST_SHIFT)
-#define LDST_SRCDST_WORD_DESCBUF_SHARED_WE (0x46 << LDST_SRCDST_SHIFT)
 #define LDST_SRCDST_WORD_INFO_FIFO	(0x7a << LDST_SRCDST_SHIFT)
 
 /* Offset in source/destination */
@@ -371,7 +382,6 @@ struct sec4_sg_entry {
 #define FIFOLD_TYPE_LAST2FLUSH1 (0x05 << FIFOLD_TYPE_SHIFT)
 #define FIFOLD_TYPE_LASTBOTH	(0x06 << FIFOLD_TYPE_SHIFT)
 #define FIFOLD_TYPE_LASTBOTHFL	(0x07 << FIFOLD_TYPE_SHIFT)
-#define FIFOLD_TYPE_NOINFOFIFO	(0x0F << FIFOLD_TYPE_SHIFT)
 
 #define FIFOLDST_LEN_MASK	0xffff
 #define FIFOLDST_EXT_LEN_MASK	0xffffffff
@@ -1093,6 +1103,23 @@ struct sec4_sg_entry {
 #define OP_PCL_PKPROT_ECC			 0x0002
 #define OP_PCL_PKPROT_F2M			 0x0001
 
+/* Blob protocol protinfo bits */
+#define OP_PCL_BLOB_TK			0x0200
+#define OP_PCL_BLOB_EKT			0x0100
+
+#define OP_PCL_BLOB_K2KR_MEM		0x0000
+#define OP_PCL_BLOB_K2KR_C1KR		0x0010
+#define OP_PCL_BLOB_K2KR_C2KR		0x0030
+#define OP_PCL_BLOB_K2KR_AFHAS		0x0050
+#define OP_PCL_BLOB_K2KR_C2KR_SPLIT	0x0070
+
+#define OP_PCL_BLOB_PTXT_SECMEM		0x0008
+#define OP_PCL_BLOB_BLACK		0x0004
+
+#define OP_PCL_BLOB_FMT_NORMAL		0x0000
+#define OP_PCL_BLOB_FMT_MSTR		0x0002
+#define OP_PCL_BLOB_FMT_TEST		0x0003
+
 /* For non-protocol/alg-only op commands */
 #define OP_ALG_TYPE_SHIFT	24
 #define OP_ALG_TYPE_MASK	(0x7 << OP_ALG_TYPE_SHIFT)
@@ -1155,15 +1182,8 @@ struct sec4_sg_entry {
 
 /* randomizer AAI set */
 #define OP_ALG_AAI_RNG		(0x00 << OP_ALG_AAI_SHIFT)
-#define OP_ALG_AAI_RNG_NZB	(0x10 << OP_ALG_AAI_SHIFT)
-#define OP_ALG_AAI_RNG_OBP	(0x20 << OP_ALG_AAI_SHIFT)
-
-/* RNG4 AAI set */
-#define OP_ALG_AAI_RNG4_SH_0	(0x00 << OP_ALG_AAI_SHIFT)
-#define OP_ALG_AAI_RNG4_SH_1	(0x01 << OP_ALG_AAI_SHIFT)
-#define OP_ALG_AAI_RNG4_PS	(0x40 << OP_ALG_AAI_SHIFT)
-#define OP_ALG_AAI_RNG4_AI	(0x80 << OP_ALG_AAI_SHIFT)
-#define OP_ALG_AAI_RNG4_SK	(0x100 << OP_ALG_AAI_SHIFT)
+#define OP_ALG_AAI_RNG_NOZERO	(0x10 << OP_ALG_AAI_SHIFT)
+#define OP_ALG_AAI_RNG_ODD	(0x20 << OP_ALG_AAI_SHIFT)
 
 /* hmac/smac AAI set */
 #define OP_ALG_AAI_HASH		(0x00 << OP_ALG_AAI_SHIFT)
@@ -1184,6 +1204,12 @@ struct sec4_sg_entry {
 #define OP_ALG_AAI_F9		(0xc8 << OP_ALG_AAI_SHIFT)
 #define OP_ALG_AAI_GSM		(0x10 << OP_ALG_AAI_SHIFT)
 #define OP_ALG_AAI_EDGE		(0x20 << OP_ALG_AAI_SHIFT)
+
+/* RNG4 set */
+#define OP_ALG_RNG4_SHIFT	4
+#define OP_ALG_RNG4_MASK	(0x1f3 << OP_ALG_RNG4_SHIFT)
+
+#define OP_ALG_RNG4_SK		(0x100 << OP_ALG_RNG4_SHIFT)
 
 #define OP_ALG_AS_SHIFT		2
 #define OP_ALG_AS_MASK		(0x3 << OP_ALG_AS_SHIFT)
@@ -1301,10 +1327,10 @@ struct sec4_sg_entry {
 #define SQOUT_SGF	0x01000000
 
 /* Appends to a previous pointer */
-#define SQOUT_PRE	SQIN_PRE
+#define SQOUT_PRE	0x00800000
 
 /* Restore sequence with pointer/length */
-#define SQOUT_RTO	 SQIN_RTO
+#define SQOUT_RTO	0x00200000
 
 /* Use extended length following pointer */
 #define SQOUT_EXT	0x00400000
@@ -1366,7 +1392,6 @@ struct sec4_sg_entry {
 #define MOVE_DEST_MATH3		(0x07 << MOVE_DEST_SHIFT)
 #define MOVE_DEST_CLASS1INFIFO	(0x08 << MOVE_DEST_SHIFT)
 #define MOVE_DEST_CLASS2INFIFO	(0x09 << MOVE_DEST_SHIFT)
-#define MOVE_DEST_INFIFO_NOINFO (0x0a << MOVE_DEST_SHIFT)
 #define MOVE_DEST_PK_A		(0x0c << MOVE_DEST_SHIFT)
 #define MOVE_DEST_CLASS1KEY	(0x0d << MOVE_DEST_SHIFT)
 #define MOVE_DEST_CLASS2KEY	(0x0e << MOVE_DEST_SHIFT)
@@ -1419,7 +1444,6 @@ struct sec4_sg_entry {
 #define MATH_SRC0_REG2		(0x02 << MATH_SRC0_SHIFT)
 #define MATH_SRC0_REG3		(0x03 << MATH_SRC0_SHIFT)
 #define MATH_SRC0_IMM		(0x04 << MATH_SRC0_SHIFT)
-#define MATH_SRC0_DPOVRD	(0x07 << MATH_SRC0_SHIFT)
 #define MATH_SRC0_SEQINLEN	(0x08 << MATH_SRC0_SHIFT)
 #define MATH_SRC0_SEQOUTLEN	(0x09 << MATH_SRC0_SHIFT)
 #define MATH_SRC0_VARSEQINLEN	(0x0a << MATH_SRC0_SHIFT)
@@ -1434,7 +1458,6 @@ struct sec4_sg_entry {
 #define MATH_SRC1_REG2		(0x02 << MATH_SRC1_SHIFT)
 #define MATH_SRC1_REG3		(0x03 << MATH_SRC1_SHIFT)
 #define MATH_SRC1_IMM		(0x04 << MATH_SRC1_SHIFT)
-#define MATH_SRC1_DPOVRD	(0x07 << MATH_SRC0_SHIFT)
 #define MATH_SRC1_INFIFO	(0x0a << MATH_SRC1_SHIFT)
 #define MATH_SRC1_OUTFIFO	(0x0b << MATH_SRC1_SHIFT)
 #define MATH_SRC1_ONE		(0x0c << MATH_SRC1_SHIFT)
@@ -1610,13 +1633,28 @@ struct sec4_sg_entry {
 #define NFIFOENTRY_PLEN_SHIFT	0
 #define NFIFOENTRY_PLEN_MASK	(0xFF << NFIFOENTRY_PLEN_SHIFT)
 
-/* Append Load Immediate Command */
-#define FD_CMD_APPEND_LOAD_IMMEDIATE			0x80000000
+/*
+ * PDB internal definitions
+ */
 
-/* Set SEQ LIODN equal to the Non-SEQ LIODN for the job */
-#define FD_CMD_SET_SEQ_LIODN_EQUAL_NONSEQ_LIODN		0x40000000
+/* IPSec ESP CBC Encap/Decap Options */
+#define PDBOPTS_ESPCBC_ARSNONE	0x00	/* no antireplay window	*/
+#define PDBOPTS_ESPCBC_ARS32	0x40	/* 32-entry antireplay window */
+#define PDBOPTS_ESPCBC_ARS64	0xc0	/* 64-entry antireplay window */
+#define PDBOPTS_ESPCBC_IVSRC	0x20	/* IV comes from internal random gen */
+#define PDBOPTS_ESPCBC_ESN	0x10	/* extended sequence included */
+#define PDBOPTS_ESPCBC_OUTFMT	0x08	/* output only decapsulation (decap) */
+#define PDBOPTS_ESPCBC_IPHDRSRC 0x08	/* IP header comes from PDB (encap) */
+#define PDBOPTS_ESPCBC_INCIPHDR 0x04	/* Prepend IP header to output frame */
+#define PDBOPTS_ESPCBC_IPVSN	0x02	/* process IPv6 header */
+#define PDBOPTS_ESPCBC_TUNNEL	0x01	/* tunnel mode next-header byte */
 
-/* Frame Descriptor Command for Replacement Job Descriptor */
-#define FD_CMD_REPLACE_JOB_DESC				0x20000000
+#define ARC4_BLOCK_SIZE       1
+#define ARC4_MAX_KEY_SIZE     256
+#define ARC4_MIN_KEY_SIZE     1
+
+#define XCBC_MAC_DIGEST_SIZE  16
+#define XCBC_MAC_BLOCK_WORDS  16
+
 
 #endif /* DESC_H */

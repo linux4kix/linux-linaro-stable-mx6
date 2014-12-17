@@ -10,7 +10,6 @@
 #define CAAM_CMD_SZ sizeof(u32)
 #define CAAM_PTR_SZ sizeof(dma_addr_t)
 #define CAAM_DESC_BYTES_MAX (CAAM_CMD_SZ * MAX_CAAM_DESCSIZE)
-#define DESC_JOB_IO_LEN (CAAM_CMD_SZ * 5 + CAAM_PTR_SZ * 3)
 
 #ifdef DEBUG
 #define PRINT_POS do { printk(KERN_DEBUG "%02d: %s\n", desc_len(desc),\
@@ -111,26 +110,6 @@ static inline void append_cmd(u32 *desc, u32 command)
 	(*desc)++;
 }
 
-#define append_u32 append_cmd
-
-static inline void append_u64(u32 *desc, u64 data)
-{
-	u32 *offset = desc_end(desc);
-
-	*offset = upper_32_bits(data);
-	*(++offset) = lower_32_bits(data);
-
-	(*desc) += 2;
-}
-
-/* Write command without affecting header, and return pointer to next word */
-static inline u32 *write_cmd(u32 *desc, u32 command)
-{
-	*desc = command;
-
-	return desc + 1;
-}
-
 static inline void append_cmd_ptr(u32 *desc, dma_addr_t ptr, int len,
 				  u32 command)
 {
@@ -143,8 +122,7 @@ static inline void append_cmd_ptr_extlen(u32 *desc, dma_addr_t ptr,
 					 unsigned int len, u32 command)
 {
 	append_cmd(desc, command);
-	if (!(command & (SQIN_RTO | SQIN_PRE)))
-		append_ptr(desc, ptr);
+	append_ptr(desc, ptr);
 	append_cmd(desc, len);
 }
 
@@ -198,25 +176,9 @@ static inline void append_##cmd(u32 *desc, dma_addr_t ptr, unsigned int len, \
 }
 APPEND_CMD_PTR(key, KEY)
 APPEND_CMD_PTR(load, LOAD)
+APPEND_CMD_PTR(store, STORE)
 APPEND_CMD_PTR(fifo_load, FIFO_LOAD)
 APPEND_CMD_PTR(fifo_store, FIFO_STORE)
-
-static inline void append_store(u32 *desc, dma_addr_t ptr, unsigned int len,
-				u32 options)
-{
-	u32 cmd_src;
-
-	cmd_src = options & LDST_SRCDST_MASK;
-
-	append_cmd(desc, CMD_STORE | options | len);
-
-	/* The following options do not require pointer */
-	if (!(cmd_src == LDST_SRCDST_WORD_DESCBUF_SHARED ||
-	      cmd_src == LDST_SRCDST_WORD_DESCBUF_JOB    ||
-	      cmd_src == LDST_SRCDST_WORD_DESCBUF_JOB_WE ||
-	      cmd_src == LDST_SRCDST_WORD_DESCBUF_SHARED_WE))
-		append_ptr(desc, ptr);
-}
 
 #define APPEND_SEQ_PTR_INTLEN(cmd, op) \
 static inline void append_seq_##cmd##_ptr_intlen(u32 *desc, dma_addr_t ptr, \
@@ -224,10 +186,7 @@ static inline void append_seq_##cmd##_ptr_intlen(u32 *desc, dma_addr_t ptr, \
 						 u32 options) \
 { \
 	PRINT_POS; \
-	if (options & (SQIN_RTO | SQIN_PRE)) \
-		append_cmd(desc, CMD_SEQ_##op##_PTR | len | options); \
-	else \
-		append_cmd_ptr(desc, ptr, len, CMD_SEQ_##op##_PTR | options); \
+	append_cmd_ptr(desc, ptr, len, CMD_SEQ_##op##_PTR | options); \
 }
 APPEND_SEQ_PTR_INTLEN(in, IN)
 APPEND_SEQ_PTR_INTLEN(out, OUT)
@@ -300,7 +259,7 @@ APPEND_CMD_RAW_IMM(load, LOAD, u32);
  */
 #define APPEND_MATH(op, desc, dest, src_0, src_1, len) \
 append_cmd(desc, CMD_MATH | MATH_FUN_##op | MATH_DEST_##dest | \
-	MATH_SRC0_##src_0 | MATH_SRC1_##src_1 | (u32)len);
+	   MATH_SRC0_##src_0 | MATH_SRC1_##src_1 | (u32) (len & MATH_LEN_MASK));
 
 #define append_math_add(desc, dest, src0, src1, len) \
 	APPEND_MATH(ADD, desc, dest, src0, src1, len)
@@ -320,8 +279,6 @@ append_cmd(desc, CMD_MATH | MATH_FUN_##op | MATH_DEST_##dest | \
 	APPEND_MATH(LSHIFT, desc, dest, src0, src1, len)
 #define append_math_rshift(desc, dest, src0, src1, len) \
 	APPEND_MATH(RSHIFT, desc, dest, src0, src1, len)
-#define append_math_ldshift(desc, dest, src0, src1, len) \
-	APPEND_MATH(SHLD, desc, dest, src0, src1, len)
 
 /* Exactly one source is IMM. Data is passed in as u32 value */
 #define APPEND_MATH_IMM_u32(op, desc, dest, src_0, src_1, data) \
@@ -348,34 +305,3 @@ do { \
 	APPEND_MATH_IMM_u32(LSHIFT, desc, dest, src0, src1, data)
 #define append_math_rshift_imm_u32(desc, dest, src0, src1, data) \
 	APPEND_MATH_IMM_u32(RSHIFT, desc, dest, src0, src1, data)
-
-/* Exactly one source is IMM. Data is passed in as u64 value */
-#define APPEND_MATH_IMM_u64(op, desc, dest, src_0, src_1, data) \
-do { \
-	u32 upper = (data >> 16) >> 16; \
-	APPEND_MATH(op, desc, dest, src_0, src_1, CAAM_CMD_SZ * 2 | \
-		    (upper ? 0 : MATH_IFB)); \
-	if (upper) \
-		append_u64(desc, data); \
-	else \
-		append_u32(desc, data); \
-} while (0)
-
-#define append_math_add_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(ADD, desc, dest, src0, src1, data)
-#define append_math_sub_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(SUB, desc, dest, src0, src1, data)
-#define append_math_add_c_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(ADDC, desc, dest, src0, src1, data)
-#define append_math_sub_b_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(SUBB, desc, dest, src0, src1, data)
-#define append_math_and_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(AND, desc, dest, src0, src1, data)
-#define append_math_or_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(OR, desc, dest, src0, src1, data)
-#define append_math_xor_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(XOR, desc, dest, src0, src1, data)
-#define append_math_lshift_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(LSHIFT, desc, dest, src0, src1, data)
-#define append_math_rshift_imm_u64(desc, dest, src0, src1, data) \
-	APPEND_MATH_IMM_u64(RSHIFT, desc, dest, src0, src1, data)
