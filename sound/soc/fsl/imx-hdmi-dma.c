@@ -83,7 +83,7 @@ static u8 g_packet_head_table[48 * 8];
 static u8 g_channel_remap_table[24];
 
 /* default mapping tables */
-static const u8 channel_maps_alsa_cea[5][8] = { 
+static const u8 channel_maps_alsa_cea[5][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 0CH: no remapping */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 2CH: no remapping */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 4CH: no remapping */
@@ -91,7 +91,7 @@ static const u8 channel_maps_alsa_cea[5][8] = {
 	{ 0, 1, 6, 7, 3, 2, 4, 5 }	/* 8CH: ALSA7.1 to CEA */
 };
 
-static const u8 channel_maps_cea_alsa[5][8] = { 
+static const u8 channel_maps_cea_alsa[5][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 0CH: no remapping */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 2CH: no remapping */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* 4CH: no remapping */
@@ -142,8 +142,8 @@ EXPORT_SYMBOL(iec_header);
  *    is necessary for 6 ch.
  */
 #define HDMI_DMA_PERIOD_BYTES		(12288)
-#define HDMI_DMA_BUF_SIZE		(128 * 1024)
-#define HDMI_PCM_BUF_SIZE		(128 * 1024)
+#define HDMI_DMA_BUF_SIZE		(1280 * 1024)
+#define HDMI_PCM_BUF_SIZE		(1280 * 1024)
 
 #define hdmi_audio_debug(dev, reg) \
 	dev_dbg(dev, #reg ": 0x%02x\n", hdmi_readb(reg))
@@ -247,24 +247,29 @@ static u32 hdmi_dma_add_frame_info(struct hdmi_dma_priv *priv,
 				   u32 pcm_data, int subframe_idx)
 {
 	union hdmi_audio_dma_data_t subframe;
+	union hdmi_audio_header_t tmp_header;
 
 	subframe.U = 0;
 
-	/* fill c (channel status) */
 	if (priv->frame_idx < 42) {
-		iec_header.B.channel = 
-			(iec_header.B.linear_pcm == 0) ? subframe_idx : 0;
-		subframe.B.c = iec_header.U >> priv->frame_idx;
+		tmp_header = iec_header;
+
+		/* fill v (validity) */
+		subframe.B.v = tmp_header.B.linear_pcm;
+
+		/* fill c (channel status) */
+		if (tmp_header.B.linear_pcm == 0)
+			tmp_header.B.channel = subframe_idx + 1;
+		subframe.B.c = tmp_header.U >> priv->frame_idx;
+	} else {
+		/* fill v (validity), c is always zero */
+		subframe.B.v = iec_header.B.linear_pcm;
 	}
-	
-	/* fill v (validity) */
-	subframe.B.v = iec_header.B.linear_pcm;
 
 	/* fill data */
 	if (priv->sample_bits == 16)
-		subframe.B.data = pcm_data << 8;
-	else
-		subframe.B.data = pcm_data;
+		pcm_data <<= 8;
+	subframe.B.data = pcm_data;
 
 	/* fill p (parity) Note: Do not include b ! */
 	subframe.B.p = odd_ones(subframe.U);
@@ -278,8 +283,9 @@ static u32 hdmi_dma_add_frame_info(struct hdmi_dma_priv *priv,
 
 static void init_table(int channels)
 {
+	int i, map_sel, ch;
 	unsigned char *p = g_packet_head_table;
-	int i, map_sel, ch = 0;
+	union hdmi_audio_header_t tmp_header = iec_header;
 
 	for (i = 0; i < 48; i++) {
 		int b = 0;
@@ -289,8 +295,8 @@ static void init_table(int channels)
 		for (ch = 0; ch < channels; ch++) {
 			int c = 0;
 			if (i < 42) {
-				iec_header.B.channel = ch+1;
-				c = (iec_header.U >> i) & 0x1;
+				tmp_header.B.channel = ch + 1;
+				c = (tmp_header.U >> i) & 0x1;
 			}
 			/* preset bit p as c */
 			*p++ = (b << 4) | (c << 2) | (c << 3);
@@ -299,7 +305,7 @@ static void init_table(int channels)
 
 	map_sel = channels / 2;
 	for (i = 0; i < 24; i++) {
-		g_channel_remap_table[i] = (i / channels) * channels + 
+		g_channel_remap_table[i] = (i / channels) * channels +
 			channel_maps_cea_alsa[map_sel][i % channels];
 	}
 }
@@ -684,15 +690,22 @@ static int hdmi_dma_copy(struct snd_pcm_substream *substream, int channel,
 	struct hdmi_dma_priv *priv = runtime->private_data;
 	unsigned int count = frames_to_bytes(runtime, frames);
 	unsigned int pos_bytes = frames_to_bytes(runtime, pos);
-	int channel_no, pcm_idx, subframe_no, bits_left, sample_bits, map_sel;
-	u32 pcm_data[8], pcm_temp, *hw_buf, sample_block;
-	
+	int channel_no, pcm_idx, subframe_idx, bits_left, sample_bits, map_sel;
+	u32 pcm_data[8], pcm_temp, *hw_buf, sample_block, inc_mask;
+
 	/* Adding frame info to pcm data from userspace and copy to hw_buffer */
 	hw_buf = (u32 *)(priv->hw_buffer.area + (pos_bytes * priv->buffer_ratio));
 
 	sample_bits = priv->sample_align * 8;
 	sample_block = priv->sample_align * priv->channels;
-	map_sel = (iec_header.B.linear_pcm == 0) ? (priv->channels / 2) : 0;
+
+	if (iec_header.B.linear_pcm == 0) {
+		map_sel = priv->channels / 2;
+		inc_mask = 1 << (priv->channels - 1);
+	} else {
+		map_sel = 0;
+		inc_mask = 0xaa;
+	}
 
 	while (count > 0) {
 		if (copy_from_user(pcm_data, buf, sample_block))
@@ -707,11 +720,17 @@ static int hdmi_dma_copy(struct snd_pcm_substream *substream, int channel,
 			bits_left = 32;
 			for (;;) {
 				/* re-map channels */
-				subframe_no = channel_maps_alsa_cea[map_sel][channel_no];
+				subframe_idx = channel_maps_alsa_cea[map_sel][channel_no];
 
 				/* Save the header info to the audio dma buffer */
-				hw_buf[subframe_no] = hdmi_dma_add_frame_info(
-							priv, pcm_temp, subframe_no + 1);
+				hw_buf[subframe_idx] = hdmi_dma_add_frame_info(
+								priv, pcm_temp, subframe_idx);
+
+				if (inc_mask & (1 << channel_no)) {
+					if (++priv->frame_idx == 192)
+						priv->frame_idx = 0;
+				}
+
 				channel_no++;
 
 				if (bits_left <= sample_bits)
@@ -723,10 +742,6 @@ static int hdmi_dma_copy(struct snd_pcm_substream *substream, int channel,
 		} while (channel_no < priv->channels);
 
 		hw_buf += priv->channels;
-
-		priv->frame_idx++;
-		if (priv->frame_idx == 192)
-			priv->frame_idx = 0;
 	}
 
 	return 0;
@@ -868,6 +883,7 @@ static int hdmi_dma_hw_params(struct snd_pcm_substream *substream,
 	init_table(priv->channels);
 
 	priv->appl_bytes = 0;
+	priv->frame_idx = 0;
 
 	return 0;
 }
@@ -886,8 +902,17 @@ static void hdmi_dma_trigger_init(struct snd_pcm_substream *substream,
 	hbr = (iec_header.B.linear_pcm != 0 && priv->channels == 8);
 	hdmi_audio_writeb(AHB_DMA_CONF0, HBR, !!hbr);
 
+	/*
+	 * Override AES3 - parameter: This is a temporary hack for
+	 * callers that provide incorrect information when opening
+	 * the device. 0x09 (i.e. 768K) is the only acceptable value.
+	 */
+	if (hbr) {
+		iec_header.B.sample_freq = 0x09;
+		iec_header.B.org_sample_freq = 0x00;
+	}
+
 	priv->offset = 0;
-	priv->frame_idx = 0;
 
 	/* Copy data by buffer_bytes */
 	hdmi_dma_data_copy(substream, priv, 'b');
@@ -932,13 +957,13 @@ static int hdmi_dma_trigger(struct snd_pcm_substream *substream, int cmd)
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		if (!check_hdmi_state())
 			return 0;
 		hdmi_dma_trigger_init(substream, priv);
 
 		dumpregs(dev);
 
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		priv->tx_active = true;
 		hdmi_audio_writeb(AHB_DMA_START, START, 0x1);
 		hdmi_dma_irq_set(false);
@@ -987,7 +1012,7 @@ static struct snd_pcm_hardware snd_imx_hardware = {
 	.period_bytes_min = HDMI_DMA_PERIOD_BYTES / 2,
 	.period_bytes_max = HDMI_DMA_PERIOD_BYTES / 2,
 	.periods_min = 8,
-	.periods_max = 8,
+	.periods_max = HDMI_DMA_BUF_SIZE / HDMI_DMA_PERIOD_BYTES,
 	.fifo_size = 0,
 };
 
@@ -1168,6 +1193,7 @@ static int imx_soc_platform_probe(struct platform_device *pdev)
 	case 0x0a:
 		snd_imx_hardware.period_bytes_max = HDMI_DMA_PERIOD_BYTES / 4;
 		snd_imx_hardware.period_bytes_min = HDMI_DMA_PERIOD_BYTES / 4;
+		snd_imx_hardware.periods_max = HDMI_DMA_BUF_SIZE / (HDMI_DMA_PERIOD_BYTES / 2);
 		break;
 	default:
 		break;

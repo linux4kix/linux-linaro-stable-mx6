@@ -29,6 +29,7 @@
 #include <linux/types.h>
 #include <linux/busfreq-imx6.h>
 
+#include "../pci.h"
 #include "pcie-designware.h"
 
 #define to_imx6_pcie(x)	container_of(x, struct imx6_pcie, pp)
@@ -64,6 +65,9 @@ struct imx6_pcie {
 
 /* PCIe Port Logic registers (memory-mapped) */
 #define PL_OFFSET 0x700
+#define PCIE_PL_PFLR (PL_OFFSET + 0x08)
+#define PCIE_PL_PFLR_LINK_STATE_MASK		(0x3f << 16)
+#define PCIE_PL_PFLR_FORCE_LINK			(1 << 15)
 #define PCIE_PHY_DEBUG_R0 (PL_OFFSET + 0x28)
 #define PCIE_PHY_DEBUG_R1 (PL_OFFSET + 0x2c)
 #define PCIE_PHY_DEBUG_R1_XMLH_LINK_IN_TRAINING	(1 << 29)
@@ -226,6 +230,18 @@ static int imx6q_pcie_abort_handler(unsigned long addr,
 	return 0;
 }
 
+static int imx6_pcie_assert_core_reset(struct pcie_port *pp)
+{
+        struct imx6_pcie *imx6_pcie = to_imx6_pcie(pp);
+
+        regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
+                        IMX6Q_GPR1_PCIE_TEST_PD, 1 << 18);
+        regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
+                        IMX6Q_GPR1_PCIE_REF_CLK_EN, 0 << 16);
+
+        return 0;
+}
+
 static int imx6_pcie_deassert_core_reset(struct pcie_port *pp)
 {
 	struct imx6_pcie *imx6_pcie = to_imx6_pcie(pp);
@@ -234,10 +250,6 @@ static int imx6_pcie_deassert_core_reset(struct pcie_port *pp)
 	if (gpio_is_valid(imx6_pcie->power_on_gpio))
 		gpio_set_value(imx6_pcie->power_on_gpio, 1);
 
-	regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
-			IMX6Q_GPR1_PCIE_TEST_PD, 0 << 18);
-	regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
-			IMX6Q_GPR1_PCIE_REF_CLK_EN, 1 << 16);
 	request_bus_freq(BUS_FREQ_HIGH);
 
 	ret = clk_prepare_enable(imx6_pcie->sata_ref_100m);
@@ -270,6 +282,12 @@ static int imx6_pcie_deassert_core_reset(struct pcie_port *pp)
 	/* allow the clocks to stabilize */
 	usleep_range(200, 500);
 
+	/* power up core phy and enable ref clock */
+	regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
+			IMX6Q_GPR1_PCIE_TEST_PD, 0 << 18);
+	regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1,
+			IMX6Q_GPR1_PCIE_REF_CLK_EN, 1 << 16);
+
 	/* Some boards don't have PCIe reset GPIO. */
 	if (gpio_is_valid(imx6_pcie->reset_gpio)) {
 		gpio_set_value(imx6_pcie->reset_gpio, 0);
@@ -293,6 +311,31 @@ err_sata_ref:
 static void imx6_pcie_init_phy(struct pcie_port *pp)
 {
 	struct imx6_pcie *imx6_pcie = to_imx6_pcie(pp);
+	u32 val, gpr1, gpr12;
+
+	/*
+	 * If the bootloader already enabled the link we need some special
+	 * handling to get the core back into a state where it is safe to
+	 * touch it for configuration. As there is no dedicated reset signal
+	 * wired up for MX6QDL, we need to manually force LTSSM into "detect"
+	 * state before completely disabling LTSSM, which is a prerequisite
+	 * for core configuration.
+	 * If both LTSSM_ENABLE and REF_SSP_ENABLE are active we have a strong
+	 * indication that the bootloader activated the link.
+	 */
+	regmap_read(imx6_pcie->iomuxc_gpr, IOMUXC_GPR1, &gpr1);
+	regmap_read(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12, &gpr12);
+
+	if ((gpr1 & IMX6Q_GPR1_PCIE_REF_CLK_EN) &&
+	    (gpr12 & IMX6Q_GPR12_PCIE_CTL_2)) {
+		val = readl(pp->dbi_base + PCIE_PL_PFLR);
+		val &= ~PCIE_PL_PFLR_LINK_STATE_MASK;
+		val |= PCIE_PL_PFLR_FORCE_LINK;
+		writel(val, pp->dbi_base + PCIE_PL_PFLR);
+
+		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
+				IMX6Q_GPR12_PCIE_CTL_2, 0 << 10);
+	}
 
 	regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 			IMX6Q_GPR12_PCIE_CTL_2, 0 << 10);
@@ -323,7 +366,6 @@ static void imx6_pcie_init_phy(struct pcie_port *pp)
 
 static int imx6_pcie_wait_for_link(struct pcie_port *pp)
 {
-	struct imx6_pcie *imx6_pcie = to_imx6_pcie(pp);
 	int count = 200;
 
 	while (!dw_pcie_link_up(pp)) {
@@ -342,12 +384,6 @@ static int imx6_pcie_wait_for_link(struct pcie_port *pp)
 		pp->quirks |= DW_PCIE_QUIRK_NO_MSI_VEC;
 		pp->quirks |= DW_PCIE_QUIRK_MSI_SELF_EN;
 		dw_pcie_msi_init(pp);
-	}
-
-	if (gpio_is_valid(imx6_pcie->reset_gpio)) {
-		gpio_set_value(imx6_pcie->reset_gpio, 0);
-		msleep(100);
-		gpio_set_value(imx6_pcie->reset_gpio, 1);
 	}
 
 	return 0;
@@ -427,6 +463,8 @@ static irqreturn_t imx_pcie_msi_irq_handler(int irq, void *arg)
 
 static void imx6_pcie_host_init(struct pcie_port *pp)
 {
+	imx6_pcie_assert_core_reset(pp);
+
 	imx6_pcie_init_phy(pp);
 
 	imx6_pcie_deassert_core_reset(pp);
@@ -830,6 +868,9 @@ static int __init imx6_pcie_probe(struct platform_device *pdev)
 		goto err;
 	}
 
+        if (of_find_property(np, "no-msi", NULL))
+                pci_no_msi();
+
 	if (IS_ENABLED(CONFIG_EP_MODE_IN_EP_RC_SYS)) {
 		if (IS_ENABLED(CONFIG_EP_SELF_IO_TEST)) {
 			/* Prepare the test regions and data */
@@ -989,6 +1030,14 @@ err:
 	return ret;
 }
 
+static void imx6_pcie_shutdown(struct platform_device *pdev)
+{
+	struct imx6_pcie *imx6_pcie = platform_get_drvdata(pdev);
+
+	/* bring down link, so bootloader gets clean state in case of reboot */
+	imx6_pcie_assert_core_reset(&imx6_pcie->pp);
+}
+
 static const struct of_device_id imx6_pcie_of_match[] = {
 	{ .compatible = "fsl,imx6q-pcie", },
 	{},
@@ -1001,6 +1050,7 @@ static struct platform_driver imx6_pcie_driver = {
 		.owner	= THIS_MODULE,
 		.of_match_table = imx6_pcie_of_match,
 	},
+	.shutdown = imx6_pcie_shutdown,
 };
 
 /* Freescale PCIe driver does not allow module unload */

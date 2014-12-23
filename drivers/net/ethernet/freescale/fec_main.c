@@ -1217,8 +1217,11 @@ fec_enet_rx(struct net_device *ndev, int budget)
 
 	while (!((status = bdp->cbd_sc) & BD_ENET_RX_EMPTY)) {
 
-		if (pkt_received >= budget)
+		if (pkt_received >= budget) {
+			/* overwhelmed take a breath */
+			udelay(210);
 			break;
+		}
 		pkt_received++;
 
 		/* Since we have allocated space to hold a complete frame,
@@ -2701,6 +2704,8 @@ failed_irq:
 failed_init:
 	if (fep->reg_phy)
 		regulator_disable(fep->reg_phy);
+	if (fep->ptp_clock)
+		ptp_clock_unregister(fep->ptp_clock);
 failed_regulator:
 	fec_enet_clk_enable(ndev, false);
 failed_clk:

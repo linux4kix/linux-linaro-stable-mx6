@@ -46,8 +46,8 @@ void hdmi_set_dma_mode(unsigned int dma_running);
 void hdmi_init_clk_regenerator(void);
 void hdmi_clk_regenerator_update_pixel_clock(u32 pixclock);
 
-void hdmi_set_edid_cfg(struct mxc_edid_cfg *cfg);
-void hdmi_get_edid_cfg(struct mxc_edid_cfg *cfg);
+void hdmi_set_edid_cfg(int edid_status, struct mxc_edid_cfg *cfg);
+int hdmi_get_edid_cfg(struct mxc_edid_cfg *cfg);
 
 extern int mxc_hdmi_ipu_id;
 extern int mxc_hdmi_disp_id;
@@ -57,8 +57,12 @@ int hdmi_get_registered(void);
 int mxc_hdmi_abort_stream(void);
 int mxc_hdmi_register_audio(struct snd_pcm_substream *substream);
 void mxc_hdmi_unregister_audio(struct snd_pcm_substream *substream);
+void hdmi_set_dvi_mode(unsigned int state);
 unsigned int hdmi_set_cable_state(unsigned int state);
 unsigned int hdmi_set_blank_state(unsigned int state);
 int check_hdmi_state(void);
+
+void hdmi_cec_start_device(void);
+void hdmi_cec_stop_device(void);
 
 #endif

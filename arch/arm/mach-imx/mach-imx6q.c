@@ -35,6 +35,7 @@
 #include <linux/mfd/syscon.h>
 #include <linux/mfd/syscon/imx6q-iomuxc-gpr.h>
 #include <linux/of_net.h>
+#include <linux/fsl_otp.h>
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 #include <asm/system_misc.h>
@@ -230,11 +231,11 @@ static void __init imx6q_csi_mux_init(void)
 #define OCOTP_MACn(n)	(0x00000620 + (n) * 0x10)
 void __init imx6_enet_mac_init(const char *compatible)
 {
-	struct device_node *ocotp_np, *enet_np;
-	void __iomem *base;
+	struct device_node *enet_np;
 	struct property *newmac;
 	u32 macaddr_low, macaddr_high;
 	u8 *macaddr;
+	int ret;
 
 	enet_np = of_find_compatible_node(NULL, NULL, compatible);
 	if (!enet_np)
@@ -243,31 +244,19 @@ void __init imx6_enet_mac_init(const char *compatible)
 	if (of_get_mac_address(enet_np))
 		goto put_enet_node;
 
-	ocotp_np = of_find_compatible_node(NULL, NULL, "fsl,imx6q-ocotp");
-	if (!ocotp_np) {
-		pr_warn("failed to find ocotp node\n");
-		goto put_enet_node;
-	}
-
-	base = of_iomap(ocotp_np, 0);
-	if (!base) {
-		pr_warn("failed to map ocotp\n");
-		goto put_ocotp_node;
-	}
-
-	macaddr_high = readl_relaxed(base + OCOTP_MACn(0));
-	macaddr_low = readl_relaxed(base + OCOTP_MACn(1));
+	ret = fsl_otp_readl(OCOTP_MACn(0), &macaddr_high);
+	ret = fsl_otp_readl(OCOTP_MACn(1), &macaddr_low);
 
 	newmac = kzalloc(sizeof(*newmac) + 6, GFP_KERNEL);
 	if (!newmac)
-		goto put_ocotp_node;
+		goto put_enet_node;
 
 	newmac->value = newmac + 1;
 	newmac->length = 6;
 	newmac->name = kstrdup("local-mac-address", GFP_KERNEL);
 	if (!newmac->name) {
 		kfree(newmac);
-		goto put_ocotp_node;
+		goto put_enet_node;
 	}
 
 	macaddr = newmac->value;
@@ -280,8 +269,6 @@ void __init imx6_enet_mac_init(const char *compatible)
 
 	of_update_property(enet_np, newmac);
 
-put_ocotp_node:
-	of_node_put(ocotp_np);
 put_enet_node:
 	of_node_put(enet_np);
 }
@@ -323,20 +310,13 @@ static void __init imx6q_init_machine(void)
 
 static void __init imx6q_opp_check_speed_grading(struct device *cpu_dev)
 {
-	struct device_node *np;
-	void __iomem *base;
 	u32 val;
+	int ret;
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,imx6q-ocotp");
-	if (!np) {
-		pr_warn("failed to find ocotp node\n");
-		return;
-	}
-
-	base = of_iomap(np, 0);
-	if (!base) {
-		pr_warn("failed to map ocotp\n");
-		goto put_node;
+	ret = fsl_otp_readl(OCOTP_CFG3, &val); 
+	if (ret) {
+		pr_warn("failed to read ocotp\n");
+		return;	
 	}
 
 	/*
@@ -348,7 +328,6 @@ static void __init imx6q_opp_check_speed_grading(struct device *cpu_dev)
 	 * We need to set the max speed of ARM according to fuse map.
 	 */
 
-	val = readl_relaxed(base + OCOTP_CFG3);
 	val >>= OCOTP_CFG3_SPEED_SHIFT;
 	if (cpu_is_imx6q()) {
 		if ((val & 0x3) < OCOTP_CFG3_SPEED_1P2GHZ)
@@ -364,9 +343,6 @@ static void __init imx6q_opp_check_speed_grading(struct device *cpu_dev)
 			if (dev_pm_opp_disable(cpu_dev, 852000000))
 				pr_warn("failed to disable 850 MHz OPP\n");
 	}
-
-put_node:
-	of_node_put(np);
 }
 
 static void __init imx6q_opp_init(void)

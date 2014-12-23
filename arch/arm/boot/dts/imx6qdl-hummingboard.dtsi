@@ -5,15 +5,20 @@
 #include "imx6qdl-microsom-ar8035.dtsi"
 
 / {
+	chosen {
+		bootargs = "quiet console=ttymxc0,115200 root=/dev/mmcblk0p2 rw";
+	};
+
 	aliases {
 		mxcfb0 = &mxcfb1;
 	};
 
 	ir_recv: ir-receiver {
 		compatible = "gpio-ir-receiver";
-		gpios = <&gpio1 2 1>;
+		gpios = <&gpio3 5 1>;
 		pinctrl-names = "default";
-		pinctrl-0 = <&pinctrl_hummingboard_gpio1_2>;
+		pinctrl-0 = <&pinctrl_hummingboard_gpio3_5>;
+		linux,rc-map-name = "rc-rc6-mce";
 	};
 
 	regulators {
@@ -133,6 +138,7 @@
 };
 
 &i2c1 {
+	clock-frequency = <100000>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_hummingboard_i2c1>;
 	status = "okay";
@@ -147,8 +153,8 @@
 	sgtl5000: sgtl5000@0a {
 		clocks = <&clks 201>;
 		compatible = "fsl,sgtl5000";
-		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_hummingboard_sgtl5000>;
+		pinctrl-names = "default";
 		reg = <0x0a>;
 		VDDA-supply = <&reg_3p3v>;
 		VDDIO-supply = <&reg_3p3v>;
@@ -166,29 +172,32 @@
 				 * numbering as following -
 				 * GPIO number | GPIO (bank,num) |  PIN number
 				 * ------------+-----------------+------------
-				 * gpio1       | (1,1)	   | IO7
-				 * gpio73      | (3,9)	   | IO11
-				 * gpio72      | (3,8)	   | IO12
-				 * gpio71      | (3,7)	   | IO13
-				 * gpio70      | (3,6)	   | IO15
-				 * gpio194     | (7,2)	   | IO16
-				 * gpio195     | (7,3)	   | IO18
-				 * gpio67      | (3,3)	   | IO22
+				 * gpio1       | (1,1)           | IO7
+				 * gpio73      | (3,9)           | IO11
+				 * gpio72      | (3,8)           | IO12
+				 * gpio71      | (3,7)           | IO13
+				 * gpio70      | (3,6)           | IO15
+				 * gpio194     | (7,2)           | IO16
+				 * gpio195     | (7,3)           | IO18
+				 * gpio67      | (3,3)           | IO22
+				 *
+				 * Notice the gpioX and GPIO (Y,Z) mapping forumla :
+				 * X = (Y-1) * 32 + Z
 				 */
-				MX6QDL_PAD_GPIO_1__GPIO1_IO01 0x8001b0b1
-				MX6QDL_PAD_EIM_DA9__GPIO3_IO09 0x8001b0b1
-				MX6QDL_PAD_EIM_DA8__GPIO3_IO08 0x8001b0b1
-				MX6QDL_PAD_EIM_DA7__GPIO3_IO07 0x8001b0b1
-				MX6QDL_PAD_EIM_DA6__GPIO3_IO06 0x8001b0b1
-				MX6QDL_PAD_SD3_CMD__GPIO7_IO02 0x8001b0b1
-				MX6QDL_PAD_SD3_CLK__GPIO7_IO03 0x8001b0b1
-				MX6QDL_PAD_EIM_DA3__GPIO3_IO03 0x8001b0b1
+				MX6QDL_PAD_GPIO_1__GPIO1_IO01 0x400130b1
+				MX6QDL_PAD_EIM_DA9__GPIO3_IO09 0x400130b1
+				MX6QDL_PAD_EIM_DA8__GPIO3_IO08 0x400130b1
+				MX6QDL_PAD_EIM_DA7__GPIO3_IO07 0x400130b1
+				MX6QDL_PAD_EIM_DA6__GPIO3_IO06 0x400130b1
+				MX6QDL_PAD_SD3_CMD__GPIO7_IO02 0x400130b1
+				MX6QDL_PAD_SD3_CLK__GPIO7_IO03 0x400130b1
+				MX6QDL_PAD_EIM_DA3__GPIO3_IO03 0x400130b1
 			>;
 		};
 
-		pinctrl_hummingboard_gpio1_2: hummingboard-gpio1_2 {
+		pinctrl_hummingboard_gpio3_5: hummingboard-gpio3_5 {
 			fsl,pins = <
-				MX6QDL_PAD_GPIO_2__GPIO1_IO02 0x80000000
+				MX6QDL_PAD_EIM_DA5__GPIO3_IO05 0x80000000
 			>;
 		};
 
@@ -258,6 +267,19 @@
 				MX6QDL_PAD_SD2_DAT3__SD2_DATA3 0x13059
 			>;
 		};
+
+		pinctrl_hummingboard_pcie_reset: hummingboard-pcie-reset {
+			fsl,pins = <
+				MX6QDL_PAD_EIM_DA4__GPIO3_IO04 0x80000000
+			>;
+		};
+
+		pinctrl_pwm1: pwm1grp {
+			fsl,pins = <
+				MX6QDL_PAD_DISP0_DAT8__PWM1_OUT 0x1b0b1
+			>;
+		};
+
 	};
 };
 
@@ -313,3 +335,33 @@
 	fsl,cpu_pdnscr_iso2sw = <0x1>;
 	fsl,cpu_pdnscr_iso = <0x1>;
 };
+
+&pcie {
+	pinctrl-names = "default";
+	pinctrl-0 = <
+		&pinctrl_hummingboard_pcie_reset
+	>;
+	reset-gpio = <&gpio3 4 0>;
+	status = "okay";
+	no-msi;
+};
+
+&pwm1 {
+        pinctrl-names = "default";
+        pinctrl-0 = <&pinctrl_pwm1>;
+        status = "okay";
+};
+
+&pwm2 {
+        pinctrl-names = "default";
+        status = "okay";
+};
+
+&pwm3 {
+	status = "disabled";
+};
+
+&pwm4 {
+	status = "disabled";
+};
+

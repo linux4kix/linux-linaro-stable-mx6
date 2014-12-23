@@ -334,9 +334,12 @@ static void fsl_hdmi_get_playback_channels(void)
 static int fsl_hdmi_update_constraints(struct snd_pcm_substream *substream)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
-	int ret;
+	int edid_status, ret;
 
-	hdmi_get_edid_cfg(&edid_cfg);
+	edid_status = hdmi_get_edid_cfg(&edid_cfg);
+
+	if (edid_status && !edid_cfg.hdmi_cap)
+		return -1;
 
 	fsl_hdmi_get_playback_rates();
 	ret = snd_pcm_hw_constraint_list(runtime, 0, SNDRV_PCM_HW_PARAM_RATE,
@@ -369,16 +372,16 @@ static int fsl_hdmi_soc_startup(struct snd_pcm_substream *substream,
 	struct imx_hdmi *hdmi_data = snd_soc_dai_get_drvdata(dai);
 	int ret;
 
+	ret = fsl_hdmi_update_constraints(substream);
+	if (ret < 0)
+		return ret;
+
 	clk_prepare_enable(hdmi_data->isfr_clk);
 	clk_prepare_enable(hdmi_data->iahb_clk);
 
 	dev_dbg(dai->dev, "%s hdmi clks: isfr:%d iahb:%d\n", __func__,
 			(int)clk_get_rate(hdmi_data->isfr_clk),
 			(int)clk_get_rate(hdmi_data->iahb_clk));
-
-	ret = fsl_hdmi_update_constraints(substream);
-	if (ret < 0)
-		return ret;
 
 	/* Indicates the subpacket represents a flatline sample */
 	hdmi_audio_writeb(FC_AUDSCONF, AUD_PACKET_SAMPFIT, 0x0);
@@ -431,7 +434,7 @@ static int fsl_hdmi_iec_get(struct snd_kcontrol *kcontrol,
 {
 	int i;
 
-	for (i = 0 ; i < 4 ; i++)
+	for (i = 0 ; i < 6 ; i++)
 		uvalue->value.iec958.status[i] = iec_header.status[i];
 
 	return 0;
@@ -446,7 +449,7 @@ static int fsl_hdmi_iec_put(struct snd_kcontrol *kcontrol,
 	if (uvalue->value.iec958.status[0] & IEC958_AES0_PROFESSIONAL)
 		return -EPERM;
 
-	for (i = 0 ; i < 4 ; i++) {
+	for (i = 0 ; i < 6 ; i++) {
 		iec_header.status[i] = uvalue->value.iec958.status[i];
 		pr_debug("%s status[%d]=0x%02x\n", __func__, i, iec_header.status[i]);
 	}
