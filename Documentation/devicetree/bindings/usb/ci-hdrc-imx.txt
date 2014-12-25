@@ -18,6 +18,8 @@ Optional properties:
 - vbus-supply: regulator for vbus
 - disable-over-current: disable over current detect
 - external-vbus-divider: enables off-chip resistor divider for Vbus
+- clocks: phandle to the clock that drives the USB hub
+- clock-names: must be "phy"
 
 Examples:
 usb@02184000 { /* USB OTG */
