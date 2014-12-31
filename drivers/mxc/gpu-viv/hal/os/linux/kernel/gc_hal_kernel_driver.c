@@ -1032,23 +1032,18 @@ static int thermal_hot_pm_notify(struct notifier_block *nb, unsigned long event,
 	void *dummy)
 {
     static gctUINT orgFscale, minFscale, maxFscale;
-    static gctBOOL critical;
+    static gctBOOL bAlreadyTooHot = gcvFALSE;
     gckHARDWARE hardware = galDevice->kernels[gcvCORE_MAJOR]->hardware;
 
-    if (event > 4) {
-	critical = gcvTRUE;
+    if (event && !bAlreadyTooHot) {
         gckHARDWARE_GetFscaleValue(hardware,&orgFscale,&minFscale, &maxFscale);
         gckHARDWARE_SetFscaleValue(hardware, minFscale);
-        gckOS_Print("System is too hot. GPU3D scalign to %d/64 clock.\n", minFscale);
-    } else if (event > 1) {
-        gckHARDWARE_GetFscaleValue(hardware,&orgFscale,&minFscale, &maxFscale);
-        gckHARDWARE_SetFscaleValue(hardware, maxFscale - (8 * event));
-    } else if (orgFscale) {
+        bAlreadyTooHot = gcvTRUE;
+        gckOS_Print("System is too hot. GPU3D will work at %d/64 clock.\n", minFscale);
+    } else if (!event && bAlreadyTooHot) {
         gckHARDWARE_SetFscaleValue(hardware, orgFscale);
-	if (critical) {
-            gckOS_Print("Hot alarm is canceled. GPU3D clock will return to %d/64\n", orgFscale);
-            critical = gcvFALSE;
-        }
+        gckOS_Print("Hot alarm is canceled. GPU3D clock will return to %d/64\n", orgFscale);
+        bAlreadyTooHot = gcvFALSE;
     }
     return NOTIFY_OK;
 }
