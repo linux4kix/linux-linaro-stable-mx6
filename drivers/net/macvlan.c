@@ -548,6 +548,7 @@ static int macvlan_init(struct net_device *dev)
 				  (lowerdev->state & MACVLAN_STATE_MASK);
 	dev->features 		= lowerdev->features & MACVLAN_FEATURES;
 	dev->features		|= ALWAYS_ON_FEATURES;
+	dev->vlan_features	= lowerdev->vlan_features & MACVLAN_FEATURES;
 	dev->gso_max_size	= lowerdev->gso_max_size;
 	dev->iflink		= lowerdev->ifindex;
 	dev->hard_header_len	= lowerdev->hard_header_len;
@@ -708,6 +709,7 @@ static netdev_features_t macvlan_fix_features(struct net_device *dev,
 					     features,
 					     mask);
 	features |= ALWAYS_ON_FEATURES;
+	features &= ~NETIF_F_NETNS_LOCAL;
 
 	return features;
 }
