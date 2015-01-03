@@ -1613,8 +1613,6 @@ void igb_power_up_link(struct igb_adapter *adapter)
 		igb_power_up_phy_copper(&adapter->hw);
 	else
 		igb_power_up_serdes_link_82575(&adapter->hw);
-
-	igb_setup_link(&adapter->hw);
 }
 
 /**
@@ -2185,6 +2183,30 @@ static s32 igb_init_i2c(struct igb_adapter *adapter)
 	return status;
 }
 
+
+/**
+ *  igb_read_mac_addr_dts - Read mac addres from the device tree
+ *  blob
+ *  @adapter: pointer to adapter structure
+ **/
+static void igb_read_mac_addr_dts(struct e1000_hw *hw)
+{
+	struct device_node *dn;
+	const uint8_t *mac;
+
+	dn = of_find_compatible_node(NULL, NULL, "intel,i211");
+
+	if (!dn)
+		return;
+
+	mac = of_get_property(dn, "local-mac-address", NULL);
+
+	if (mac)
+		memcpy(hw->mac.addr, mac, ETH_ALEN);
+
+	return;
+}
+
 /**
  *  igb_probe - Device Initialization Routine
  *  @pdev: PCI device information struct
@@ -2386,6 +2408,14 @@ static int igb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	/* copy the MAC address out of the NVM */
 	if (hw->mac.ops.read_mac_addr(hw))
 		dev_err(&pdev->dev, "NVM Read Error\n");
+
+	if (!is_valid_ether_addr(hw->mac.addr))
+		igb_read_mac_addr_dts(hw);
+
+	if (!is_valid_ether_addr(hw->mac.addr)) {
+		dev_info(&pdev->dev, "Random MAC Address\n");
+		random_ether_addr(hw->mac.addr);
+	}
 
 	memcpy(netdev->dev_addr, hw->mac.addr, netdev->addr_len);
 
@@ -8089,3 +8119,4 @@ int igb_reinit_queues(struct igb_adapter *adapter)
 	return err;
 }
 /* igb_main.c */
+
