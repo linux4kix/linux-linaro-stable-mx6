@@ -37,6 +37,7 @@
 
 
 &i2c1 {
+	status = "okay";
 	rtc@56 {
 		compatible = "emmicro,em3027";
 		reg = <0x56>;
