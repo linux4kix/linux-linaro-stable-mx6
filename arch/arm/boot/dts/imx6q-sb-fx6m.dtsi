@@ -1,0 +1,32 @@
+/*
+ * Copyright 2014 CompuLab Ltd.
+ *
+ * Author: Valentin Raevsky <valentin@compulab.co.il>
+ *
+ * The code contained herein is licensed under the GNU General Public
+ * License. You may obtain a copy of the GNU General Public License
+ * Version 2 or later at the following locations:
+ *
+ * http://www.opensource.org/licenses/gpl-license.html
+ * http://www.gnu.org/copyleft/gpl.html
+ */
+
+#include "imx6q-sb-fx6x.dtsi"
+
+/ {
+	eth@pcie {
+		compatible = "intel,i211";
+		local-mac-address = [FF FF FF FF FF FF];
+		status = "okay";
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		power {
+			label = "Power Button";
+			gpios = <&gpio1 29 1>;
+			linux,code = <116>; /* KEY_POWER */
+			gpio-key,wakeup;
+		};
+	};
+};

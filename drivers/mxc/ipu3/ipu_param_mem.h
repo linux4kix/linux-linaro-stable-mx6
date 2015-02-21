@@ -384,7 +384,7 @@ static inline void _ipu_ch_param_init(struct ipu_soc *ipu, int ch,
 			ipu_ch_param_set_field(&params, 1, 78, 7, 15);  /* burst size */
 			uv_stride = uv_stride*2;
 		} else {
-			ipu_ch_param_set_field(&params, 1, 78, 7, 31);  /* burst size */
+			ipu_ch_param_set_field(&params, 1, 78, 7, 63);  /* burst size */
 		}
 		break;
 	case IPU_PIX_FMT_YVU420P:

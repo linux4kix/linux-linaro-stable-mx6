@@ -30,7 +30,6 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/sysfs.h>
-#include <linux/fsl_otp.h>
 
 #define HW_OCOTP_CTRL			0x00000000
 #define HW_OCOTP_CTRL_SET		0x00000004
@@ -126,13 +125,16 @@ static int otp_wait_busy(u32 flags)
 	return 0;
 }
 
-int fsl_otp_readl(unsigned long offset, u32 *value)
+static ssize_t fsl_otp_show(struct kobject *kobj, struct kobj_attribute *attr,
+			    char *buf)
 {
-	int ret = 0;
+	unsigned int index = attr - otp_kattr;
+	u32 value = 0;
+	int ret;
 
 	ret = clk_prepare_enable(otp_clk);
 	if (ret)
-		return ret;
+		return 0;
 
 	mutex_lock(&otp_mutex);
 
@@ -141,28 +143,14 @@ int fsl_otp_readl(unsigned long offset, u32 *value)
 	if (ret)
 		goto out;
 
-        *value = __raw_readl(otp_base + offset);
+	value = __raw_readl(otp_base + HW_OCOTP_CUST_N(index));
 
 out:
 	mutex_unlock(&otp_mutex);
 	clk_disable_unprepare(otp_clk);
-        return ret;
-}
-EXPORT_SYMBOL(fsl_otp_readl);
-
-static ssize_t fsl_otp_show(struct kobject *kobj, struct kobj_attribute *attr,
-			    char *buf)
-{
-	unsigned int index = attr - otp_kattr;
-	u32 value = 0;
-	int ret;
-
-	ret = fsl_otp_readl(HW_OCOTP_CUST_N(index), &value);
-
 	return ret ? 0 : sprintf(buf, "0x%x\n", value);
 }
 
-#ifdef CONFIG_FSL_OTP_WRITE_ENABLE
 static int otp_write_bits(int addr, u32 data, u32 magic)
 {
 	u32 c; /* for control register */
@@ -216,7 +204,6 @@ out:
 	clk_disable_unprepare(otp_clk);
 	return ret ? 0 : count;
 }
-#endif
 
 static int fsl_otp_probe(struct platform_device *pdev)
 {
@@ -257,13 +244,9 @@ static int fsl_otp_probe(struct platform_device *pdev)
 	for (i = 0; i < num; i++) {
 		sysfs_attr_init(&otp_kattr[i].attr);
 		otp_kattr[i].attr.name = desc[i];
-#ifdef CONFIG_FSL_OTP_WRITE_ENABLE
 		otp_kattr[i].attr.mode = 0600;
-		otp_kattr[i].store = fsl_otp_store;
-#else
-		otp_kattr[i].attr.mode = 0400;
-#endif
 		otp_kattr[i].show = fsl_otp_show;
+		otp_kattr[i].store = fsl_otp_store;
 		attrs[i] = &otp_kattr[i].attr;
 	}
 	otp_attr_group->attrs = attrs;

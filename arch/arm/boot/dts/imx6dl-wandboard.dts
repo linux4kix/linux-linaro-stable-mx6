@@ -9,14 +9,35 @@
  *
  */
 /dts-v1/;
+
+#include <dt-bindings/interrupt-controller/irq.h>
 #include "imx6dl.dtsi"
 #include "imx6qdl-wandboard.dtsi"
 
 / {
 	model = "Wandboard i.MX6 Dual Lite Board";
 	compatible = "wand,imx6dl-wandboard", "fsl,imx6dl";
-
-	memory {
-		reg = <0x10000000 0x40000000>;
-	};
 };
+
+&mxcfb1 {
+	status = "okay";
+};
+
+#if 0
+&mxcfb2 {
+	status = "okay";
+};
+
+&mxcfb3 {
+	status = "okay";
+};
+
+&mxcfb4 {
+	status = "okay";
+};
+#endif
+
+&epdc {
+	status = "disabled";
+};
+

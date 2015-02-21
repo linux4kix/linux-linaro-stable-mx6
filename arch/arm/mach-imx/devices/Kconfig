@@ -85,3 +85,9 @@ config IMX_HAVE_PLATFORM_SDHCI_ESDHC_IMX
 
 config IMX_HAVE_PLATFORM_SPI_IMX
 	bool
+
+config WAND_RFKILL
+	tristate "Wandboard RF Kill support"
+	depends on SOC_IMX6Q
+	default m
+	select RFKILL
