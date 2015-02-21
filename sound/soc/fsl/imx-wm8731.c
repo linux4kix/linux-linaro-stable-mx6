@@ -685,3 +685,4 @@ MODULE_AUTHOR("Freescale Semiconductor, Inc.");
 MODULE_DESCRIPTION("Freescale i.MX WM8731 ASoC machine driver");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:imx-wm8731");
+

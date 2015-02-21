@@ -11,7 +11,7 @@
  * http://www.gnu.org/copyleft/gpl.html
  */
 
-#include "imx6q.dtsi"
+#include "imx6q-cm.dtsi"
 
 / {
 	regulators {
