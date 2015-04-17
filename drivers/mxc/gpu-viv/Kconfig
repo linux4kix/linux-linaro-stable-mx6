@@ -5,5 +5,16 @@ config MXC_GPU_VIV
 	tristate "MXC Vivante GPU support"
 	---help---
          Say Y to get the GPU driver support.
+choice
+	prompt "Galcore Version"
+	default MXC_GPU_VIV_V5
+
+config MXC_GPU_VIV_V5
+	bool "Galcore Version 5.x"
+
+config MXC_GPU_VIV_V4
+	bool "Galcore Version 4.x"
+
+endchoice
 
 endmenu
