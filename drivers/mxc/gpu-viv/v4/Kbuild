@@ -23,7 +23,7 @@
 # Linux build file for kernel HAL driver.
 #
 
-AQROOT := $(srctree)/drivers/mxc/gpu-viv
+AQROOT := $(srctree)/drivers/mxc/gpu-viv/v4
 AQARCH := $(AQROOT)/arch/XAQ2
 AQVGARCH := $(AQROOT)/arch/GC350
 
